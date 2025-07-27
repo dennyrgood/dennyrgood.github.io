@@ -1,8 +1,8 @@
 Runtime Error: in Open at line 1079 of usd/stage.cpp -- Failed to open layer @/Users/dennishmathes/Documents/MyWebsiteGIT/pump.usdz@
 Coding Error: in UsdGeomGetStageUpAxis at line 54 of usdGeom/metrics.cpp -- Invalid UsdStage
 Coding Error: in UsdGeomGetStageMetersPerUnit at line 190 of usdGeom/metrics.cpp -- Invalid UsdStage
-2025-07-27 20:10:14.783 swift-frontend[97501:13390616] Could not import USD file
+2025-07-27 20:18:38.678 usdz_thumbnailer[97982:13401607] Could not import USD file
 Runtime Error: in Open at line 1079 of usd/stage.cpp -- Failed to open layer @/Users/dennishmathes/Documents/MyWebsiteGIT/thetford porta potti.usdz@
 Coding Error: in UsdGeomGetStageUpAxis at line 54 of usdGeom/metrics.cpp -- Invalid UsdStage
 Coding Error: in UsdGeomGetStageMetersPerUnit at line 190 of usdGeom/metrics.cpp -- Invalid UsdStage
-2025-07-27 20:10:16.398 swift-frontend[97501:13390616] Could not import USD file
+2025-07-27 20:18:40.374 usdz_thumbnailer[97982:13401607] Could not import USD file
