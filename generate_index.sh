@@ -67,21 +67,27 @@ INDEX_HTML_CONTENT='<!DOCTYPE html>
                 </p>
                 <ul class="space-y-3">'
 
-# Find all .usdz files in the current directory, sort them, and add to HTML
+# Set IFS to newline to correctly handle filenames with spaces
+# This ensures that 'for filename in $(ls -1 *.usdz)' treats each line (filename) as a single item
+IFS=$'\n'
 for filename in $(ls -1 *.usdz 2>/dev/null | sort); do
     # Remove the .usdz extension for display text
     display_name="${filename%.usdz}"
     # Capitalize the first letter of each word for better readability
+    # Use 'sed' with quotes to handle spaces in display_name
     display_name=$(echo "$display_name" | sed -E 's/\b([a-z])/\U\1/g')
 
+    # Ensure filename is properly quoted in the href attribute
     INDEX_HTML_CONTENT+="
                     <li>
-                        <a href=\"./${filename}\" download=\"${filename}\" class=\"text-blue-600 hover:text-blue-800 font-semibold text-lg transition duration-300 ease-in-out transform hover:scale-105 inline-flex items-center\">
+                        <a href=\"./${filename// /%20}\" download=\"${filename}\" class=\"text-blue-600 hover:text-blue-800 font-semibold text-lg transition duration-300 ease-in-out transform hover:scale-105 inline-flex items-center\">
                             <svg class=\"w-5 h-5 mr-2\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M13 7l5 5m0 0l-5 5m5-5H6\"></path></svg>
                             Download ${display_name} File (${filename})
                         </a>
                     </li>"
 done
+# Reset IFS to its default value
+unset IFS
 
 # Close the HTML structure
 INDEX_HTML_CONTENT+='
