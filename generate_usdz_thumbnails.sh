@@ -2,7 +2,7 @@
 
 # This script automates the creation of .png thumbnails for .usdz files
 # using a custom Swift executable (usdz_thumbnailer).
-# It then calls generate_index.sh to create the index.html.
+# It then calls generate_index_with_USDZ.sh to create the index.html.
 
 echo "--- Starting USDZ Thumbnail Generation (using Swift) ---"
 
@@ -33,14 +33,17 @@ fi
 
 
 # Now, call the script to generate the index.html with the new thumbnails
-echo "--- Calling generate_index.sh to create index.html ---"
-# Ensure generate_index.sh is executable
-if [ ! -f "./generate_index.sh" ]; then
-    echo "Error: generate_index.sh script not found. Please ensure it's in this directory."
+echo "--- Calling generate_index_with_USDZ.sh to create index.html ---"
+# Define the path to the index generation script
+INDEX_GENERATOR_SCRIPT="./generate_index_with_USDZ.sh"
+
+# Ensure generate_index_with_USDZ.sh is executable
+if [ ! -f "$INDEX_GENERATOR_SCRIPT" ]; then
+    echo "Error: '$INDEX_GENERATOR_SCRIPT' script not found. Please ensure it's in this directory."
     exit 1
 fi
-chmod +x ./generate_index.sh # Ensure it's executable for this run
-./generate_index.sh
+chmod +x "$INDEX_GENERATOR_SCRIPT" # Ensure it's executable for this run
+"$INDEX_GENERATOR_SCRIPT"
 
 echo "--- All processes finished. ---"
 

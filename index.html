@@ -26,6 +26,29 @@
             max-width: 100%;
             height: auto;
             display: block; /* Remove extra space below images */
+            border-radius: 0.5rem; /* Rounded corners for images */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+        }
+        .file-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem; /* Space between thumbnail and text */
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #e2e8f0; /* Light border for separation */
+        }
+        .file-item:last-child {
+            border-bottom: none; /* No border for the last item */
+        }
+        .thumbnail-placeholder {
+            width: 60px; /* Fixed width for consistent thumbnail size */
+            height: 60px; /* Fixed height for consistent thumbnail size */
+            background-color: #cbd5e1; /* Light gray for placeholder */
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0; /* Prevent placeholder from shrinking */
+            font-size: 2rem; /* Size for the emoji placeholder */
         }
     </style>
 </head>
@@ -53,95 +76,110 @@
                     Click on any of the links below to download the corresponding file.
                 </p>
                 <ul class="space-y-3">
-                    <li>
-                        <a href="./6BFCC4DD-AF88-4B94-BEB8-5BD851C4E30C.usdz" download="6BFCC4DD-AF88-4B94-BEB8-5BD851C4E30C.usdz" class="text-blue-600 hover:text-blue-800 font-semibold text-lg transition duration-300 ease-in-out transform hover:scale-105 inline-flex items-center">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
-                            Download 6BFCC4DD-AF88-4B94-BEB8-5BD851C4E30C File (6BFCC4DD-AF88-4B94-BEB8-5BD851C4E30C.usdz)
+                    <li class="file-item">
+                        <img src="./6BFCC4DD-AF88-4B94-BEB8-5BD851C4E30C.png" alt="6BFCC4DD-AF88-4B94-BEB8-5BD851C4E30C Thumbnail" class="w-16 h-16 object-cover rounded-md flex-shrink-0">
+                        <a href="./6BFCC4DD-AF88-4B94-BEB8-5BD851C4E30C.usdz" download="6BFCC4DD-AF88-4B94-BEB8-5BD851C4E30C.usdz" class="text-blue-600 hover:text-blue-800 font-semibold text-lg transition duration-300 ease-in-out transform hover:scale-105 flex-grow">
+                            6BFCC4DD-AF88-4B94-BEB8-5BD851C4E30C.usdz
                         </a>
+                        <svg class="w-5 h-5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
                     </li>
-                    <li>
-                        <a href="./7E7ACCFF-A795-4C25-A72D-A1B00686ECB0.usdz" download="7E7ACCFF-A795-4C25-A72D-A1B00686ECB0.usdz" class="text-blue-600 hover:text-blue-800 font-semibold text-lg transition duration-300 ease-in-out transform hover:scale-105 inline-flex items-center">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
-                            Download 7E7ACCFF-A795-4C25-A72D-A1B00686ECB0 File (7E7ACCFF-A795-4C25-A72D-A1B00686ECB0.usdz)
+                    <li class="file-item">
+                        <img src="./7E7ACCFF-A795-4C25-A72D-A1B00686ECB0.png" alt="7E7ACCFF-A795-4C25-A72D-A1B00686ECB0 Thumbnail" class="w-16 h-16 object-cover rounded-md flex-shrink-0">
+                        <a href="./7E7ACCFF-A795-4C25-A72D-A1B00686ECB0.usdz" download="7E7ACCFF-A795-4C25-A72D-A1B00686ECB0.usdz" class="text-blue-600 hover:text-blue-800 font-semibold text-lg transition duration-300 ease-in-out transform hover:scale-105 flex-grow">
+                            7E7ACCFF-A795-4C25-A72D-A1B00686ECB0.usdz
                         </a>
+                        <svg class="w-5 h-5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
                     </li>
-                    <li>
-                        <a href="./A70FD8CE-E369-4652-A7AD-18B91FD431DD.usdz" download="A70FD8CE-E369-4652-A7AD-18B91FD431DD.usdz" class="text-blue-600 hover:text-blue-800 font-semibold text-lg transition duration-300 ease-in-out transform hover:scale-105 inline-flex items-center">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
-                            Download A70FD8CE-E369-4652-A7AD-18B91FD431DD File (A70FD8CE-E369-4652-A7AD-18B91FD431DD.usdz)
+                    <li class="file-item">
+                        <img src="./A70FD8CE-E369-4652-A7AD-18B91FD431DD.png" alt="A70FD8CE-E369-4652-A7AD-18B91FD431DD Thumbnail" class="w-16 h-16 object-cover rounded-md flex-shrink-0">
+                        <a href="./A70FD8CE-E369-4652-A7AD-18B91FD431DD.usdz" download="A70FD8CE-E369-4652-A7AD-18B91FD431DD.usdz" class="text-blue-600 hover:text-blue-800 font-semibold text-lg transition duration-300 ease-in-out transform hover:scale-105 flex-grow">
+                            A70FD8CE-E369-4652-A7AD-18B91FD431DD.usdz
                         </a>
+                        <svg class="w-5 h-5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
                     </li>
-                    <li>
-                        <a href="./C4CAAC50-E97D-4EC0-A9D2-AA37A7D27093.usdz" download="C4CAAC50-E97D-4EC0-A9D2-AA37A7D27093.usdz" class="text-blue-600 hover:text-blue-800 font-semibold text-lg transition duration-300 ease-in-out transform hover:scale-105 inline-flex items-center">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
-                            Download C4CAAC50-E97D-4EC0-A9D2-AA37A7D27093 File (C4CAAC50-E97D-4EC0-A9D2-AA37A7D27093.usdz)
+                    <li class="file-item">
+                        <img src="./C4CAAC50-E97D-4EC0-A9D2-AA37A7D27093.png" alt="C4CAAC50-E97D-4EC0-A9D2-AA37A7D27093 Thumbnail" class="w-16 h-16 object-cover rounded-md flex-shrink-0">
+                        <a href="./C4CAAC50-E97D-4EC0-A9D2-AA37A7D27093.usdz" download="C4CAAC50-E97D-4EC0-A9D2-AA37A7D27093.usdz" class="text-blue-600 hover:text-blue-800 font-semibold text-lg transition duration-300 ease-in-out transform hover:scale-105 flex-grow">
+                            C4CAAC50-E97D-4EC0-A9D2-AA37A7D27093.usdz
                         </a>
+                        <svg class="w-5 h-5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
                     </li>
-                    <li>
-                        <a href="./CB58E600-A82A-459C-A2B7-F740AA11E341.usdz" download="CB58E600-A82A-459C-A2B7-F740AA11E341.usdz" class="text-blue-600 hover:text-blue-800 font-semibold text-lg transition duration-300 ease-in-out transform hover:scale-105 inline-flex items-center">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
-                            Download CB58E600-A82A-459C-A2B7-F740AA11E341 File (CB58E600-A82A-459C-A2B7-F740AA11E341.usdz)
+                    <li class="file-item">
+                        <img src="./CB58E600-A82A-459C-A2B7-F740AA11E341.png" alt="CB58E600-A82A-459C-A2B7-F740AA11E341 Thumbnail" class="w-16 h-16 object-cover rounded-md flex-shrink-0">
+                        <a href="./CB58E600-A82A-459C-A2B7-F740AA11E341.usdz" download="CB58E600-A82A-459C-A2B7-F740AA11E341.usdz" class="text-blue-600 hover:text-blue-800 font-semibold text-lg transition duration-300 ease-in-out transform hover:scale-105 flex-grow">
+                            CB58E600-A82A-459C-A2B7-F740AA11E341.usdz
                         </a>
+                        <svg class="w-5 h-5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
                     </li>
-                    <li>
-                        <a href="./corner%20sink2.usdz" download="corner sink2.usdz" class="text-blue-600 hover:text-blue-800 font-semibold text-lg transition duration-300 ease-in-out transform hover:scale-105 inline-flex items-center">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
-                            Download corner sink2 File (corner sink2.usdz)
+                    <li class="file-item">
+                        <img src="./corner%20sink2.png" alt="corner sink2 Thumbnail" class="w-16 h-16 object-cover rounded-md flex-shrink-0">
+                        <a href="./corner%20sink2.usdz" download="corner sink2.usdz" class="text-blue-600 hover:text-blue-800 font-semibold text-lg transition duration-300 ease-in-out transform hover:scale-105 flex-grow">
+                            corner sink2.usdz
                         </a>
+                        <svg class="w-5 h-5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
                     </li>
-                    <li>
-                        <a href="./oblong%20sink2.usdz" download="oblong sink2.usdz" class="text-blue-600 hover:text-blue-800 font-semibold text-lg transition duration-300 ease-in-out transform hover:scale-105 inline-flex items-center">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
-                            Download oUlong sink2 File (oblong sink2.usdz)
+                    <li class="file-item">
+                        <img src="./oblong%20sink2.png" alt="oblong sink2 Thumbnail" class="w-16 h-16 object-cover rounded-md flex-shrink-0">
+                        <a href="./oblong%20sink2.usdz" download="oblong sink2.usdz" class="text-blue-600 hover:text-blue-800 font-semibold text-lg transition duration-300 ease-in-out transform hover:scale-105 flex-grow">
+                            oblong sink2.usdz
                         </a>
+                        <svg class="w-5 h-5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
                     </li>
-                    <li>
-                        <a href="./pump.usdz" download="pump.usdz" class="text-blue-600 hover:text-blue-800 font-semibold text-lg transition duration-300 ease-in-out transform hover:scale-105 inline-flex items-center">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
-                            Download pump File (pump.usdz)
+                    <li class="file-item">
+                        <div class="thumbnail-placeholder w-16 h-16 text-gray-500 rounded-md flex-shrink-0">📦</div>
+                        <a href="./pump.usdz" download="pump.usdz" class="text-blue-600 hover:text-blue-800 font-semibold text-lg transition duration-300 ease-in-out transform hover:scale-105 flex-grow">
+                            pump.usdz
                         </a>
+                        <svg class="w-5 h-5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
                     </li>
-                    <li>
-                        <a href="./tank2.usdz" download="tank2.usdz" class="text-blue-600 hover:text-blue-800 font-semibold text-lg transition duration-300 ease-in-out transform hover:scale-105 inline-flex items-center">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
-                            Download tank2 File (tank2.usdz)
+                    <li class="file-item">
+                        <img src="./tank2.png" alt="tank2 Thumbnail" class="w-16 h-16 object-cover rounded-md flex-shrink-0">
+                        <a href="./tank2.usdz" download="tank2.usdz" class="text-blue-600 hover:text-blue-800 font-semibold text-lg transition duration-300 ease-in-out transform hover:scale-105 flex-grow">
+                            tank2.usdz
                         </a>
+                        <svg class="w-5 h-5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
                     </li>
-                    <li>
-                        <a href="./thetford%20porta%20potti.usdz" download="thetford porta potti.usdz" class="text-blue-600 hover:text-blue-800 font-semibold text-lg transition duration-300 ease-in-out transform hover:scale-105 inline-flex items-center">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
-                            Download thetford porta potti File (thetford porta potti.usdz)
+                    <li class="file-item">
+                        <div class="thumbnail-placeholder w-16 h-16 text-gray-500 rounded-md flex-shrink-0">📦</div>
+                        <a href="./thetford%20porta%20potti.usdz" download="thetford porta potti.usdz" class="text-blue-600 hover:text-blue-800 font-semibold text-lg transition duration-300 ease-in-out transform hover:scale-105 flex-grow">
+                            thetford porta potti.usdz
                         </a>
+                        <svg class="w-5 h-5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
                     </li>
-                    <li>
-                        <a href="./toliet2%203.usdz" download="toliet2 3.usdz" class="text-blue-600 hover:text-blue-800 font-semibold text-lg transition duration-300 ease-in-out transform hover:scale-105 inline-flex items-center">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
-                            Download toliet2 3 File (toliet2 3.usdz)
+                    <li class="file-item">
+                        <img src="./toliet2%203.png" alt="toliet2 3 Thumbnail" class="w-16 h-16 object-cover rounded-md flex-shrink-0">
+                        <a href="./toliet2%203.usdz" download="toliet2 3.usdz" class="text-blue-600 hover:text-blue-800 font-semibold text-lg transition duration-300 ease-in-out transform hover:scale-105 flex-grow">
+                            toliet2 3.usdz
                         </a>
+                        <svg class="w-5 h-5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
                     </li>
-                    <li>
-                        <a href="./w67b%20106%20all%20w%20walls%202.usdz" download="w67b 106 all w walls 2.usdz" class="text-blue-600 hover:text-blue-800 font-semibold text-lg transition duration-300 ease-in-out transform hover:scale-105 inline-flex items-center">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
-                            Download w67b 106 all w walls 2 File (w67b 106 all w walls 2.usdz)
+                    <li class="file-item">
+                        <img src="./w67b%20106%20all%20w%20walls%202.png" alt="w67b 106 all w walls 2 Thumbnail" class="w-16 h-16 object-cover rounded-md flex-shrink-0">
+                        <a href="./w67b%20106%20all%20w%20walls%202.usdz" download="w67b 106 all w walls 2.usdz" class="text-blue-600 hover:text-blue-800 font-semibold text-lg transition duration-300 ease-in-out transform hover:scale-105 flex-grow">
+                            w67b 106 all w walls 2.usdz
                         </a>
+                        <svg class="w-5 h-5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
                     </li>
-                    <li>
-                        <a href="./w67b%20106%20all%20w%20walls%20and%20me%202.usdz" download="w67b 106 all w walls and me 2.usdz" class="text-blue-600 hover:text-blue-800 font-semibold text-lg transition duration-300 ease-in-out transform hover:scale-105 inline-flex items-center">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
-                            Download w67b 106 all w walls and me 2 File (w67b 106 all w walls and me 2.usdz)
+                    <li class="file-item">
+                        <img src="./w67b%20106%20all%20w%20walls%20and%20me%202.png" alt="w67b 106 all w walls and me 2 Thumbnail" class="w-16 h-16 object-cover rounded-md flex-shrink-0">
+                        <a href="./w67b%20106%20all%20w%20walls%20and%20me%202.usdz" download="w67b 106 all w walls and me 2.usdz" class="text-blue-600 hover:text-blue-800 font-semibold text-lg transition duration-300 ease-in-out transform hover:scale-105 flex-grow">
+                            w67b 106 all w walls and me 2.usdz
                         </a>
+                        <svg class="w-5 h-5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
                     </li>
-                    <li>
-                        <a href="./w67b%20106%20bed%20and%20me.usdz" download="w67b 106 bed and me.usdz" class="text-blue-600 hover:text-blue-800 font-semibold text-lg transition duration-300 ease-in-out transform hover:scale-105 inline-flex items-center">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
-                            Download w67b 106 Ued and me File (w67b 106 bed and me.usdz)
+                    <li class="file-item">
+                        <img src="./w67b%20106%20bed%20and%20me.png" alt="w67b 106 bed and me Thumbnail" class="w-16 h-16 object-cover rounded-md flex-shrink-0">
+                        <a href="./w67b%20106%20bed%20and%20me.usdz" download="w67b 106 bed and me.usdz" class="text-blue-600 hover:text-blue-800 font-semibold text-lg transition duration-300 ease-in-out transform hover:scale-105 flex-grow">
+                            w67b 106 bed and me.usdz
                         </a>
+                        <svg class="w-5 h-5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
                     </li>
-                    <li>
-                        <a href="./wastemaster2.usdz" download="wastemaster2.usdz" class="text-blue-600 hover:text-blue-800 font-semibold text-lg transition duration-300 ease-in-out transform hover:scale-105 inline-flex items-center">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
-                            Download wastemaster2 File (wastemaster2.usdz)
+                    <li class="file-item">
+                        <img src="./wastemaster2.png" alt="wastemaster2 Thumbnail" class="w-16 h-16 object-cover rounded-md flex-shrink-0">
+                        <a href="./wastemaster2.usdz" download="wastemaster2.usdz" class="text-blue-600 hover:text-blue-800 font-semibold text-lg transition duration-300 ease-in-out transform hover:scale-105 flex-grow">
+                            wastemaster2.usdz
                         </a>
+                        <svg class="w-5 h-5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
                     </li>
                 </ul>
             </section>
