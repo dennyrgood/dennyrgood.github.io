@@ -6,19 +6,10 @@
 # Define the branch you want to push to (commonly 'main' or 'master')
 GIT_BRANCH="main"
 
-# Get a commit message from the user, or use a default
-read -p "Enter your commit message (e.g., 'Updated content'): " USER_COMMIT_MESSAGE
-
-# If the user didn't provide a message, use a default one
-if [ -z "$USER_COMMIT_MESSAGE" ]; then
-  COMMIT_MESSAGE="Automated update at $(date +'%Y-%m-%d %H:%M:%S')"
-else
-  COMMIT_MESSAGE="$USER_COMMIT_MESSAGE"
-fi
+# Set the default commit message
+COMMIT_MESSAGE="Updated content"
 
 echo "--- Starting Git Deployment ---"
-
-# Step 1: Add all changes to the staging area
 echo "Adding all changes to Git staging area..."
 git add .
 
@@ -46,4 +37,3 @@ else
 fi
 
 echo "-------------------------------"
-
