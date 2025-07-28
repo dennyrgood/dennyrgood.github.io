@@ -1,8 +1,0 @@
-Runtime Error: in Open at line 1079 of usd/stage.cpp -- Failed to open layer @/Users/dennishmathes/Documents/MyWebsiteGIT/pump.usdz@
-Coding Error: in UsdGeomGetStageUpAxis at line 54 of usdGeom/metrics.cpp -- Invalid UsdStage
-Coding Error: in UsdGeomGetStageMetersPerUnit at line 190 of usdGeom/metrics.cpp -- Invalid UsdStage
-2025-07-27 20:30:18.845 usdz_thumbnailer[98417:13416929] Could not import USD file
-Runtime Error: in Open at line 1079 of usd/stage.cpp -- Failed to open layer @/Users/dennishmathes/Documents/MyWebsiteGIT/thetford porta potti.usdz@
-Coding Error: in UsdGeomGetStageUpAxis at line 54 of usdGeom/metrics.cpp -- Invalid UsdStage
-Coding Error: in UsdGeomGetStageMetersPerUnit at line 190 of usdGeom/metrics.cpp -- Invalid UsdStage
-2025-07-27 20:30:20.573 usdz_thumbnailer[98417:13416929] Could not import USD file
