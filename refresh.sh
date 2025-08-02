@@ -93,6 +93,21 @@ if failCount > 0 {
     print("Errors logged to: \(logPath)")
 }
 
+// Run generate_index_with_USDZ.sh if it exists
+let generateIndexScript = directory + "/generate_index_with_USDZ.sh"
+if FileManager.default.fileExists(atPath: generateIndexScript) {
+    print("Running generate_index_with_USDZ.sh...")
+    let process = Process()
+    process.currentDirectoryPath = directory
+    process.executableURL = URL(fileURLWithPath: "/bin/bash")
+    process.arguments = ["generate_index_with_USDZ.sh"]
+    try process.run()
+    process.waitUntilExit()
+    print("Generate index completed with exit code: \(process.terminationStatus)")
+} else {
+    print("No generate_index_with_USDZ.sh found, skipping index generation")
+}
+
 // Run deploy.sh if it exists
 let deployScript = directory + "/deploy.sh"
 if FileManager.default.fileExists(atPath: deployScript) {
