@@ -64,20 +64,15 @@ for file in files {
         }
     }
     
-    // Redirect both stderr and stdout to log file during thumbnail generation
+    // Redirect stderr to log file
     let originalStderr = dup(STDERR_FILENO)
-    let originalStdout = dup(STDOUT_FILENO)
-    
     dup2(logFile, STDERR_FILENO)
-    dup2(logFile, STDOUT_FILENO)
     
     let thumbnail = generator.thumbnail(for: inputURL, size: CGSize(width: 512, height: 512))
     
-    // Restore stderr and stdout
+    // Restore stderr
     dup2(originalStderr, STDERR_FILENO)
-    dup2(originalStdout, STDOUT_FILENO)
     close(originalStderr)
-    close(originalStdout)
     
     if let thumbnail = thumbnail {
         let data = thumbnail.tiffRepresentation!
@@ -85,23 +80,9 @@ for file in files {
         let pngData = bitmap.representation(using: .png, properties: [:])!
         try pngData.write(to: outputURL)
         print("✓ \(file)")
-        
-        // Log success to file
-        let logMessage = "SUCCESS: Generated thumbnail for \(file)\n"
-        logMessage.data(using: .utf8)?.withUnsafeBytes { bytes in
-            write(logFile, bytes.bindMemory(to: UInt8.self).baseAddress, bytes.count)
-        }
-        
         successCount += 1
     } else {
         print("✗ \(file)")
-        
-        // Log failure to file
-        let logMessage = "FAILED: Could not generate thumbnail for \(file)\n"
-        logMessage.data(using: .utf8)?.withUnsafeBytes { bytes in
-            write(logFile, bytes.bindMemory(to: UInt8.self).baseAddress, bytes.count)
-        }
-        
         failCount += 1
     }
 }
