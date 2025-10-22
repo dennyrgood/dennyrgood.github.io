@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Excel Data Updater - Hub</title>
+    <title>Mathes Online Utilities</title>
     <style>
         * {
             margin: 0;
@@ -124,6 +124,14 @@
             background: #e0e0e0;
         }
 
+        .btn-disabled {
+            background: #f0f0f0;
+            color: #999;
+            opacity: 0.6;
+            cursor: default;
+            flex: 1;
+        }
+
         .footer {
             text-align: center;
             color: white;
@@ -183,68 +191,197 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>📊 Mathes Online Utilities</h1>
-            <p>Managing files online from anywhere</p>
+            <h1 id="site-title"></h1>
+            <p id="site-tagline"></p>
         </div>
 
         <div id="status" class="status"></div>
 
-        <div class="projects-grid">
-            <!-- Movies & Shows - Full Editor -->
-            <div class="project-card">
-                <div class="project-icon">🎬</div>
-                <h2>Movies & Shows</h2>
-                <p>Full CRUD editor for your movies and shows collection. Add new entries, edit existing ones, or delete as needed.</p>
-                <div class="project-links">
-                    <a href="https://dennyrgood.github.io/MoviesShowsFullEdit/" class="btn btn-primary">Full Editor</a>
-                    <a href="https://dennyrgood.github.io/excel-web-interface/" class="btn btn-secondary">Quick Add</a>
-                </div>
-            </div>
-
-            <!-- USDZ Objects -->
-            <div class="project-card">
-                <div class="project-icon">🥽</div>
-                <h2>USDZ Objects</h2>
-                <p>USDZ Objects for use with the Apple Vision Pro.</p>
-                <div class="project-links">
-                    <a href="USDZ_AVP/index.html" class="btn btn-primary">View Objects</a>
-                </div>
-            </div>
-
-            <!-- Weather Dashboard -->
-            <div class="project-card">
-                <div class="project-icon">🌤️</div>
-                <h2>Weather Dashboard</h2>
-                <p>Real-time weather information and forecasts. View default location or customize with URL parameters for your preferred city.</p>
-                <div class="project-links">
-                    <a href="https://dennyrgood.github.io/weather-dashboard/" class="btn btn-primary">View Weather</a>
-                    <a href="https://dennyrgood.github.io/weather-dashboard/url-parameter-guide.html" class="btn btn-secondary">Customize</a>
-                </div>
-            </div>
-
-            <!-- Future Projects -->
-            <div class="project-card">
-                <div class="project-icon">🔄</div>
-                <h2>More Projects Coming</h2>
-                <p>This hub is ready to grow. New projects and editors will be added here as they're built.</p>
-                <div class="project-links">
-                    <span class="btn btn-secondary" style="opacity: 0.6; cursor: default;">Coming Soon</span>
-                </div>
-            </div>
+        <div id="projects-grid" class="projects-grid">
+            <!-- Cards will be dynamically generated here -->
         </div>
 
         <div class="footer">
-            <p>All data is stored securely in your OneDrive. Backups are created automatically with each update.</p>
+            <p id="footer-text"></p>
         </div>
     </div>
 
     <script>
+        // ============================================================
+        // CONFIGURATION SECTION - Edit this to customize the site
+        // ============================================================
+        
+        const CONFIG = {
+            // Site header configuration
+            header: {
+                title: "📊 Mathes Online Utilities",
+                tagline: "Managing files online from anywhere"
+            },
+
+            // Footer configuration
+            footer: {
+                text: "All data is stored securely in your OneDrive. Backups are created automatically with each update."
+            },
+
+            // Backend health check configuration
+            healthCheck: {
+                enabled: true,
+                url: "https://api.ldmathes.cc/api/health",
+                interval: 30000, // Check every 30 seconds
+                messages: {
+                    online: "✓ Backend is online and ready",
+                    offline: "⚠ Backend is offline or unreachable. Please check your connection."
+                }
+            },
+
+            // Project cards configuration
+            // Each card can have:
+            // - icon: Emoji to display
+            // - title: Card title
+            // - description: Card description text
+            // - buttons: Array of button objects with text, url, and style
+            projects: [
+                {
+                    icon: "🎬",
+                    title: "Movies & Shows",
+                    description: "Full CRUD editor for your movies and shows collection. Add new entries, edit existing ones, or delete as needed. (Currently offline)",
+                    buttons: [
+                        {
+                            text: "Full Editor",
+                            url: "https://dennyrgood.github.io/MoviesShowsFullEdit/",
+                            style: "disabled"
+                        },
+                        {
+                            text: "Quick Add",
+                            url: "https://dennyrgood.github.io/excel-web-interface/",
+                            style: "disabled"
+                        }
+                    ]
+                },
+                {
+                    icon: "🥽",
+                    title: "USDZ Objects",
+                    description: "USDZ Objects for use with the Apple Vision Pro.",
+                    buttons: [
+                        {
+                            text: "View Objects",
+                            url: "USDZ_AVP/index_usdz.html",
+                            style: "primary"
+                        }
+                    ]
+                },
+                {
+                    icon: "🌤️",
+                    title: "Weather Dashboard",
+                    description: "Real-time weather information and forecasts. View default location or customize with URL parameters for your preferred city.",
+                    buttons: [
+                        {
+                            text: "View Weather",
+                            url: "https://dennyrgood.github.io/weather-dashboard/",
+                            style: "primary"
+                        },
+                        {
+                            text: "Customize",
+                            url: "https://dennyrgood.github.io/weather-dashboard/url-parameter-guide.html",
+                            style: "secondary"
+                        }
+                    ]
+                },
+                {
+                    icon: "🔄",
+                    title: "More Projects Coming",
+                    description: "This hub is ready to grow. New projects and editors will be added here as they're built.",
+                    buttons: [
+                        {
+                            text: "Coming Soon",
+                            url: "#",
+                            style: "disabled"
+                        }
+                    ]
+                }
+            ]
+        };
+
+        // ============================================================
+        // RENDERING LOGIC - Don't modify unless changing functionality
+        // ============================================================
+
+        // Render header
+        function renderHeader() {
+            document.getElementById('site-title').textContent = CONFIG.header.title;
+            document.getElementById('site-tagline').textContent = CONFIG.header.tagline;
+        }
+
+        // Render footer
+        function renderFooter() {
+            document.getElementById('footer-text').textContent = CONFIG.footer.text;
+        }
+
+        // Render a single project card
+        function renderProjectCard(project) {
+            const card = document.createElement('div');
+            card.className = 'project-card';
+
+            // Icon
+            const icon = document.createElement('div');
+            icon.className = 'project-icon';
+            icon.textContent = project.icon;
+            card.appendChild(icon);
+
+            // Title
+            const title = document.createElement('h2');
+            title.textContent = project.title;
+            card.appendChild(title);
+
+            // Description
+            const description = document.createElement('p');
+            description.textContent = project.description;
+            card.appendChild(description);
+
+            // Buttons container
+            const linksDiv = document.createElement('div');
+            linksDiv.className = 'project-links';
+
+            project.buttons.forEach(button => {
+                if (button.style === 'disabled') {
+                    const span = document.createElement('span');
+                    span.className = 'btn btn-disabled';
+                    span.textContent = button.text;
+                    linksDiv.appendChild(span);
+                } else {
+                    const link = document.createElement('a');
+                    link.href = button.url;
+                    link.className = `btn btn-${button.style}`;
+                    link.textContent = button.text;
+                    linksDiv.appendChild(link);
+                }
+            });
+
+            card.appendChild(linksDiv);
+            return card;
+        }
+
+        // Render all project cards
+        function renderProjects() {
+            const grid = document.getElementById('projects-grid');
+            grid.innerHTML = ''; // Clear existing cards
+
+            CONFIG.projects.forEach(project => {
+                grid.appendChild(renderProjectCard(project));
+            });
+        }
+
         // Check backend health
         async function checkBackendStatus() {
+            if (!CONFIG.healthCheck.enabled) {
+                document.getElementById('status').style.display = 'none';
+                return;
+            }
+
             try {
-                const response = await fetch('https://api.ldmathes.cc/api/health', { timeout: 5000 });
+                const response = await fetch(CONFIG.healthCheck.url, { timeout: 5000 });
                 if (response.ok) {
-                    document.getElementById('status').innerHTML = '✓ Backend is online and ready';
+                    document.getElementById('status').innerHTML = CONFIG.healthCheck.messages.online;
                     document.getElementById('status').className = 'status online';
                 } else {
                     showOfflineStatus();
@@ -255,15 +392,24 @@
         }
 
         function showOfflineStatus() {
-            document.getElementById('status').innerHTML = '⚠ Backend is offline or unreachable. Please check your connection.';
+            document.getElementById('status').innerHTML = CONFIG.healthCheck.messages.offline;
             document.getElementById('status').className = 'status offline';
         }
 
-        // Check status on load
-        window.addEventListener('load', checkBackendStatus);
-        
-        // Check status every 30 seconds
-        setInterval(checkBackendStatus, 30000);
+        // Initialize page
+        function init() {
+            renderHeader();
+            renderFooter();
+            renderProjects();
+
+            if (CONFIG.healthCheck.enabled) {
+                checkBackendStatus();
+                setInterval(checkBackendStatus, CONFIG.healthCheck.interval);
+            }
+        }
+
+        // Run on page load
+        window.addEventListener('load', init);
     </script>
 </body>
 </html>
