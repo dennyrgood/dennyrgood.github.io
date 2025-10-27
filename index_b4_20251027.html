@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mathes Online Utilities</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 50px;
+        }
+
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 15px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+            margin-bottom: 30px;
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .project-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .project-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 50px rgba(0,0,0,0.3);
+        }
+
+        .project-icon {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+        }
+
+        .project-card h2 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.5em;
+        }
+
+        .project-card p {
+            color: #666;
+            margin-bottom: 25px;
+            flex: 1;
+            line-height: 1.6;
+        }
+
+        .project-links {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            text-decoration: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            font-size: 1em;
+            text-align: center;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            flex: 1;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+            flex: 1;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-disabled {
+            background: #f0f0f0;
+            color: #999;
+            opacity: 0.6;
+            cursor: default;
+            flex: 1;
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            opacity: 0.8;
+            margin-top: 40px;
+            font-size: 0.9em;
+        }
+
+        .status {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            padding: 15px;
+            background: rgba(0,0,0,0.1);
+            border-radius: 6px;
+            font-weight: 500;
+        }
+
+        .status.online {
+            background: rgba(76, 175, 80, 0.2);
+            border-left: 4px solid #4caf50;
+        }
+
+        .status.offline {
+            background: rgba(244, 67, 54, 0.2);
+            border-left: 4px solid #f44336;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .header p {
+                font-size: 1em;
+            }
+
+            .projects-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .project-card {
+                padding: 20px;
+            }
+
+            .project-links {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 id="site-title"></h1>
+            <p id="site-tagline"></p>
+        </div>
+
+        <div id="status" class="status"></div>
+
+        <div id="projects-grid" class="projects-grid">
+            <!-- Cards will be dynamically generated here -->
+        </div>
+
+        <div class="footer">
+            <p id="footer-text"></p>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // CONFIGURATION SECTION - Edit this to customize the site
+        // ============================================================
+        
+        const CONFIG = {
+            // Site header configuration
+            header: {
+                title: "📊 Mathes Online Utilities",
+                tagline: "Managing files online from anywhere"
+            },
+
+            // Footer configuration
+            footer: {
+                text: "All data is stored securely in your OneDrive. Backups are created automatically with each update."
+            },
+
+            // Backend health check configuration
+            healthCheck: {
+                enabled: true,
+                url: "https://api.ldmathes.cc/api/health",
+                interval: 30000, // Check every 30 seconds
+                messages: {
+                    online: "✓ Backend is online and ready",
+                    offline: "⚠ Backend is offline or unreachable. Please check your connection."
+                }
+            },
+
+            // Project cards configuration
+            // Each card can have:
+            // - icon: Emoji to display
+            // - title: Card title
+            // - description: Card description text
+            // - buttons: Array of button objects with text, url, and style
+            projects: [
+                {
+                    icon: "🎬",
+                    title: "Movies & Shows",
+                    description: "Full CRUD editor for your movies and shows collection. Add new entries, edit existing ones, or delete as needed. (Currently offline)",
+                    buttons: [
+                        {
+                            text: "Full Editor",
+                            url: "https://dennyrgood.github.io/MoviesShowsFullEdit/",
+                            style: "disabled"
+                        },
+                        {
+                            text: "Quick Add",
+                            url: "https://dennyrgood.github.io/excel-web-interface/",
+                            style: "disabled"
+                        }
+                    ]
+                },
+                {
+                    icon: "🥽",
+                    title: "USDZ Objects",
+                    description: "USDZ Objects for use with the Apple Vision Pro.",
+                    buttons: [
+                        {
+                            text: "View Objects",
+                            url: "USDZ_AVP/index_usdz.html",
+                            style: "primary"
+                        }
+                    ]
+                },
+                {
+                    icon: "🌤️",
+                    title: "Weather Dashboard",
+                    description: "Real-time weather information and forecasts. View default location or customize with URL parameters for your preferred city.",
+                    buttons: [
+                        {
+                            text: "View Weather",
+                            url: "https://dennyrgood.github.io/weather-dashboard/",
+                            style: "primary"
+                        },
+                        {
+                            text: "Customize",
+                            url: "https://dennyrgood.github.io/weather-dashboard/url-parameter-guide.html",
+                            style: "secondary"
+                        }
+                    ]
+                },
+                {
+                    icon: "🔄",
+                    title: "More Projects Coming",
+                    description: "This hub is ready to grow. New projects and editors will be added here as they're built.",
+                    buttons: [
+                        {
+                            text: "Coming Soon",
+                            url: "#",
+                            style: "disabled"
+                        }
+                    ]
+                }
+            ]
+        };
+
+        // ============================================================
+        // RENDERING LOGIC - Don't modify unless changing functionality
+        // ============================================================
+
+        // Render header
+        function renderHeader() {
+            document.getElementById('site-title').textContent = CONFIG.header.title;
+            document.getElementById('site-tagline').textContent = CONFIG.header.tagline;
+        }
+
+        // Render footer
+        function renderFooter() {
+            document.getElementById('footer-text').textContent = CONFIG.footer.text;
+        }
+
+        // Render a single project card
+        function renderProjectCard(project) {
+            const card = document.createElement('div');
+            card.className = 'project-card';
+
+            // Icon
+            const icon = document.createElement('div');
+            icon.className = 'project-icon';
+            icon.textContent = project.icon;
+            card.appendChild(icon);
+
+            // Title
+            const title = document.createElement('h2');
+            title.textContent = project.title;
+            card.appendChild(title);
+
+            // Description
+            const description = document.createElement('p');
+            description.textContent = project.description;
+            card.appendChild(description);
+
+            // Buttons container
+            const linksDiv = document.createElement('div');
+            linksDiv.className = 'project-links';
+
+            project.buttons.forEach(button => {
+                if (button.style === 'disabled') {
+                    const span = document.createElement('span');
+                    span.className = 'btn btn-disabled';
+                    span.textContent = button.text;
+                    linksDiv.appendChild(span);
+                } else {
+                    const link = document.createElement('a');
+                    link.href = button.url;
+                    link.className = `btn btn-${button.style}`;
+                    link.textContent = button.text;
+                    linksDiv.appendChild(link);
+                }
+            });
+
+            card.appendChild(linksDiv);
+            return card;
+        }
+
+        // Render all project cards
+        function renderProjects() {
+            const grid = document.getElementById('projects-grid');
+            grid.innerHTML = ''; // Clear existing cards
+
+            CONFIG.projects.forEach(project => {
+                grid.appendChild(renderProjectCard(project));
+            });
+        }
+
+        // Check backend health
+        async function checkBackendStatus() {
+            if (!CONFIG.healthCheck.enabled) {
+                document.getElementById('status').style.display = 'none';
+                return;
+            }
+
+            try {
+                const response = await fetch(CONFIG.healthCheck.url, { timeout: 5000 });
+                if (response.ok) {
+                    document.getElementById('status').innerHTML = CONFIG.healthCheck.messages.online;
+                    document.getElementById('status').className = 'status online';
+                } else {
+                    showOfflineStatus();
+                }
+            } catch (error) {
+                showOfflineStatus();
+            }
+        }
+
+        function showOfflineStatus() {
+            document.getElementById('status').innerHTML = CONFIG.healthCheck.messages.offline;
+            document.getElementById('status').className = 'status offline';
+        }
+
+        // Initialize page
+        function init() {
+            renderHeader();
+            renderFooter();
+            renderProjects();
+
+            if (CONFIG.healthCheck.enabled) {
+                checkBackendStatus();
+                setInterval(checkBackendStatus, CONFIG.healthCheck.interval);
+            }
+        }
+
+        // Run on page load
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
