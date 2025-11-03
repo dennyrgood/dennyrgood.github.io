@@ -194,6 +194,8 @@
             <p id="site-tagline"></p>
         </div>
 
+        <!-- Removed the status div: <div id="status" class="status"></div> -->
+
         <div id="projects-grid" class="projects-grid">
             <!-- Cards will be dynamically generated here -->
         </div>
@@ -205,15 +207,14 @@
 
     <script>
         // ============================================================
-        // CONFIGURATION SECTION (ES5 Compliant)
+        // CONFIGURATION SECTION - Edit this to customize the site
         // ============================================================
         
-        // Using 'var' for ES5 compatibility
-        var CONFIG = {
+        const CONFIG = {
             // Site header configuration
             header: {
                 title: "📊 Mathes Online Utilities",
-                tagline: "Links to My Projects"
+                tagline: "Links to My Projects" // <-- UPDATED BYLINE
             },
 
             // Footer configuration
@@ -221,7 +222,9 @@
                 text: "All data is stored securely in your OneDrive. Backups are created automatically with each update."
             },
 
-            // Project cards configuration: Cards 2 and 3 are swapped.
+            // Removed healthCheck configuration
+
+            // Project cards configuration
             projects: [
                 // 1. WEATHER DASHBOARD
                 {
@@ -234,33 +237,18 @@
                             url: "https://dennyrgood.github.io/weather-dashboard/",
                             style: "primary"
                         },
-                        // BUTTONS SWAPPED: View on old iPad is now second
-                        {
-                            text: "View on old iPad",
-                            url: "http://ldmathes.cc/weather-dashboard/index_old_ipad.html",
-                            style: "tertiary"
-                        },
                         {
                             text: "Customize",
                             url: "https://dennyrgood.github.io/weather-dashboard/url-parameter-guide.html",
                             style: "secondary"
-                        }
-                    ]
-                },
-                // 2. USDZ Objects (FORMERLY CARD 3)
-                {
-                    icon: "🥽",
-                    title: "USDZ Objects",
-                    description: "USDZ Objects for use with the Apple Vision Pro.",
-                    buttons: [
+                        },
                         {
-                            text: "View Objects",
-                            url: "USDZ_AVP/index_usdz.html",
-                            style: "primary"
+                            text: "View on old iPad",
+                            url: "http://ldmathes.cc/weather-dashboard/index_old_ipad.html", // <-- UPDATED URL
+                            style: "tertiary"
                         }
                     ]
                 },
-                // 3. Movies & Shows (FORMERLY CARD 2)
                 {
                     icon: "🎬",
                     title: "Movies & Shows",
@@ -278,7 +266,18 @@
                         }
                     ]
                 },
-                // 4. More Projects Coming
+                {
+                    icon: "🥽",
+                    title: "USDZ Objects",
+                    description: "USDZ Objects for use with the Apple Vision Pro.",
+                    buttons: [
+                        {
+                            text: "View Objects",
+                            url: "USDZ_AVP/index_usdz.html",
+                            style: "primary"
+                        }
+                    ]
+                },
                 {
                     icon: "🔄",
                     title: "More Projects Coming",
@@ -295,7 +294,7 @@
         };
 
         // ============================================================
-        // RENDERING LOGIC (ES5 Compliant)
+        // RENDERING LOGIC - Don't modify unless changing functionality
         // ============================================================
 
         // Render header
@@ -311,40 +310,39 @@
 
         // Render a single project card
         function renderProjectCard(project) {
-            var card = document.createElement('div');
+            const card = document.createElement('div');
             card.className = 'project-card';
 
             // Icon
-            var icon = document.createElement('div');
+            const icon = document.createElement('div');
             icon.className = 'project-icon';
             icon.textContent = project.icon;
             card.appendChild(icon);
 
             // Title
-            var title = document.createElement('h2');
+            const title = document.createElement('h2');
             title.textContent = project.title;
             card.appendChild(title);
 
             // Description
-            var description = document.createElement('p');
+            const description = document.createElement('p');
             description.textContent = project.description;
             card.appendChild(description);
 
             // Buttons container
-            var linksDiv = document.createElement('div');
+            const linksDiv = document.createElement('div');
             linksDiv.className = 'project-links';
 
-            // Using ES5 forEach and string concatenation
-            project.buttons.forEach(function (button) {
+            project.buttons.forEach(button => {
                 if (button.style === 'disabled') {
-                    var span = document.createElement('span');
+                    const span = document.createElement('span');
                     span.className = 'btn btn-disabled';
                     span.textContent = button.text;
                     linksDiv.appendChild(span);
                 } else {
-                    var link = document.createElement('a');
+                    const link = document.createElement('a');
                     link.href = button.url;
-                    link.className = 'btn btn-' + button.style; // String concatenation
+                    link.className = `btn btn-${button.style}`;
                     link.textContent = button.text;
                     linksDiv.appendChild(link);
                 }
@@ -356,20 +354,23 @@
 
         // Render all project cards
         function renderProjects() {
-            var grid = document.getElementById('projects-grid');
+            const grid = document.getElementById('projects-grid');
             grid.innerHTML = ''; // Clear existing cards
 
-            // Using ES5 forEach
-            CONFIG.projects.forEach(function (project) {
+            CONFIG.projects.forEach(project => {
                 grid.appendChild(renderProjectCard(project));
             });
         }
+
+        // Removed checkBackendStatus and showOfflineStatus functions
 
         // Initialize page
         function init() {
             renderHeader();
             renderFooter();
             renderProjects();
+
+            // Removed health check initialization logic
         }
 
         // Run on page load
@@ -377,4 +378,3 @@
     </script>
 </body>
 </html>
-
