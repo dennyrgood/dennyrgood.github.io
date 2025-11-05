@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>GitHack URL Generator</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        label, select, input, button { display: block; margin-bottom: 10px; }
+        #generatedUrl { border: 1px solid #ccc; padding: 10px; background-color: #f9f9f9; word-break: break-all; }
+        .note { font-size: 0.9em; color: gray; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+    <h2>🔗 Generate and Open GitHack URL</h2>
+
+    <form id="urlForm">
+        <label for="repoSelect">1. Select Repository:</label>
+        <select id="repoSelect" onchange="checkCustomRepo()">
+            <option value="dennyrgood.github.io">dennyrgood.github.io</option>
+            <option value="Doc">Doc</option>
+            <option value="excel-web-interface">excel-web-interface</option>
+            <option value="MoviesShowsFullEdit">MoviesShowsFullEdit</option>
+            <option value="Scripts">Scripts</option>
+            <option value="USDZ_AVP">USDZ_AVP</option>
+            <option value="weather-dashboard">weather-dashboard</option>
+            <option value="custom">-- Enter Custom Repo --</option>
+        </select>
+
+        <label for="customRepo" style="display:none;">(or) Enter Custom Repository Name:</label>
+        <input type="text" id="customRepo" placeholder="e.g., my-awesome-project" style="display:none;">
+
+        <label for="branchInput">2. Enter Branch Name:</label>
+        <input type="text" id="branchInput" value="main" required>
+
+        <button type="submit">3. Generate & Open URL</button>
+    </form>
+
+    <h3>Generated URL:</h3>
+    <div id="generatedUrl"></div>
+
+    <p class="note">
+        **Note:** Modern browsers may block the automatic opening of a new tab/window unless the function is directly triggered by a user action (like clicking the button). If the link doesn't open automatically, you can copy and paste the generated URL.
+    </p>
+
+    <script>
+        const form = document.getElementById('urlForm');
+        const repoSelect = document.getElementById('repoSelect');
+        const customRepoInput = document.getElementById('customRepo');
+        const branchInput = document.getElementById('branchInput');
+        const generatedUrlDisplay = document.getElementById('generatedUrl');
+
+        // Function to show/hide the custom repo input field
+        function checkCustomRepo() {
+            if (repoSelect.value === 'custom') {
+                customRepoInput.style.display = 'block';
+                customRepoInput.setAttribute('required', 'required');
+            } else {
+                customRepoInput.style.display = 'none';
+                customRepoInput.removeAttribute('required');
+            }
+        }
+
+        form.addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent form from submitting normally
+
+            let repo;
+            if (repoSelect.value === 'custom') {
+                repo = customRepoInput.value.trim();
+                if (!repo) {
+                    alert("Please enter a custom repository name.");
+                    return;
+                }
+            } else {
+                repo = repoSelect.value;
+            }
+
+            const branch = branchInput.value.trim();
+            if (!branch) {
+                alert("Please enter a branch name.");
+                return;
+            }
+
+            // Construct the URL
+            const url = `https://raw.githack.com/dennyrgood/${repo}/${branch}/index.html`;
+
+            // Display the URL
+            generatedUrlDisplay.innerHTML = `<a href="${url}" target="_blank">${url}</a>`;
+
+            // Open the URL
+            window.open(url, '_blank');
+        });
+
+        // Initialize display based on default selection
+        checkCustomRepo();
+    </script>
+
+</body>
+</html>
