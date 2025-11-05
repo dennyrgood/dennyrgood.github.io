@@ -6,7 +6,15 @@
     <style>
         body { font-family: Arial, sans-serif; padding: 20px; }
         label, select, input, button { display: block; margin-bottom: 10px; }
-        #generatedUrl { border: 1px solid #ccc; padding: 10px; background-color: #f9f9f9; word-break: break-all; }
+        input[type="text"] { width: 300px; padding: 5px; box-sizing: border-box; }
+        #generatedUrl { 
+            border: 1px solid #ccc; 
+            padding: 10px; 
+            background-color: #f9f9f9; 
+            word-break: break-all; 
+            margin-top: 15px;
+            min-height: 20px; /* Ensures space is always visible */
+        }
         .note { font-size: 0.9em; color: gray; margin-top: 20px; }
     </style>
 </head>
@@ -16,7 +24,7 @@
 
     <form id="urlForm">
         <label for="repoSelect">1. Select Repository:</label>
-        <select id="repoSelect" onchange="checkCustomRepo()">
+        <select id="repoSelect">
             <option value="dennyrgood.github.io">dennyrgood.github.io</option>
             <option value="Doc">Doc</option>
             <option value="excel-web-interface">excel-web-interface</option>
@@ -27,72 +35,108 @@
             <option value="custom">-- Enter Custom Repo --</option>
         </select>
 
-        <label for="customRepo" style="display:none;">(or) Enter Custom Repository Name:</label>
+        <label for="customRepo" id="customRepoLabel" style="display:none;">(or) Enter Custom Repository Name:</label>
         <input type="text" id="customRepo" placeholder="e.g., my-awesome-project" style="display:none;">
 
         <label for="branchInput">2. Enter Branch Name:</label>
         <input type="text" id="branchInput" value="main" required>
 
-        <button type="submit">3. Generate & Open URL</button>
+        <button type="submit">3. Open Generated URL</button>
     </form>
 
     <h3>Generated URL:</h3>
     <div id="generatedUrl"></div>
 
     <p class="note">
-        **Note:** Modern browsers may block the automatic opening of a new tab/window unless the function is directly triggered by a user action (like clicking the button). If the link doesn't open automatically, you can copy and paste the generated URL.
+        The URL updates automatically as you change the inputs. Clicking the button will open the displayed link in a new tab.
     </p>
 
     <script>
+        const USERNAME = 'dennyrgood'; // Base GitHub username
+        const BASE_URL = 'https://raw.githack.com';
+        const SUFFIX = 'index.html';
+
         const form = document.getElementById('urlForm');
         const repoSelect = document.getElementById('repoSelect');
         const customRepoInput = document.getElementById('customRepo');
+        const customRepoLabel = document.getElementById('customRepoLabel');
         const branchInput = document.getElementById('branchInput');
         const generatedUrlDisplay = document.getElementById('generatedUrl');
 
-        // Function to show/hide the custom repo input field
-        function checkCustomRepo() {
+        /**
+         * Determines the correct repository name (either selected or custom).
+         * @returns {string} The repository name.
+         */
+        function getRepo() {
             if (repoSelect.value === 'custom') {
-                customRepoInput.style.display = 'block';
+                return customRepoInput.value.trim();
+            }
+            return repoSelect.value;
+        }
+
+        /**
+         * Updates the display of the custom repo input field.
+         */
+        function toggleCustomRepoInput() {
+            const isCustom = repoSelect.value === 'custom';
+            customRepoInput.style.display = isCustom ? 'block' : 'none';
+            customRepoLabel.style.display = isCustom ? 'block' : 'none';
+            if (isCustom) {
                 customRepoInput.setAttribute('required', 'required');
             } else {
-                customRepoInput.style.display = 'none';
                 customRepoInput.removeAttribute('required');
             }
         }
 
+        /**
+         * Generates and displays the full URL in the dedicated div.
+         */
+        function updateUrlDisplay() {
+            const repo = getRepo();
+            const branch = branchInput.value.trim();
+
+            if (repo && branch) {
+                const fullUrl = `${BASE_URL}/${USERNAME}/${repo}/${branch}/${SUFFIX}`;
+                generatedUrlDisplay.innerHTML = `<a href="${fullUrl}" target="_blank">${fullUrl}</a>`;
+            } else {
+                generatedUrlDisplay.textContent = '...URL will appear here...';
+            }
+        }
+
+        // --- Event Listeners for Real-time Update ---
+        repoSelect.addEventListener('change', () => {
+            toggleCustomRepoInput();
+            updateUrlDisplay();
+        });
+
+        customRepoInput.addEventListener('input', updateUrlDisplay);
+        branchInput.addEventListener('input', updateUrlDisplay);
+
+        // --- Event Listener for Opening the URL (on form submit) ---
         form.addEventListener('submit', function(event) {
             event.preventDefault(); // Prevent form from submitting normally
 
-            let repo;
-            if (repoSelect.value === 'custom') {
-                repo = customRepoInput.value.trim();
-                if (!repo) {
-                    alert("Please enter a custom repository name.");
-                    return;
-                }
-            } else {
-                repo = repoSelect.value;
-            }
-
+            const repo = getRepo();
             const branch = branchInput.value.trim();
+
+            if (!repo) {
+                alert("Please enter a custom repository name or select a repository.");
+                return;
+            }
             if (!branch) {
                 alert("Please enter a branch name.");
                 return;
             }
 
-            // Construct the URL
-            const url = `https://raw.githack.com/dennyrgood/${repo}/${branch}/index.html`;
-
-            // Display the URL
-            generatedUrlDisplay.innerHTML = `<a href="${url}" target="_blank">${url}</a>`;
-
-            // Open the URL
-            window.open(url, '_blank');
+            const urlToOpen = `${BASE_URL}/${USERNAME}/${repo}/${branch}/${SUFFIX}`;
+            
+            // Open the URL in a new tab
+            window.open(urlToOpen, '_blank');
         });
 
-        // Initialize display based on default selection
-        checkCustomRepo();
+        // Initialize display and URL on page load
+        toggleCustomRepoInput();
+        updateUrlDisplay();
     </script>
 
 </body>
