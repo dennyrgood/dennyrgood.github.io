@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub File Renderer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fb;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 sm:p-8 flex items-start justify-center">
+
+    <div class="w-full max-w-xl bg-white p-6 sm:p-8 rounded-xl shadow-2xl border border-gray-100">
+        <h1 class="text-3xl font-bold text-gray-900 mb-6 text-center">
+            Render GitHub File
+        </h1>
+        <p class="text-gray-500 mb-8 text-center">
+            Use <code class="text-sm font-mono bg-gray-100 px-1 rounded">raw.githack.com</code> to safely render files from any GitHub branch.
+        </p>
+
+        <form id="urlForm" class="space-y-6">
+
+            <!-- Repo/Owner Input -->
+            <div class="relative">
+                <label for="repo" class="block text-sm font-medium text-gray-700 mb-1">
+                    Repository Owner and Name (e.g., dennyrgood/weather-dashboard)
+                </label>
+                <input type="text" id="repo" placeholder="owner/repository-name" required
+                       class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
+                       value="dennyrgood/MoviesShowsFullEdit">
+            </div>
+
+            <!-- Branch Input -->
+            <div class="relative">
+                <label for="branch" class="block text-sm font-medium text-gray-700 mb-1">
+                    Branch or Commit Hash
+                </label>
+                <input type="text" id="branch" placeholder="main, development, or a1b2c3d..." required
+                       class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
+                       value="fix/update-index">
+            </div>
+
+            <!-- File Path Input -->
+            <div class="relative">
+                <label for="filepath" class="block text-sm font-medium text-gray-700 mb-1">
+                    File Path (e.g., index.html or /dist/app.js)
+                </label>
+                <input type="text" id="filepath" placeholder="path/to/file.html" required
+                       class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
+                       value="index.html">
+            </div>
+
+            <!-- Generate Button -->
+            <button type="submit"
+                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out">
+                Generate and Open Rendered File
+            </button>
+        </form>
+
+        <div id="resultBox" class="mt-8 pt-6 border-t border-gray-200 hidden">
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">Generated URL:</h3>
+            <div class="bg-gray-50 p-3 rounded-lg flex items-center justify-between">
+                <code id="generatedUrlCode" class="flex-grow text-xs sm:text-sm text-gray-700 break-all mr-4"></code>
+                <button onclick="copyToClipboard('generatedUrlCode')"
+                        class="p-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-xs text-gray-700 transition duration-150 ease-in-out">
+                    Copy
+                </button>
+            </div>
+        </div>
+
+        <div id="messageBox" class="mt-4 p-4 text-sm rounded-lg text-red-700 bg-red-100 hidden" role="alert"></div>
+    </div>
+
+    <script>
+        document.getElementById('urlForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const repo = document.getElementById('repo').value.trim();
+            const branch = document.getElementById('branch').value.trim();
+            const filepath = document.getElementById('filepath').value.trim().replace(/^\//, ''); // Remove leading slash
+
+            const resultBox = document.getElementById('resultBox');
+            const generatedUrlCode = document.getElementById('generatedUrlCode');
+            const messageBox = document.getElementById('messageBox');
+            
+            messageBox.classList.add('hidden');
+
+            if (!repo || !branch || !filepath) {
+                showMessage("All fields must be filled out to generate the URL.");
+                return;
+            }
+
+            // Construct the final URL using the raw.githack.com structure
+            // Format: https://raw.githack.com/OWNER/REPO/BRANCH/FILEPATH
+            const fullUrl = `https://raw.githack.com/${repo}/${branch}/${filepath}`;
+
+            // 1. Display the URL
+            generatedUrlCode.textContent = fullUrl;
+            resultBox.classList.remove('hidden');
+            
+            // 2. Open the URL in a new tab (after a slight delay for better UX)
+            // Use setTimeout to allow the UI to update before opening the new tab
+            setTimeout(() => {
+                window.open(fullUrl, '_blank');
+            }, 100); 
+
+            // Clear the error message if successful
+            messageBox.classList.add('hidden');
+        });
+
+        function showMessage(message) {
+            const messageBox = document.getElementById('messageBox');
+            messageBox.textContent = message;
+            messageBox.classList.remove('hidden');
+        }
+
+        function copyToClipboard(elementId) {
+            const copyText = document.getElementById(elementId).textContent;
+            
+            // Modern, recommended way (may not work in all iframe contexts)
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(copyText).then(() => {
+                    alert('URL copied to clipboard!');
+                }).catch(err => {
+                    fallbackCopy(copyText);
+                });
+            } else {
+                // Fallback method
+                fallbackCopy(copyText);
+            }
+        }
+
+        function fallbackCopy(text) {
+             const textarea = document.createElement('textarea');
+             textarea.value = text;
+             textarea.style.position = 'fixed'; // Avoid scrolling to bottom
+             document.body.appendChild(textarea);
+             textarea.focus();
+             textarea.select();
+             try {
+                 document.execCommand('copy');
+                 // Note: We are using a custom message box instead of alert() per instructions, 
+                 // but for the clipboard copy success, we'll use a simple indicator since 
+                 // the copy function is a helper utility.
+                 const copyButton = event.target;
+                 copyButton.textContent = 'Copied!';
+                 setTimeout(() => { copyButton.textContent = 'Copy'; }, 1500);
+             } catch (err) {
+                 console.error('Fallback: Unable to copy', err);
+             } finally {
+                 document.body.removeChild(textarea);
+             }
+        }
+
+        // Initialize with default values for demonstration
+        document.addEventListener('DOMContentLoaded', () => {
+            // Pre-fill fields with your provided example
+            document.getElementById('repo').value = "dennyrgood/MoviesShowsFullEdit";
+            document.getElementById('branch').value = "fix/update-index";
+            document.getElementById('filepath').value = "index.html";
+        });
+    </script>
+</body>
+</html>
