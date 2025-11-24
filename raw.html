@@ -13,7 +13,7 @@
             background-color: #f9f9f9; 
             word-break: break-all; 
             margin-top: 15px;
-            min-height: 20px; /* Ensures space is always visible */
+            min-height: 20px;
         }
         .note { font-size: 0.9em; color: gray; margin-top: 20px; }
     </style>
@@ -26,11 +26,13 @@
         <label for="repoSelect">1. Select Repository:</label>
         <select id="repoSelect">
             <option value="dennyrgood.github.io">dennyrgood.github.io</option>
-            <option value="Doc">Doc</option>
             <option value="excel-web-interface">excel-web-interface</option>
-            <option value="MoviesShowsFullEdit">MoviesShowsFullEdit</option>
-            <option value="Scripts">Scripts</option>
-            <option value="USDZ_AVP">USDZ_AVP</option>
+            <option value="google-photos">google-photos</option>
+            <option value="llm">llm</option>
+            <option value="movies-shows-editor">movies-shows-editor</option>
+            <option value="place-objects">place-objects</option>
+            <option value="scripts">scripts</option>
+            <option value="usdz-avp">usdz-avp</option>
             <option value="weather-dashboard">weather-dashboard</option>
             <option value="custom">-- Enter Custom Repo --</option>
         </select>
@@ -52,7 +54,7 @@
     </p>
 
     <script>
-        const USERNAME = 'dennyrgood'; // Base GitHub username
+        const USERNAME = 'dennyrgood';
         const BASE_URL = 'https://raw.githack.com';
         const SUFFIX = 'index.html';
 
@@ -63,10 +65,6 @@
         const branchInput = document.getElementById('branchInput');
         const generatedUrlDisplay = document.getElementById('generatedUrl');
 
-        /**
-         * Determines the correct repository name (either selected or custom).
-         * @returns {string} The repository name.
-         */
         function getRepo() {
             if (repoSelect.value === 'custom') {
                 return customRepoInput.value.trim();
@@ -74,9 +72,6 @@
             return repoSelect.value;
         }
 
-        /**
-         * Updates the display of the custom repo input field.
-         */
         function toggleCustomRepoInput() {
             const isCustom = repoSelect.value === 'custom';
             customRepoInput.style.display = isCustom ? 'block' : 'none';
@@ -88,9 +83,6 @@
             }
         }
 
-        /**
-         * Generates and displays the full URL in the dedicated div.
-         */
         function updateUrlDisplay() {
             const repo = getRepo();
             const branch = branchInput.value.trim();
@@ -103,7 +95,6 @@
             }
         }
 
-        // --- Event Listeners for Real-time Update ---
         repoSelect.addEventListener('change', () => {
             toggleCustomRepoInput();
             updateUrlDisplay();
@@ -112,9 +103,8 @@
         customRepoInput.addEventListener('input', updateUrlDisplay);
         branchInput.addEventListener('input', updateUrlDisplay);
 
-        // --- Event Listener for Opening the URL (on form submit) ---
         form.addEventListener('submit', function(event) {
-            event.preventDefault(); // Prevent form from submitting normally
+            event.preventDefault();
 
             const repo = getRepo();
             const branch = branchInput.value.trim();
@@ -129,12 +119,9 @@
             }
 
             const urlToOpen = `${BASE_URL}/${USERNAME}/${repo}/${branch}/${SUFFIX}`;
-            
-            // Open the URL in a new tab
             window.open(urlToOpen, '_blank');
         });
 
-        // Initialize display and URL on page load
         toggleCustomRepoInput();
         updateUrlDisplay();
     </script>
