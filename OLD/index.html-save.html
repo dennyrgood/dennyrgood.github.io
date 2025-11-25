@@ -223,7 +223,7 @@
 
             // Project cards configuration: Cards 2 and 3 are swapped.
             projects: [
-                // WEATHER DASHBOARD
+                // 1. WEATHER DASHBOARD
                 {
                     icon: "🌤️",
                     title: "Weather Dashboard",
@@ -246,22 +246,20 @@
                         }
                     ]
                 },
-                // Chat
+                // 2. USDZ Objects (FORMERLY CARD 3)
                 {
-                    icon: "💬",
-                    title: "Chat - our personal LLM",
-                    description: "Brought to us by the generous gift of Laura - GTX 3060 - use the gwen2.5:14b model for best performance/experience.",
+                    icon: "🥽",
+                    title: "USDZ Objects",
+                    description: "USDZ Objects for use with the Apple Vision Pro.",
                     buttons: [
                         {
-                            text: "Kick the tires",
-                            url: "http://chat.ldmathes.cc",
+                            text: "View Objects",
+                            url: "usdz-avp/index_usdz.html",
                             style: "primary"
                         }
                     ]
                 },
-
-                
-                // Movies & Shows (FORMERLY CARD 2)
+                // 3. Movies & Shows (FORMERLY CARD 2)
                 {
                     icon: "🎬",
                     title: "Movies & Shows",
@@ -279,101 +277,7 @@
                         }
                     ]
                 },
-
-
-                // Documentation
-                {
-                    icon: "📚",
-                    title: "Documentation",
-                    description: "Links to documentation and resources.",
-                    buttons: [
-                        {
-                            "text": "Doc for repo: dennyrgood.github.io",
-                            "url": "https://dennyrgood.github.io/Doc",
-                            "style": "ignore" //this repo doesn't have Doc in it
-                        },
-                        {
-                            "text": "Doc for repo: excel-web-interface",
-                            "url": "https://dennyrgood.github.io/excel-web-interface/Doc",
-                            "style": "ignore" //this repo doesn't have Doc in it
-                        },
-                        {
-                            "text": "Doc for repo: google-photos",
-                            "url": "https://dennyrgood.github.io/google-photos/Doc",
-                            "style": "secondary"
-                        },
-                        {
-                            "text": "Doc for repo: llm",
-                            "url": "https://dennyrgood.github.io/llm/Doc",
-                            "style": "primary"
-                        },
-                        {
-                            "text": "Doc for repo: movies-shows-editor",
-                            "url": "https://dennyrgood.github.io/movies-shows-editor/Doc",
-                            "style": "secondary"
-                        },
-                        {
-                            "text": "Doc for repo: place-objects",
-                            "url": "https://dennyrgood.github.io/place-objects/Doc",
-                            "style": "ignore" //this repo doesn't have Doc in it
-                        },
-                        {
-                            "text": "Doc for repo: scripts",
-                            "url": "https://dennyrgood.github.io/scripts/Doc",
-                            "style": "secondary"
-                        },
-                        {
-                            "text": "Doc for repo: usdz-avp",
-                            "url": "https://dennyrgood.github.io/usdz-avp/Doc",
-                            "style": "secondary"
-                        },
-                        {
-                            "text": "Doc for repo: weather-dashboard",
-                            "url": "https://dennyrgood.github.io/weather-dashboard/Doc",
-                            "style": "secondary"
-                        }
-                    ]
-                },
-
-      
-                // Utilties
-                {
-                    icon: "🔧",
-                    title: "Utilties",
-                    description: "This will be the card for various utilties:",
-                    buttons: [
-                        {
-                            text: "Got to Photos Library",
-                            url: "https://dennyrgood.github.io/photos/",
-                            style: "primary"
-                        },
-
-                        {
-                            text: "Render HTL will still in GITHUB-ck",
-                            url: "https://dennyrgood.github.io/ck.html",
-                            style: "secondary"
-                        },
-                       {
-                            text: "Render HTL will still in GITHUB-raw",
-                            url: "https://dennyrgood.github.io/raw.html",
-                            style: "secondary"
-                        }
-                    ]
-                },
-                                // USDZ Objects (FORMERLY CARD 3)
-                {
-                    icon: "🥽",
-                    title: "USDZ Objects",
-                    description: "USDZ Objects for use with the Apple Vision Pro.",
-                    buttons: [
-                        {
-                            text: "View Objects",
-                            url: "usdz-avp/index_usdz.html",
-                            style: "primary"
-                        }
-                    ]
-                },
-                // More Projects Coming
+                // 4. More Projects Coming
                 {
                     icon: "🔄",
                     title: "More Projects Coming",
@@ -385,7 +289,8 @@
                             style: "disabled"
                         }
                     ]
-                }]
+                }
+            ]
         };
 
         // ============================================================
@@ -435,7 +340,7 @@
                     span.className = 'btn btn-disabled';
                     span.textContent = button.text;
                     linksDiv.appendChild(span);
-                } else if (button.style !== 'ignore') {
+                } else {
                     var link = document.createElement('a');
                     link.href = button.url;
                     link.className = 'btn btn-' + button.style; // String concatenation
