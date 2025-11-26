@@ -1,0 +1,5 @@
+Toggle Visibility with Keyboard Shortcut
+
+The fastest way to show or hide the Dock is with a keyboard shortcut:
+
+* Press Command (3) + Option(\)+D 2

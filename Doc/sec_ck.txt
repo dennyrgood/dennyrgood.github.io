@@ -1,0 +1,156 @@
+#!/bin/bash
+
+# Daily Security Check Script
+# Run this daily to monitor for suspicious activity after malware removal
+# Usage: chmod +x security_check.sh && ./security_check.sh
+
+echo "=================================="
+echo "Daily Security Check"
+echo "Date: $(date)"
+echo "=================================="
+echo ""
+
+# Create log directory if it doesn't exist
+LOG_DIR="$HOME/security_logs"
+mkdir -p "$LOG_DIR"
+LOG_FILE="$LOG_DIR/security_check_$(date +%Y%m%d_%H%M%S).log"
+
+# Function to log and display
+log_output() {
+    echo "$1" | tee -a "$LOG_FILE"
+}
+
+log_output "=== 1. CHECKING LAUNCH AGENTS/DAEMONS ==="
+log_output ""
+
+# Check user LaunchAgents
+log_output "User LaunchAgents (~/Library/LaunchAgents/):"
+if [ -d "$HOME/Library/LaunchAgents" ]; then
+    ls -lt "$HOME/Library/LaunchAgents/" | head -20 | tee -a "$LOG_FILE"
+    
+    # Flag any suspicious names
+    SUSPICIOUS=$(ls "$HOME/Library/LaunchAgents/" 2>/dev/null | grep -iE "helper|agent|sync|update|.com\.[a-z]{1,8}\." | grep -v "com.apple")
+    if [ ! -z "$SUSPICIOUS" ]; then
+        log_output ""
+        log_output "⚠️  SUSPICIOUS FILES FOUND:"
+        echo "$SUSPICIOUS" | tee -a "$LOG_FILE"
+    fi
+else
+    log_output "Directory does not exist"
+fi
+
+log_output ""
+log_output "System LaunchAgents (/Library/LaunchAgents/):"
+if [ -d "/Library/LaunchAgents" ]; then
+    ls -lt /Library/LaunchAgents/ | head -20 | tee -a "$LOG_FILE"
+    
+    SUSPICIOUS=$(ls /Library/LaunchAgents/ 2>/dev/null | grep -v "com.apple" | grep -v "com.adobe" | grep -v "com.microsoft")
+    if [ ! -z "$SUSPICIOUS" ]; then
+        log_output ""
+        log_output "⚠️  NON-APPLE FILES:"
+        echo "$SUSPICIOUS" | tee -a "$LOG_FILE"
+    fi
+else
+    log_output "Directory does not exist"
+fi
+
+log_output ""
+log_output "System LaunchDaemons (/Library/LaunchDaemons/):"
+sudo ls -lt /Library/LaunchDaemons/ | head -20 | tee -a "$LOG_FILE"
+
+log_output ""
+log_output "=== 2. CHECKING FOR HIDDEN FILES IN HOME DIRECTORY ==="
+log_output ""
+HIDDEN_FILES=$(ls -la "$HOME" | grep "^\-.*\s\." | grep -v ".zsh" | grep -v ".bash" | grep -v ".CFUserTextEncoding" | grep -v ".cups" | grep -v ".viminfo")
+if [ ! -z "$HIDDEN_FILES" ]; then
+    log_output "Hidden files found:"
+    echo "$HIDDEN_FILES" | tee -a "$LOG_FILE"
+else
+    log_output "No suspicious hidden files found"
+fi
+
+log_output ""
+log_output "=== 3. CHECKING RUNNING PROCESSES ==="
+log_output ""
+
+# Check for suspicious process names
+log_output "Processes with suspicious names:"
+SUSP_PROC=$(ps aux | grep -iE "\.agent|\.helper|\.sync|\.update" | grep -v grep | grep -v "com.apple")
+if [ ! -z "$SUSP_PROC" ]; then
+    log_output "⚠️  SUSPICIOUS PROCESSES:"
+    echo "$SUSP_PROC" | tee -a "$LOG_FILE"
+else
+    log_output "✓ No suspicious processes found"
+fi
+
+log_output ""
+log_output "Processes running from /tmp or hidden directories:"
+TEMP_PROC=$(ps aux | grep -E "/tmp/|/\." | grep -v grep | grep -v "/Applications" | grep -v "Library" | grep -v "com.apple")
+if [ ! -z "$TEMP_PROC" ]; then
+    log_output "⚠️  PROCESSES FROM TEMP/HIDDEN LOCATIONS:"
+    echo "$TEMP_PROC" | tee -a "$LOG_FILE"
+else
+    log_output "✓ No processes from suspicious locations"
+fi
+
+log_output ""
+log_output "=== 4. CHECKING NETWORK CONNECTIONS ==="
+log_output ""
+
+# Check for unusual network connections (exclude common Apple services)
+log_output "Active network connections (non-Apple):"
+sudo lsof -i -n -P | grep -v "com.apple" | grep ESTABLISHED | head -20 | tee -a "$LOG_FILE"
+
+log_output ""
+log_output "=== 5. CHECKING SYSTEM EXTENSIONS ==="
+log_output ""
+systemextensionsctl list | tee -a "$LOG_FILE"
+
+log_output ""
+log_output "=== 6. CHECKING KERNEL EXTENSIONS ==="
+log_output ""
+KEXTS=$(kextstat | grep -v com.apple)
+if [ ! -z "$KEXTS" ]; then
+    log_output "Non-Apple kernel extensions:"
+    echo "$KEXTS" | tee -a "$LOG_FILE"
+else
+    log_output "✓ Only Apple kernel extensions loaded"
+fi
+
+log_output ""
+log_output "=== 7. CHECKING LOGIN ITEMS ==="
+log_output ""
+log_output "Login items that start at boot:"
+osascript -e 'tell application "System Events" to get the name of every login item' 2>/dev/null | tee -a "$LOG_FILE"
+
+log_output ""
+log_output "=== 8. CHECKING BROWSER DATA ACCESS ==="
+log_output ""
+
+# Check if browser password files were recently accessed
+if [ -f "$HOME/Library/Application Support/Firefox/Profiles/"*".default"*/logins.json ]; then
+    log_output "Firefox password file last modified:"
+    stat -f "%Sm %N" -t "%Y-%m-%d %H:%M:%S" "$HOME/Library/Application Support/Firefox/Profiles/"*".default"*/logins.json 2>/dev/null | tee -a "$LOG_FILE"
+fi
+
+if [ -f "$HOME/Library/Safari/Passwords.plist" ]; then
+    log_output "Safari password file last modified:"
+    stat -f "%Sm %N" -t "%Y-%m-%d %H:%M:%S" "$HOME/Library/Safari/Passwords.plist" 2>/dev/null | tee -a "$LOG_FILE"
+fi
+
+log_output ""
+log_output "=================================="
+log_output "Check complete. Log saved to:"
+log_output "$LOG_FILE"
+log_output "=================================="
+log_output ""
+
+# Compare with previous log if it exists
+PREV_LOG=$(ls -t "$LOG_DIR"/security_check_*.log 2>/dev/null | sed -n '2p')
+if [ ! -z "$PREV_LOG" ]; then
+    log_output "💡 To compare with previous check, run:"
+    log_output "   diff \"$PREV_LOG\" \"$LOG_FILE\""
+fi
+
+echo ""
+echo "✓ Security check complete"

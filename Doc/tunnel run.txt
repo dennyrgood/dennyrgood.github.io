@@ -1,0 +1,22 @@
+.\cloudflared-windows-amd64.exe tunnel run excel-backend
+2025-10-19T16:06:22Z INF Starting tunnel tunnelID=c1d95b8b-8b1e-4a3a-a029-af316a9e97ab
+2025-10-19T16:06:22Z INF Cannot determine default configuration path. No file [config.yml config.yaml] in [~/.cloudflared ~/.cloudflare-warp ~/cloudflare-warp]
+2025-10-19T16:06:22Z INF Version 2025.10.0 (Checksum 07ce5e7ffc805734797d37061654f5f0152de2a2da241bf52e90822e9b8fc724)
+2025-10-19T16:06:22Z INF GOOS: windows, GOVersion: go1.24.6, GoArch: amd64
+2025-10-19T16:06:22Z INF cloudflared will not automatically update on Windows systems.
+2025-10-19T16:06:22Z INF Generated Connector ID: c8577f1a-d67b-4d68-b09a-e6631c1adc7f
+2025-10-19T16:06:22Z WRN No ingress rules were defined in provided config (if any) nor from the cli, cloudflared will return 503 for all incoming HTTP requests
+2025-10-19T16:06:22Z INF Initial protocol quic
+2025-10-19T16:06:22Z INF ICMP proxy will use 192.168.178.21 as source for IPv4
+2025-10-19T16:06:22Z INF ICMP proxy will use fe80::f211:61a9:fc5f:380c in zone NordLynx as source for IPv6
+2025-10-19T16:06:22Z INF ICMP proxy will use 192.168.178.21 as source for IPv4
+2025-10-19T16:06:22Z INF Tunnel connection curve preferences: [X25519MLKEM768 CurveP256] connIndex=0 event=0 ip=198.41.192.7
+2025-10-19T16:06:22Z INF ICMP proxy will use fe80::f211:61a9:fc5f:380c in zone NordLynx as source for IPv6
+2025-10-19T16:06:22Z INF Starting metrics server on 127.0.0.1:20241/metrics
+2025-10-19T16:06:23Z INF Registered tunnel connection connIndex=0 connection=1102990e-7c93-4e45-bf53-56152253c193 event=0 ip=198.41.192.7 location=ams07 protocol=quic
+2025-10-19T16:06:23Z INF Tunnel connection curve preferences: [X25519MLKEM768 CurveP256] connIndex=1 event=0 ip=198.41.200.73
+2025-10-19T16:06:23Z INF Registered tunnel connection connIndex=1 connection=22e39e70-78a1-4bb2-8246-36548a884582 event=0 ip=198.41.200.73 location=ams01 protocol=quic
+2025-10-19T16:06:24Z INF Tunnel connection curve preferences: [X25519MLKEM768 CurveP256] connIndex=2 event=0 ip=198.41.200.23
+2025-10-19T16:06:24Z INF Registered tunnel connection connIndex=2 connection=fdffde97-56a7-4bbd-8043-8a03289c70a7 event=0 ip=198.41.200.23 location=ams18 protocol=quic
+2025-10-19T16:06:25Z INF Tunnel connection curve preferences: [X25519MLKEM768 CurveP256] connIndex=3 event=0 ip=198.41.192.167
+2025-10-19T16:06:25Z INF Registered tunnel connection connIndex=3 connection=398e6bff-f792-4f63-9fc6-70cbfc2070f8 event=0 ip=198.41.192.167 location=ams15 protocol=quic

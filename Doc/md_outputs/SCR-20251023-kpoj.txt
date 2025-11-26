@@ -1,0 +1,12 @@
+In any active Finder window or on your desktop, press the following three keys simultaneously:
+
++ Command (88) + Shift (t) + Period (.) 2
+
+Pressing this shortcut will toggle the visibility of hidden files. 2
+
++ Hidden files and folders (those whose names begin with a period, like .bash profile or
+.DS_Store ) will immediately become visible, appearing with a slightly grayed-out or semi-
+transparent icon. 2
+
+a
+

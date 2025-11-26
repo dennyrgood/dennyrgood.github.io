@@ -1,0 +1,102 @@
+{
+  "metadata": {
+    "created": "2025-11-26T18:45:21.514968",
+    "last_scan": null,
+    "last_apply": "2025-11-26T18:46:17.348222"
+  },
+  "categories": [
+    "Guides",
+    "Workflows",
+    "scripts",
+    "Models",
+    "QuickRefs",
+    "Junk"
+  ],
+  "documents": {
+    "./index.html": {
+      "hash": "sha256:4165617d7676feb85099d09e548c0672df2815dd7764354a2089cfff0c8a1dd3",
+      "category": "Guides",
+      "summary": "An HTML document serving as an index page for project documentation with styled navigation and search functionality.",
+      "summary_approved": true,
+      "title": "index",
+      "last_processed": "2025-11-26T18:46:17.348037",
+      "file_mtime": "2025-11-26T18:45:21.550670"
+    },
+    "./SCR-20251023-kjdg.png": {
+      "hash": "sha256:17e6d513b48514717e3cda4f53d82504b1e7792e6a0c0808c3d61b41c75dc05f",
+      "category": "QuickRefs",
+      "summary": "Describes the keyboard shortcut Command + Option + D for toggling visibility of the Dock.",
+      "summary_approved": true,
+      "title": "SCR-20251023-kjdg",
+      "last_processed": "2025-11-26T18:46:17.348066",
+      "file_mtime": "2025-10-23T11:25:10",
+      "readable_version": "./md_outputs/SCR-20251023-kjdg.txt"
+    },
+    "./MacOS Cheat Sheet.webp": {
+      "hash": "sha256:a94913dd301081ae98ad0ea95712eb8cd886c4571fbfe5d7ac217ac7d0e04c6f",
+      "category": "QuickRefs",
+      "summary": "This document provides quick reference commands and shortcuts for basic Mac OS operations including screenshots, Finder navigation, and force quitting applications.",
+      "summary_approved": true,
+      "title": "MacOS Cheat Sheet",
+      "last_processed": "2025-11-26T18:46:17.348093",
+      "file_mtime": "2025-10-25T00:38:58.546005",
+      "readable_version": "./md_outputs/MacOS Cheat Sheet.txt"
+    },
+    "./Acer Specs.txt": {
+      "hash": "sha256:45e75a0bcff8f335d06f31ac6cdc6a7ee137fe2f323d24db724493b97c522314",
+      "category": "QuickRefs",
+      "summary": "The document contains technical specifications for the Acer Aspire TC-885 system model, focusing on its processor details.",
+      "summary_approved": true,
+      "title": "Acer Specs",
+      "last_processed": "2025-11-26T18:46:17.348109",
+      "file_mtime": "2025-11-26T08:53:21"
+    },
+    "./sec_ck.txt": {
+      "hash": "sha256:36cd55fccfe3a3a070db3a9fdd8f099ebe5f446a4960f198be89fb0e5e793fdb",
+      "category": "scripts",
+      "summary": "A Bash script for daily security checks on macOS systems, logging and analyzing potential suspicious files in LaunchAgents/LaunchDaemons directories and hidden home directory files.",
+      "summary_approved": true,
+      "title": "sec_ck",
+      "last_processed": "2025-11-26T18:46:17.348128",
+      "file_mtime": "2025-10-04T20:18:11.624851"
+    },
+    "./Sync_iTunes_to_Plex_FreeFileSync_Guide.docx": {
+      "hash": "sha256:6bdc9f61169af44baab1a7338206551e2f04bcf5972f0ea62c99489404b9ed4b",
+      "category": "Guides",
+      "summary": "This guide explains how to use FreeFileSync to sync an iTunes library from Windows 11 to a Plex server on macOS, including incremental updates and playlist synchronization.",
+      "summary_approved": true,
+      "title": "Sync_iTunes_to_Plex_FreeFileSync_Guide",
+      "last_processed": "2025-11-26T18:46:17.348142",
+      "file_mtime": "2025-11-04T22:52:55",
+      "readable_version": "./md_outputs/Sync_iTunes_to_Plex_FreeFileSync_Guide.md"
+    },
+    "./win11diskspeadtest.ps": {
+      "hash": "sha256:d52da0c814ee67875702939ac6815c2d6dd7c7fab1e3ac8f65d547d78e756848",
+      "category": "scripts",
+      "summary": "This file appears to be a PowerShell script designed for testing disk speed on Windows 11 systems.",
+      "summary_approved": true,
+      "title": "win11diskspeadtest",
+      "last_processed": "2025-11-26T18:46:17.348161",
+      "file_mtime": "2025-11-26T08:02:06"
+    },
+    "./tunnel run.txt": {
+      "hash": "sha256:d922f9ac2fc35805446a55c7268a42d9cfdc1e228dda8be64527834e6e68347a",
+      "category": "Workflows",
+      "summary": "Logs from running cloudflared tunnel for an Excel backend service on Windows, detailing initialization and connection events.",
+      "summary_approved": true,
+      "title": "tunnel run",
+      "last_processed": "2025-11-26T18:46:17.348177",
+      "file_mtime": "2025-10-19T18:08:27"
+    },
+    "./SCR-20251023-kpoj.png": {
+      "hash": "sha256:2e1d36bc5640ac2a613862c9465970c11dc0f9b25cb0a609881844f7d0a667fd",
+      "category": "Guides",
+      "summary": "This document explains how to display hidden files on macOS by using a keyboard shortcut and provides details about the appearance of these files.",
+      "summary_approved": true,
+      "title": "SCR-20251023-kpoj",
+      "last_processed": "2025-11-26T18:46:17.348197",
+      "file_mtime": "2025-10-23T11:42:56",
+      "readable_version": "./md_outputs/SCR-20251023-kpoj.txt"
+    }
+  }
+}

@@ -1,0 +1,7 @@
+$path = "$env:TEMP\winsat_test.bin"
+fsutil file createnew $path 1000000000
+$sw = [System.Diagnostics.Stopwatch]::StartNew()
+Get-Content $path -ReadCount 0 | Out-Null
+$sw.Stop()
+"{0} MB/s" -f [math]::Round((1GB / $sw.Elapsed.TotalSeconds) / 1MB, 2)
+Remove-Item $path
