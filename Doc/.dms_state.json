@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2025-11-26T18:45:21.514968",
     "last_scan": null,
-    "last_apply": "2026-01-08T17:55:41.339793"
+    "last_apply": "2026-01-08T19:08:07.796162"
   },
   "categories": [
     "Guides",
@@ -147,6 +147,15 @@
       "last_processed": "2026-01-08T17:55:41.339763",
       "file_mtime": "2026-01-08T08:23:33.566742",
       "readable_version": "./md_outputs/MacBook_M3_Reset_and_Migration_Summary.md"
+    },
+    "./Dummy.txt": {
+      "hash": "sha256:4e9ff7ff089d45437eb2aa1c045c8e754e2eaaadf601ce2ccbc3ac11c4f7b49a",
+      "category": "Junk",
+      "summary": "A placeholder file used for testing update processes on pages or GitHub repositories.",
+      "summary_approved": true,
+      "title": "Dummy",
+      "last_processed": "2026-01-08T19:08:07.796109",
+      "file_mtime": "2026-01-08T19:07:44.872699"
     }
   }
 }
