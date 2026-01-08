@@ -1,0 +1,13 @@
+{
+  "timestamp": "2026-01-08T17:55:45.867522",
+  "new_files": [
+    {
+      "path": "./index_iphone.html",
+      "hash": "sha256:5d5696051580517d354f73b04b48c131ed57cf8c209fdeb8066ceed8bc692681",
+      "size": 11238,
+      "file_mtime": "2026-01-08T17:55:41.435855"
+    }
+  ],
+  "changed_files": [],
+  "missing_files": []
+}
