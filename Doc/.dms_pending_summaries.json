@@ -1,17 +1,29 @@
 {
-  "timestamp": "2026-01-08T19:08:00.196035",
+  "timestamp": "2026-01-09T12:56:11.093450",
   "summaries": [
     {
       "file": {
-        "path": "./Dummy.txt",
-        "hash": "sha256:4e9ff7ff089d45437eb2aa1c045c8e754e2eaaadf601ce2ccbc3ac11c4f7b49a",
-        "size": 61
+        "path": "./FixMulti.md",
+        "hash": "sha256:ef63d9fb0b961cb112152ccea42356b4dba5287c3f93b4fc868205d9d12f62d1",
+        "size": 5428
       },
-      "summary": "A placeholder file used for testing update processes on pages or GitHub repositories.",
-      "category": "Junk",
+      "summary": "This document provides a workflow for fixing composite images with multiple faces using ComfyUI and specific models/extensions, ensuring face integrity while addressing seams, lighting, and color issues.",
+      "category": "Workflows",
       "is_new_category": false,
-      "title": "Dummy",
-      "timestamp": "2026-01-08T19:08:00.195955"
+      "title": "FixMulti",
+      "timestamp": "2026-01-09T12:56:08.070809"
+    },
+    {
+      "file": {
+        "path": "./FixMulti.json",
+        "hash": "sha256:a6a1d106ac7cd4cd1b1670877f8bca3da50e5542067fcab75c9c56d5a6498e52",
+        "size": 12269
+      },
+      "summary": "This document defines nodes and links for an image processing workflow involving loading an image, using an Ultralytics detector provider to detect faces, and applying face detailer operations.",
+      "category": "Workflows",
+      "is_new_category": false,
+      "title": "FixMulti",
+      "timestamp": "2026-01-09T12:56:11.093372"
     }
   ]
 }
