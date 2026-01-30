@@ -2,7 +2,7 @@
   "metadata": {
     "created": "2025-11-26T18:45:21.514968",
     "last_scan": null,
-    "last_apply": "2026-01-09T12:56:21.617426"
+    "last_apply": "2026-01-30T13:25:58.071227"
   },
   "categories": [
     "Guides",
@@ -166,14 +166,71 @@
       "last_processed": "2026-01-09T12:56:21.617318",
       "file_mtime": "2026-01-09T10:59:46.175695"
     },
-    "./FixMulti.json": {
-      "hash": "sha256:a6a1d106ac7cd4cd1b1670877f8bca3da50e5542067fcab75c9c56d5a6498e52",
-      "category": "Workflows",
-      "summary": "This document defines nodes and links for an image processing workflow involving loading an image, using an Ultralytics detector provider to detect faces, and applying face detailer operations.",
+    "./Tailscale + Plex_ Remote Streaming Setup Guide.pdf": {
+      "hash": "sha256:84b366e9b08803f1991a30038aa1c9b70f2d9b745690d95d8342075eb039a6c8",
+      "category": "Guides",
+      "summary": "This document provides instructions for setting up Plex media streaming over Tailscale for faster, secure, and reliable connections between the server and remote clients.",
       "summary_approved": true,
-      "title": "FixMulti",
-      "last_processed": "2026-01-09T12:56:21.617386",
-      "file_mtime": "2026-01-09T10:54:51.623462"
+      "title": "Tailscale + Plex_ Remote Streaming Setup Guide",
+      "last_processed": "2026-01-30T13:25:58.070989",
+      "file_mtime": "2026-01-24T20:57:08.731167",
+      "readable_version": "./md_outputs/Tailscale + Plex_ Remote Streaming Setup Guide.md"
+    },
+    "./OpenWebImages.md": {
+      "hash": "sha256:3d989c0dfb39a6bb86ea0c46d4196b043dacbe5201c4ca762d1314f8c4ca2888",
+      "category": "Guides",
+      "summary": "This document provides instructions for integrating ComfyUI with OpenWebUI using a specific workflow and JSON configuration.",
+      "summary_approved": true,
+      "title": "OpenWebImages",
+      "last_processed": "2026-01-30T13:25:58.071049",
+      "file_mtime": "2026-01-25T19:51:14.313669"
+    },
+    "./LAN over Wan.docx": {
+      "hash": "sha256:db8ecb52c93707e3cde9e2cba2da32e1ee9acec9a8d83e33e4407fddeb5ea386",
+      "category": "Workflows",
+      "summary": "Document outlines the setup of TailScale for LAN over WAN connectivity and Syncthing configuration for file synchronization across devices.",
+      "summary_approved": true,
+      "title": "LAN over Wan",
+      "last_processed": "2026-01-30T13:25:58.071063",
+      "file_mtime": "2026-01-25T19:14:26.454355",
+      "readable_version": "./md_outputs/LAN over Wan.md"
+    },
+    "./Laura New PC.txt": {
+      "hash": "sha256:1eb8cb3f0876e8774f037fd2f98cd369e18d7edda78886c9eefde4f03a287b39",
+      "category": "QuickRefs",
+      "summary": "The document provides specifications for the ASRock A520M-HDV motherboard designed for AMD AM4 processors with DDR4 RAM and Micro-ATX form factor.",
+      "summary_approved": true,
+      "title": "Laura New PC",
+      "last_processed": "2026-01-30T13:25:58.071178",
+      "file_mtime": "2026-01-27T10:18:08.844020"
+    },
+    "./Tailscale + Plex_ Remote Streaming Setup Guide.md": {
+      "hash": "sha256:bb57ec2c181acd7533be67743042912473429a65761f5d3c4a0b3281b6568d70",
+      "category": "Guides",
+      "summary": "This guide outlines the steps for setting up Plex media streaming over Tailscale, enabling direct, encrypted connections between the server and remote clients, improving speed, reliability, and privacy.",
+      "summary_approved": true,
+      "title": "Tailscale + Plex_ Remote Streaming Setup Guide",
+      "last_processed": "2026-01-30T13:25:58.071190",
+      "file_mtime": "2026-01-24T20:57:10.784695"
+    },
+    "./ComfyUI & OpenWebUI Integration Guide.pdf": {
+      "hash": "sha256:cbb909b66fb1900403dc018dc2ad032da8278d979c18d6d494fefb085b1e5fe9",
+      "category": "Guides",
+      "summary": "This document provides a step-by-step guide for integrating ComfyUI with OpenWebUI, including setup instructions and configuration details.",
+      "summary_approved": true,
+      "title": "ComfyUI & OpenWebUI Integration Guide",
+      "last_processed": "2026-01-30T13:25:58.071200",
+      "file_mtime": "2026-01-25T19:59:34.875083",
+      "readable_version": "./md_outputs/ComfyUI & OpenWebUI Integration Guide.md"
+    },
+    "./comfyui_openwebui_guide.md": {
+      "hash": "sha256:a8e9870e21547486d16309c47e5ed2ca16f2403031fed4aa1f86d6ae3018c435",
+      "category": "Guides",
+      "summary": "This guide provides steps for integrating ComfyUI with OpenWebUI including setup instructions and configuration details.",
+      "summary_approved": true,
+      "title": "comfyui_openwebui_guide",
+      "last_processed": "2026-01-30T13:25:58.071211",
+      "file_mtime": "2026-01-25T19:59:13.272810"
     }
   }
 }
