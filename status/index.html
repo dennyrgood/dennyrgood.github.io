@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fleet Status Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .status-up { color: #10b981; } /* Green */
+        .status-down { color: #ef4444; } /* Red */
+        .card { background: #1f2937; border-radius: 8px; padding: 1.5rem; }
+    </style>
+</head>
+<body class="bg-gray-900 text-white font-sans p-6">
+
+    <div class="max-w-6xl mx-auto flex justify-between items-end mb-8 border-b border-gray-700 pb-4">
+        <div>
+            <h1 class="text-3xl font-bold">Fleet Status</h1>
+            <p class="text-gray-400" id="last-updated">Last Updated: Loading...</p>
+        </div>
+        <div class="text-right">
+            <span id="global-badge" class="px-3 py-1 rounded-full bg-gray-700 text-sm font-bold">SYSTEM CHECKING...</span>
+        </div>
+    </div>
+
+    <div id="fleet-grid" class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        </div>
+
+    <div class="max-w-6xl mx-auto mt-12 text-center text-xs text-gray-500">
+        Primary API: fleet.ldmathes.cc | Backup: fleet-bkp.ldmathes.cc
+    </div>
+
+    <script>
+        // JS logic will go here to fetch from your Phase 2 API
+    </script>
+</body>
+</html>
