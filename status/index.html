@@ -8,27 +8,41 @@
     <style>
         .status-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen p-4 md:p-8">
+<body class="bg-[#0b0f1a] text-slate-100 min-h-screen p-4 md:p-8 font-sans">
 
-    <div class="max-w-6xl mx-auto">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 border-b border-slate-700 pb-6">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 border-b border-slate-800 pb-6 gap-4">
             <div>
-                <h1 class="text-4xl font-black tracking-tight text-white">FLEET_STATUS</h1>
-                <p id="sub-header" class="text-slate-400 font-mono text-sm mt-1 uppercase tracking-widest">Initialising Link...</p>
+                <h1 class="text-5xl font-black tracking-tighter text-white">FLEET<span class="text-emerald-500">_</span>STATUS</h1>
+                <p id="sub-header" class="text-slate-500 font-mono text-xs mt-2 uppercase tracking-[0.2em]">Initialising Data Link...</p>
             </div>
-            <div id="global-indicator" class="mt-4 md:mt-0 px-4 py-2 rounded-lg bg-slate-800 border border-slate-700 font-bold flex items-center gap-3">
-                <div class="w-3 h-3 rounded-full bg-slate-500"></div>
-                <span class="text-slate-300">AWAITING DATA</span>
+            
+            <!-- Summary Bar -->
+            <div id="summary-bar" class="flex gap-4 overflow-x-auto pb-2 w-full md:w-auto">
+                <!-- Summary cards injected here -->
+            </div>
+
+            <div id="global-indicator" class="px-4 py-2 rounded-lg bg-slate-900 border border-slate-800 font-bold flex items-center gap-3 whitespace-nowrap">
+                <div class="w-2 h-2 rounded-full bg-slate-600"></div>
+                <span class="text-slate-400 text-xs tracking-widest uppercase">Awaiting Data</span>
             </div>
         </div>
 
-        <div id="machine-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            </div>
+        <!-- Grid -->
+        <div id="machine-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <!-- Machine cards injected here -->
+        </div>
 
-        <footer class="mt-12 text-center text-slate-600 text-xs font-mono uppercase tracking-tighter">
-            Data Source: <span id="source-node">---</span> | Refresh: 60s
+        <footer class="mt-12 flex justify-between items-center text-slate-600 text-[10px] font-mono uppercase tracking-widest border-t border-slate-900 pt-6">
+            <div>&copy; LD MATHES FLEET OPS</div>
+            <div id="refresh-indicator">AUTO-REFRESH: 60S</div>
         </footer>
     </div>
 
@@ -36,79 +50,108 @@
         // CONFIGURATION: Set this to fleet-bkp.ldmathes.cc for the backup folder!
         const API_BASE = "https://fleet.ldmathes.cc";
 
-
-    async function updateDashboard() {
-    console.log("Attempting to fetch from:", API_BASE);
-    try {
-        // We add {mode: 'cors'} to force the browser to be honest about errors
-        const response = await fetch(`${API_BASE}/api/status`, { mode: 'cors' });
-        
-        console.log("Response received. Status:", response.status);
-        
-        if (!response.ok) {
-            console.error("Server responded with an error code:", response.status);
-            throw new Error('API_OFFLINE');
+        async function updateDashboard() {
+            try {
+                const response = await fetch(`${API_BASE}/api/status`, { mode: 'cors' });
+                if (!response.ok) throw new Error('API_OFFLINE');
+                
+                const data = await response.json();
+                
+                renderSummary(data.summary);
+                renderGrid(data.machines);
+                updateHeader(data.meta);
+            } catch (err) {
+                console.error("Dashboard Sync Error:", err);
+                document.getElementById('sub-header').innerText = "CONNECTION_LOST - CHECK TUNNEL OR API";
+                document.getElementById('global-indicator').innerHTML = `<div class="w-2 h-2 rounded-full bg-red-500 status-pulse"></div> <span class="text-red-500">OFFLINE</span>`;
+            }
         }
-        
-        const data = await response.json();
-        console.log("Data parsed successfully:", data);
-        
-        renderGrid(data.machines);
-        updateHeader(response.headers.get('X-Checker-Host'), response.headers.get('X-Data-Age'));
-    } catch (err) {
-        console.error("FETCH FAILURE DETAILS:", err); // THIS WILL SHOW THE REAL ERROR
-        document.getElementById('sub-header').innerText = "CONNECTION_LOST";
-        document.getElementById('global-indicator').innerHTML = `<div class="w-3 h-3 rounded-full bg-red-500 status-pulse"></div> ERROR`;
-    }
-}
 
-    function renderGrid(machines) {
-    const grid = document.getElementById('machine-grid');
-    grid.innerHTML = '';
+        function renderSummary(summary) {
+            const container = document.getElementById('summary-bar');
+            if (!summary) return;
 
-    // Handle case where machines might be an object instead of an array
-    const machineList = Array.isArray(machines) ? machines : Object.values(machines);
+            const items = [
+                { label: 'FLEET', val: `${summary.machines_up}/${summary.machines_total}`, color: 'emerald' },
+                { label: 'SERVICES', val: `${summary.services_up}/${summary.services_total}`, color: 'blue' },
+                { label: 'PUBLIC', val: `${summary.public_endpoints_up}/${summary.public_endpoints_total}`, color: 'purple' }
+            ];
 
-    machineList.forEach(m => {
-        // Use m.hostname or m.id if m.name is missing
-        const displayName = m.name || m.hostname || "Unknown Node";
-        const isOnline = m.status === "online";
-        
-        const card = document.createElement('div');
-        card.className = `p-6 rounded-xl border-2 transition-all ${isOnline ? 'bg-slate-800/50 border-slate-700' : 'bg-red-900/20 border-red-900'}`;
-        
-        card.innerHTML = `
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold tracking-tight">${displayName.toUpperCase()}</h2>
-                <div class="w-3 h-3 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-red-500 status-pulse'}"></div>
-            </div>
-            <div class="space-y-2">
-                ${(m.services || []).map(s => `
-                    <div class="flex justify-between text-sm font-mono border-b border-slate-700/50 pb-1">
-                        <span class="text-slate-400">${s.name || 'Service'}</span>
-                        <span class="${s.status === 'online' ? 'text-emerald-400' : 'text-red-400'}">${(s.status || 'unknown').toUpperCase()}</span>
+            container.innerHTML = items.map(i => `
+                <div class="bg-slate-900 border border-slate-800 p-3 rounded-lg min-w-[120px]">
+                    <div class="text-[10px] text-slate-500 font-bold tracking-tighter mb-1">${i.label}</div>
+                    <div class="text-xl font-black text-${i.color}-400 font-mono">${i.val}</div>
+                </div>
+            `).join('');
+        }
+
+        function renderGrid(machines) {
+            const grid = document.getElementById('machine-grid');
+            grid.innerHTML = '';
+
+            machines.forEach(m => {
+                const name = m.machine.display_name;
+                const role = m.machine.primary_role;
+                const latency = m.host.response_time_ms;
+                const isOnline = m.host.status === "up";
+                
+                const card = document.createElement('div');
+                card.className = `group flex flex-col p-5 rounded-xl border-2 transition-all duration-300 ${isOnline ? 'bg-slate-900/40 border-slate-800 hover:border-slate-700' : 'bg-red-950/20 border-red-900/50'}`;
+                
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <h2 class="text-lg font-black tracking-tight leading-none text-white group-hover:text-emerald-400 transition-colors">${name.toUpperCase()}</h2>
+                            <p class="text-[9px] font-mono text-slate-500 uppercase mt-1 tracking-tighter">${role}</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[9px] font-mono text-slate-600">${latency ? latency + 'ms' : '---'}</span>
+                            <div class="w-2.5 h-2.5 rounded-full ${isOnline ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-red-500 status-pulse'}"></div>
+                        </div>
                     </div>
-                `).join('')}
-            </div>
-        `;
-        grid.appendChild(card);
-    });
-}
+                    
+                    <div class="flex-grow space-y-3">
+                        ${m.services.map(s => {
+                            const isUp = (s.public_check && s.public_check.status === "up") || 
+                                         (s.tailscale_check && s.tailscale_check.status === "up");
+                            
+                            // Extract hardware info if available in detail
+                            const detail = s.tailscale_check?.detail || s.public_check?.detail || "";
+                            
+                            return `
+                            <div class="group/service flex flex-col">
+                                <div class="flex justify-between items-center text-xs font-mono">
+                                    <span class="text-slate-400 group-hover/service:text-slate-200 transition-colors">${s.name}</span>
+                                    <span class="font-bold ${isUp ? 'text-emerald-500/80' : 'text-red-500/80'}">${isUp ? 'UP' : 'DOWN'}</span>
+                                </div>
+                                ${detail ? `<p class="text-[9px] text-slate-600 font-mono mt-0.5 leading-tight truncate" title="${detail}">${detail.replace(' — service alive', '')}</p>` : ''}
+                            </div>
+                            `;
+                        }).join('')}
+                    </div>
 
-        
-        function updateHeader(host, age) {
-            document.getElementById('sub-header').innerText = `NODE: ${host} | AGE: ${age}s`;
-            document.getElementById('source-node').innerText = host;
-            document.getElementById('global-indicator').innerHTML = `<div class="w-3 h-3 rounded-full bg-emerald-500"></div> SYSTEM_READY`;
+                    <div class="mt-6 pt-4 border-t border-slate-800/50 flex justify-between items-center opacity-40 group-hover:opacity-100 transition-opacity">
+                        <span class="text-[9px] font-mono text-slate-500">${m.machine.tailscale_ip}</span>
+                        <span class="text-[9px] font-mono text-slate-500 uppercase">${m.machine.tailscale_name}</span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
         }
 
-        // Initial run and interval
+        function updateHeader(meta) {
+            if (!meta) return;
+            const host = meta.checker_host || 'unknown';
+            const timestamp = new Date(meta.timestamp_utc).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+            
+            document.getElementById('sub-header').innerText = `NODE: ${host} | SYNCED: ${timestamp} UTC`;
+            document.getElementById('global-indicator').innerHTML = `<div class="w-2 h-2 rounded-full bg-emerald-500"></div> <span class="text-emerald-500 text-xs tracking-widest uppercase">System Online</span>`;
+        }
+
+        // Initial run
         updateDashboard();
-
-
-
-
         
+        // Refresh loop
         setInterval(updateDashboard, 60000);
     </script>
 </body>
