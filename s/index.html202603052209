@@ -499,14 +499,14 @@ body::before {
 <div class="pagefooter">
   <div class="pagefooter-wordmark">FLEET<span>_</span>STATUS</div>
   <div class="pagefooter-meta">
-    <a href="/status/" id="altFeedLink">↗ PRIMARY FEED</a>
+    <a href="/status-bkp/" id="altFeedLink">↗ BACKUP FEED</a>
     <span id="footerMeta">POLL: 30S</span>
     <span id="footerChecker">—</span>
   </div>
 </div>
 
 <script>
-const API_URL = 'https://fleet-bkp.ldmathes.cc/api/status';
+const API_URL = 'https://fleet.ldmathes.cc/api/status';
 const POLL_MS = 30000;
 const STALE_S = 90;
 const SECONDARY = new Set(['denniss-macbook-air','denniss-2nd-macbook-air']);

@@ -108,11 +108,6 @@ body::before {
   letter-spacing: 0.08em;
 }
 
-#dataAge { color: var(--text2); }
-#dataAge.fresh { color: var(--green); }
-#dataAge.aging { color: var(--amber); }
-#dataAge.stale { color: var(--red); }
-
 .topbar-stats {
   display: flex;
   gap: 8px;
@@ -458,7 +453,7 @@ body::before {
     <div class="topbar-title">
       FLEET_OPS <span class="cursor"></span>
     </div>
-    <div class="topbar-sub">SRC: <span id="topbarSrc">—</span> &nbsp;/&nbsp; T: <span id="topbarTime">—</span> &nbsp;/&nbsp; <span id="dataAge">—</span></div>
+    <div class="topbar-sub" id="topbarSub">SRC: — &nbsp;/&nbsp; T: —</div>
   </div>
 
   <div class="topbar-stats">
@@ -499,7 +494,7 @@ body::before {
 <div class="pagefooter">
   <div class="pagefooter-wordmark">FLEET<span>_</span>STATUS</div>
   <div class="pagefooter-meta">
-    <a href="/status/" id="altFeedLink">↗ PRIMARY FEED</a>
+    <a href="/status-bkp/" id="altFeedLink">↗ BACKUP FEED</a>
     <span id="footerMeta">POLL: 30S</span>
     <span id="footerChecker">—</span>
   </div>
@@ -513,27 +508,6 @@ const SECONDARY = new Set(['denniss-macbook-air','denniss-2nd-macbook-air']);
 
 let lastData = null;
 let collapsed = {};
-let lastTimestamp = null;
-
-// ── LIVE AGE COUNTER ───────────────────────────────────
-setInterval(() => {
-  const el = document.getElementById('dataAge');
-  if (!el || !lastTimestamp) return;
-  const s = Math.floor((Date.now() - new Date(lastTimestamp).getTime()) / 1000);
-  if (s < 60) {
-    el.textContent = s + 's ago';
-    el.className = s < 45 ? 'fresh' : 'aging';
-  } else if (s < 300) {
-    const m = Math.floor(s / 60);
-    const sec = s % 60;
-    el.textContent = m + 'm ' + sec + 's ago';
-    el.className = 'aging';
-  } else {
-    const m = Math.floor(s / 60);
-    el.textContent = m + 'm ago — STALE';
-    el.className = 'stale';
-  }
-}, 1000);
 
 function fmtTime(u) {
   if (!u) return '—';
@@ -646,13 +620,12 @@ function toggle(name) {
 
 function render(data) {
   lastData = data;
-  lastTimestamp = data.meta?.timestamp_utc || null;
   const sum = data.summary || {};
   const meta = data.meta || {};
 
   // Sub
-  document.getElementById('topbarSrc').textContent = (meta.checker_host || '—').toUpperCase();
-  document.getElementById('topbarTime').textContent = fmtTime(meta.timestamp_utc);
+  document.getElementById('topbarSub').textContent =
+    `SRC: ${(meta.checker_host || '—').toUpperCase()}  /  T: ${fmtTime(meta.timestamp_utc)}`;
 
   // Stats
   const hostsEl = document.getElementById('statHosts');

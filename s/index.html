@@ -458,7 +458,7 @@ body::before {
     <div class="topbar-title">
       FLEET_OPS <span class="cursor"></span>
     </div>
-    <div class="topbar-sub" id="topbarSub">SRC: — &nbsp;/&nbsp; T: — &nbsp;/&nbsp; <span id="dataAge">—</span></div>
+    <div class="topbar-sub">SRC: <span id="topbarSrc">—</span> &nbsp;/&nbsp; T: <span id="topbarTime">—</span> &nbsp;/&nbsp; <span id="dataAge">—</span></div>
   </div>
 
   <div class="topbar-stats">
@@ -651,8 +651,8 @@ function render(data) {
   const meta = data.meta || {};
 
   // Sub
-  document.getElementById('topbarSub').textContent =
-    `SRC: ${(meta.checker_host || '—').toUpperCase()}  /  T: ${fmtTime(meta.timestamp_utc)}`;
+  document.getElementById('topbarSrc').textContent = (meta.checker_host || '—').toUpperCase();
+  document.getElementById('topbarTime').textContent = fmtTime(meta.timestamp_utc);
 
   // Stats
   const hostsEl = document.getElementById('statHosts');
