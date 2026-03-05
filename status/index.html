@@ -6,6 +6,151 @@
     <title>Fleet Status Hub</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+        .status-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+        body { font-family: 'JetBrains Mono', monospace; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .text-glow-green { text-shadow: 0 0 10px rgba(16, 185, 129, 0.4); }
+        .text-glow-red { text-shadow: 0 0 10px rgba(239, 68, 68, 0.4); }
+    </style>
+</head>
+<body class="bg-[#05070a] text-slate-300 min-h-screen p-4 md:p-6 selection:bg-emerald-500/30">
+
+    <div class="max-w-[1800px] mx-auto">
+        <!-- Dashboard Header -->
+        <header class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-6 border-b border-white/5 pb-8">
+            <div>
+                <h1 class="text-4xl font-black tracking-tighter text-white flex items-center gap-2">
+                    FLEET_OPS <span class="text-emerald-500 animate-pulse">_</span>
+                </h1>
+                <div id="sub-header" class="text-[10px] text-slate-500 mt-2 tracking-[0.3em] uppercase flex items-center gap-3">
+                    <span id="source-node">---</span> 
+                    <span class="text-slate-800">/</span> 
+                    <span id="sync-time">SYNC_PENDING</span>
+                </div>
+            </div>
+
+            <!-- Summary Stats -->
+            <div id="summary-container" class="flex gap-3 overflow-x-auto no-scrollbar">
+                <!-- Injected via JS -->
+            </div>
+
+            <div id="global-status" class="px-4 py-2 rounded-lg bg-slate-900/50 border border-white/5 flex items-center gap-3">
+                <div class="w-2 h-2 rounded-full bg-slate-700"></div>
+                <span class="text-[10px] font-bold tracking-widest text-slate-500">INITIALIZING</span>
+            </div>
+        </header>
+
+        <!-- Machine Grid -->
+        <main id="machine-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+            <!-- Injected via JS -->
+        </main>
+
+        <footer class="mt-12 flex justify-between items-center text-[9px] text-slate-600 tracking-[0.4em] uppercase opacity-50">
+            <div>&copy; 2026 LD MATHES</div>
+            <div class="flex gap-4">
+                <span>Backup: Off</span>
+                <span>Poll: 30s</span>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        const API_BASE = "https://fleet.ldmathes.cc";
+
+        async function updateDashboard() {
+            try {
+                const response = await fetch(`${API_BASE}/api/status`, { mode: 'cors' });
+                if (!response.ok) throw new Error('OFFLINE');
+                const data = await response.json();
+                
+                renderSummary(data.summary);
+                renderGrid(data.machines);
+                renderHeader(data.meta);
+            } catch (err) {
+                document.getElementById('global-status').innerHTML = `<div class="w-2 h-2 rounded-full bg-red-500 status-pulse"></div> <span class="text-red-500 text-[10px] font-bold tracking-widest uppercase font-mono">LINK_LOST</span>`;
+            }
+        }
+
+        function renderSummary(s) {
+            const container = document.getElementById('summary-container');
+            const stats = [
+                { label: 'HOSTS', val: `${s.machines_up}/${s.machines_total}`, color: 'emerald' },
+                { label: 'SVC', val: `${s.services_up}/${s.services_total}`, color: 'blue' },
+                { label: 'PUB', val: `${s.public_endpoints_up}/${s.public_endpoints_total}`, color: 'purple' }
+            ];
+            container.innerHTML = stats.map(st => `
+                <div class="bg-slate-900/30 border border-white/5 p-3 rounded-lg min-w-[100px]">
+                    <div class="text-[8px] font-bold text-slate-500 tracking-widest mb-1">${st.label}</div>
+                    <div class="text-lg font-bold text-${st.color}-400">${st.val}</div>
+                </div>
+            `).join('');
+        }
+
+        function renderGrid(machines) {
+            const grid = document.getElementById('machine-grid');
+            grid.innerHTML = machines.map(m => {
+                const isUp = m.host.status === 'up';
+                return `
+                <div class="bg-slate-900/20 border ${isUp ? 'border-white/5' : 'border-red-900/30'} rounded-xl p-5 hover:bg-slate-900/40 transition-all group">
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <h2 class="text-white font-bold text-sm tracking-tight group-hover:text-emerald-400 transition-colors">${m.machine.display_name.toUpperCase()}</h2>
+                            <p class="text-[9px] text-slate-500 mt-1 uppercase">${m.machine.primary_role}</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[9px] text-slate-600">${m.host.response_time_ms || 0}ms</span>
+                            <div class="w-2 h-2 rounded-full ${isUp ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-red-500 status-pulse'}"></div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        ${m.services.map(s => {
+                            const svcUp = (s.public_check?.status === 'up') || (s.tailscale_check?.status === 'up');
+                            const detail = s.tailscale_check?.detail || s.public_check?.detail || "";
+                            return `
+                            <div class="border-l border-white/5 pl-3 py-0.5">
+                                <div class="flex justify-between items-center">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-[8px] px-1 bg-slate-800 text-slate-400 rounded">${s.priority}</span>
+                                        <span class="text-[11px] text-slate-300 font-bold">${s.name}</span>
+                                    </div>
+                                    <span class="text-[10px] font-bold ${svcUp ? 'text-emerald-500/80' : 'text-red-500/80'}">${svcUp ? 'OK' : 'ERR'}</span>
+                                </div>
+                                ${detail ? `<p class="text-[9px] text-slate-600 mt-1 leading-tight line-clamp-2 uppercase">${detail.replace(' — service alive', '')}</p>` : ''}
+                            </div>
+                            `;
+                        }).join('')}
+                    </div>
+
+                    <div class="mt-6 pt-4 border-t border-white/5 flex justify-between items-center opacity-20 group-hover:opacity-100 transition-opacity">
+                        <span class="text-[9px] font-mono">${m.machine.tailscale_ip}</span>
+                        <span class="text-[9px] font-mono">${m.machine.tailscale_name}</span>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        function renderHeader(meta) {
+            document.getElementById('source-node').innerText = `SRC: ${meta.checker_host.toUpperCase()}`;
+            document.getElementById('sync-time').innerText = `T: ${new Date(meta.timestamp_utc).toLocaleTimeString()}`;
+            document.getElementById('global-status').innerHTML = `<div class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div> <span class="text-emerald-500 text-[10px] font-bold tracking-widest uppercase">OPERATIONAL</span>`;
+        }
+
+        updateDashboard();
+        setInterval(updateDashboard, 30000);
+    </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fleet Status Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
         .status-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
         ::-webkit-scrollbar { width: 8px; }
