@@ -1,0 +1,32 @@
+CLOUDFLARE							
+							
+3/4/26							
+							
+							
+Search DNS Records							
+Your search yielded 24 results							
+		Type	Name	Content	Proxy status	TTL	Actions
+		A	ldmathes.cc	185.199.111.153		Auto	
+		A	ldmathes.cc	185.199.110.153		Auto	
+		A	ldmathes.cc	185.199.108.153		Auto	
+		A	ldmathes.cc	185.199.109.153		Auto	
+		Tunnel	api-edit	weather-flask-proxy		Auto	
+		Tunnel	api	weather-flask-proxy		Auto	
+		Tunnel	chat	weather-flask-proxy		Auto	
+		Tunnel	clips	chatTunnel		Auto	
+		Tunnel	fleet-bkp	chatTunnel		Auto	
+		Tunnel	fleet	weather-flask-proxy		Auto	
+		Tunnel	image	beastTunnel		Auto	
+		Tunnel	ollama	chatTunnel		Auto	
+		Tunnel	ollama-lite	weather-flask-proxy		Auto	
+		Tunnel	ollama-max	beastTunnel		Auto	
+		CNAME	sig1._domainkey	sig1.dkim.ldmathes.cc.at.icloudmailadmin.com		1 hr	
+		Tunnel	stills	weather-flask-proxy		Auto	
+		Tunnel	talk	chatTunnel		Auto	
+		CNAME	weather	dennyrgood.github.io		Auto	
+		Tunnel	weatherproxy	weather-flask-proxy		Auto	
+		CNAME	www	ldmathes.cc		Auto	
+		MX	ldmathes.cc	mx02.mail.icloud.com	DNS only	1 hr	
+		MX	ldmathes.cc	mx01.mail.icloud.com	DNS only	1 hr	
+		TXT	ldmathes.cc	"""apple-domain=Gmapn2aoYQynyTFP"""	DNS only	1 hr	
+		TXT	ldmathes.cc	"""v=spf1 include:icloud.com ~all"""	DNS only	1 hr	

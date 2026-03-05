@@ -1,0 +1,181 @@
+{
+  "timestamp": "2026-03-05T16:49:02.261109",
+  "new_files": [
+    {
+      "path": "./Dummy.txt",
+      "hash": "sha256:4e9ff7ff089d45437eb2aa1c045c8e754e2eaaadf601ce2ccbc3ac11c4f7b49a",
+      "size": 61,
+      "file_mtime": "2026-01-08T19:07:44.872699"
+    },
+    {
+      "path": "./TravelBeast_Setup.docx",
+      "hash": "sha256:a8dfc80aade6696bdcff0b911dc099b2ea2faefe00d495c08ae8baeab975ee2c",
+      "size": 10538,
+      "file_mtime": "2026-03-05T16:39:05.886044"
+    },
+    {
+      "path": "./Tailscale + Plex_ Remote Streaming Setup Guide.pdf",
+      "hash": "sha256:84b366e9b08803f1991a30038aa1c9b70f2d9b745690d95d8342075eb039a6c8",
+      "size": 113180,
+      "file_mtime": "2026-01-24T19:57:08.731167"
+    },
+    {
+      "path": "./B450 Steel Legend.pdf",
+      "hash": "sha256:d0f2e5410c033af237064de64fd14ec28468ec2a55b054f9d82186970f07757b",
+      "size": 6578311,
+      "file_mtime": "2026-03-05T16:39:05.882054"
+    },
+    {
+      "path": "./GL.iNet GL-SFT1200 - Private Wifi.docx",
+      "hash": "sha256:7a5cf9ccc72e08a60ef90e94d752b3fb1fb36afd568404e28205f765fe282a2b",
+      "size": 21477,
+      "file_mtime": "2026-03-05T16:39:05.882656"
+    },
+    {
+      "path": "./SCR-20251023-kjdg.png",
+      "hash": "sha256:17e6d513b48514717e3cda4f53d82504b1e7792e6a0c0808c3d61b41c75dc05f",
+      "size": 23803,
+      "file_mtime": "2025-10-23T10:25:10"
+    },
+    {
+      "path": "./MacBook M2 to M3 Migration Guide.pdf",
+      "hash": "sha256:8eff09733d2f9c94e39c4b3dd2373887aeaa41fc631e059ee67773ef4bc2214c",
+      "size": 205263,
+      "file_mtime": "2026-01-08T08:25:20.527694"
+    },
+    {
+      "path": "./CLOUDFLARE.txt",
+      "hash": "sha256:99e0f1a52805ec0296859a11b9406869ed64b983cbda78b96aa4e78de1fe8024",
+      "size": 1264,
+      "file_mtime": "2026-03-05T16:39:05.882474"
+    },
+    {
+      "path": "./Tailscale with Surfshark.docx",
+      "hash": "sha256:0e4db084d1e204e917edea525f6e9831e4b964fc33274b89d048d92f0526bc13",
+      "size": 16121,
+      "file_mtime": "2026-03-05T16:39:05.885851"
+    },
+    {
+      "path": "./OpenWebImages.md",
+      "hash": "sha256:3d989c0dfb39a6bb86ea0c46d4196b043dacbe5201c4ca762d1314f8c4ca2888",
+      "size": 5234,
+      "file_mtime": "2026-01-25T18:51:14.313669"
+    },
+    {
+      "path": "./FixMulti.md",
+      "hash": "sha256:ef63d9fb0b961cb112152ccea42356b4dba5287c3f93b4fc868205d9d12f62d1",
+      "size": 5428,
+      "file_mtime": "2026-01-09T10:59:46.175695"
+    },
+    {
+      "path": "./StatusHub.docx",
+      "hash": "sha256:581ea2627015ea2aa1bfdf985858fe17f1a967d129fbdcebd1c2a27b1b4a4870",
+      "size": 51103,
+      "file_mtime": "2026-03-05T16:39:05.885640"
+    },
+    {
+      "path": "./LAN over Wan.docx",
+      "hash": "sha256:db8ecb52c93707e3cde9e2cba2da32e1ee9acec9a8d83e33e4407fddeb5ea386",
+      "size": 14455,
+      "file_mtime": "2026-01-25T18:14:26.454355"
+    },
+    {
+      "path": "./Plex Metadata Transfer Guide (Mac to Windows).pdf",
+      "hash": "sha256:11610d45ea78ea18657d0053e8692e9b6633cc8e63302fef8bd8fa9148890abb",
+      "size": 68323,
+      "file_mtime": "2026-01-08T08:24:10.592810"
+    },
+    {
+      "path": "./ComfyUI - the best models for each category.docx",
+      "hash": "sha256:baf48ed40b175481aa06a3db7c6aa80ea7a5349d1607e6171581cd2ae48bb934",
+      "size": 9970,
+      "file_mtime": "2026-01-08T08:27:01.528215"
+    },
+    {
+      "path": "./Q3 Ultra VR180 Quick Start Guide.docx",
+      "hash": "sha256:8e95ee2d6aadc8ac59d51f612ac246b0970af262f74792d424bc07c475fcbf32",
+      "size": 10434,
+      "file_mtime": "2026-01-08T17:42:16.870341"
+    },
+    {
+      "path": "./Laura New PC.txt",
+      "hash": "sha256:1eb8cb3f0876e8774f037fd2f98cd369e18d7edda78886c9eefde4f03a287b39",
+      "size": 663,
+      "file_mtime": "2026-01-27T09:18:08.844020"
+    },
+    {
+      "path": "./Tailscale + Plex_ Remote Streaming Setup Guide.md",
+      "hash": "sha256:bb57ec2c181acd7533be67743042912473429a65761f5d3c4a0b3281b6568d70",
+      "size": 11121,
+      "file_mtime": "2026-01-24T19:57:10.784695"
+    },
+    {
+      "path": "./MacOS Cheat Sheet.webp",
+      "hash": "sha256:a94913dd301081ae98ad0ea95712eb8cd886c4571fbfe5d7ac217ac7d0e04c6f",
+      "size": 64112,
+      "file_mtime": "2025-10-24T23:38:58.546005"
+    },
+    {
+      "path": "./Acer Specs.txt",
+      "hash": "sha256:45e75a0bcff8f335d06f31ac6cdc6a7ee137fe2f323d24db724493b97c522314",
+      "size": 136,
+      "file_mtime": "2025-11-26T07:53:21"
+    },
+    {
+      "path": "./sec_ck.txt",
+      "hash": "sha256:36cd55fccfe3a3a070db3a9fdd8f099ebe5f446a4960f198be89fb0e5e793fdb",
+      "size": 5302,
+      "file_mtime": "2025-10-04T19:18:11.624851"
+    },
+    {
+      "path": "./GLiNet_Opal_Surfshark_Guide.docx",
+      "hash": "sha256:97a046a8d39ff8dbb94289ad22112ac65d4de634a9f6481648450d216dc474ed",
+      "size": 10955,
+      "file_mtime": "2026-03-05T16:39:05.882876"
+    },
+    {
+      "path": "./Sync_iTunes_to_Plex_FreeFileSync_Guide.docx",
+      "hash": "sha256:6bdc9f61169af44baab1a7338206551e2f04bcf5972f0ea62c99489404b9ed4b",
+      "size": 38010,
+      "file_mtime": "2025-11-04T21:52:55"
+    },
+    {
+      "path": "./win11diskspeadtest.ps",
+      "hash": "sha256:d52da0c814ee67875702939ac6815c2d6dd7c7fab1e3ac8f65d547d78e756848",
+      "size": 271,
+      "file_mtime": "2025-11-26T07:02:06"
+    },
+    {
+      "path": "./ComfyUI & OpenWebUI Integration Guide.pdf",
+      "hash": "sha256:cbb909b66fb1900403dc018dc2ad032da8278d979c18d6d494fefb085b1e5fe9",
+      "size": 108191,
+      "file_mtime": "2026-01-25T18:59:34.875083"
+    },
+    {
+      "path": "./MacBook_M3_Reset_and_Migration_Summary.docx",
+      "hash": "sha256:8bb51b39e6a9d0c79e77a03642745f2f98ed01247fff83074a67c93e9b7d6e2b",
+      "size": 37380,
+      "file_mtime": "2026-01-08T08:23:33.566742"
+    },
+    {
+      "path": "./comfyui_openwebui_guide.md",
+      "hash": "sha256:a8e9870e21547486d16309c47e5ed2ca16f2403031fed4aa1f86d6ae3018c435",
+      "size": 11398,
+      "file_mtime": "2026-01-25T18:59:13.272810"
+    },
+    {
+      "path": "./tunnel run.txt",
+      "hash": "sha256:d922f9ac2fc35805446a55c7268a42d9cfdc1e228dda8be64527834e6e68347a",
+      "size": 2522,
+      "file_mtime": "2025-10-19T17:08:27"
+    },
+    {
+      "path": "./SCR-20251023-kpoj.png",
+      "hash": "sha256:2e1d36bc5640ac2a613862c9465970c11dc0f9b25cb0a609881844f7d0a667fd",
+      "size": 58612,
+      "file_mtime": "2025-10-23T10:42:56"
+    }
+  ],
+  "changed_files": [],
+  "missing_files": []
+}
