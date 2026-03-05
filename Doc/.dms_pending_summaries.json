@@ -1,92 +1,95 @@
 {
-  "timestamp": "2026-01-30T13:24:01.702455",
+  "timestamp": "2026-03-05T16:58:10.861388",
   "summaries": [
     {
       "file": {
-        "path": "./Tailscale + Plex_ Remote Streaming Setup Guide.pdf",
-        "hash": "sha256:84b366e9b08803f1991a30038aa1c9b70f2d9b745690d95d8342075eb039a6c8",
-        "size": 113180,
-        "readable_version": "./md_outputs/Tailscale + Plex_ Remote Streaming Setup Guide.md"
+        "path": "./TravelBeast_Setup.docx",
+        "hash": "sha256:a8dfc80aade6696bdcff0b911dc099b2ea2faefe00d495c08ae8baeab975ee2c",
+        "size": 10538,
+        "readable_version": "./md_outputs/TravelBeast_Setup.md"
       },
-      "summary": "This document provides instructions for setting up Plex media streaming over Tailscale for faster, secure, and reliable connections between the server and remote clients.",
+      "summary": "This document outlines steps for setting up Jump Desktop on Windows 11 Home for continuous remote access by configuring power settings and disabling sleep/hibernation.",
       "category": "Guides",
       "is_new_category": false,
-      "title": "Tailscale + Plex_ Remote Streaming Setup Guide",
-      "timestamp": "2026-01-30T13:18:15.524946"
+      "title": "TravelBeast_Setup",
+      "timestamp": "2026-03-05T16:57:52.526751"
     },
     {
       "file": {
-        "path": "./OpenWebImages.md",
-        "hash": "sha256:3d989c0dfb39a6bb86ea0c46d4196b043dacbe5201c4ca762d1314f8c4ca2888",
-        "size": 5234
+        "path": "./B450 Steel Legend.pdf",
+        "hash": "sha256:d0f2e5410c033af237064de64fd14ec28468ec2a55b054f9d82186970f07757b",
+        "size": 6578311,
+        "readable_version": "./md_outputs/B450 Steel Legend.md"
       },
-      "summary": "This document provides instructions for integrating ComfyUI with OpenWebUI using a specific workflow and JSON configuration.",
+      "summary": "This document contains legal disclaimers and copyright information for the B450 Steel Legend motherboard by ASRock, published in November 2020.",
       "category": "Guides",
       "is_new_category": false,
-      "title": "OpenWebImages",
-      "timestamp": "2026-01-30T13:19:15.384735"
+      "title": "B450 Steel Legend",
+      "timestamp": "2026-03-05T16:57:55.637435"
     },
     {
       "file": {
-        "path": "./LAN over Wan.docx",
-        "hash": "sha256:db8ecb52c93707e3cde9e2cba2da32e1ee9acec9a8d83e33e4407fddeb5ea386",
-        "size": 14455,
-        "readable_version": "./md_outputs/LAN over Wan.md"
+        "path": "./GL.iNet GL-SFT1200 - Private Wifi.docx",
+        "hash": "sha256:7a5cf9ccc72e08a60ef90e94d752b3fb1fb36afd568404e28205f765fe282a2b",
+        "size": 21477,
+        "readable_version": "./md_outputs/GL.iNet GL-SFT1200 - Private Wifi.md"
       },
-      "summary": "Document outlines the setup of TailScale for LAN over WAN connectivity and Syncthing configuration for file synchronization across devices.",
-      "category": "Workflows",
+      "summary": "The document describes how to use the GL.iNet GL-SFT1200 device in standalone mode to create a private WiFi network for local device communication without an internet connection.",
+      "category": "Guides",
       "is_new_category": false,
-      "title": "LAN over Wan",
-      "timestamp": "2026-01-30T13:19:59.747485"
+      "title": "GL.iNet GL-SFT1200 - Private Wifi",
+      "timestamp": "2026-03-05T16:57:58.729709"
     },
     {
       "file": {
-        "path": "./Laura New PC.txt",
-        "hash": "sha256:1eb8cb3f0876e8774f037fd2f98cd369e18d7edda78886c9eefde4f03a287b39",
-        "size": 663
+        "path": "./CLOUDFLARE.txt",
+        "hash": "sha256:99e0f1a52805ec0296859a11b9406869ed64b983cbda78b96aa4e78de1fe8024",
+        "size": 1264
       },
-      "summary": "The document provides specifications for the ASRock A520M-HDV motherboard designed for AMD AM4 processors with DDR4 RAM and Micro-ATX form factor.",
+      "summary": "This document lists DNS records managed by Cloudflare for the domain ldmathes.cc, including A, CNAME, MX, and TXT records as well as tunnels.",
       "category": "QuickRefs",
       "is_new_category": false,
-      "title": "Laura New PC",
-      "timestamp": "2026-01-30T13:20:48.305857"
+      "title": "CLOUDFLARE",
+      "timestamp": "2026-03-05T16:58:01.725495"
     },
     {
       "file": {
-        "path": "./Tailscale + Plex_ Remote Streaming Setup Guide.md",
-        "hash": "sha256:bb57ec2c181acd7533be67743042912473429a65761f5d3c4a0b3281b6568d70",
-        "size": 11121
+        "path": "./Tailscale with Surfshark.docx",
+        "hash": "sha256:0e4db084d1e204e917edea525f6e9831e4b964fc33274b89d048d92f0526bc13",
+        "size": 16121,
+        "readable_version": "./md_outputs/Tailscale with Surfshark.md"
       },
-      "summary": "This guide outlines the steps for setting up Plex media streaming over Tailscale, enabling direct, encrypted connections between the server and remote clients, improving speed, reliability, and privacy.",
+      "summary": "Describes steps to activate Surfshark TransparentProxy on macOS by manipulating startup security settings and troubleshooting tips for integrating Tailscale with Surfshark.",
       "category": "Guides",
       "is_new_category": false,
-      "title": "Tailscale + Plex_ Remote Streaming Setup Guide",
-      "timestamp": "2026-01-30T13:21:52.262146"
+      "title": "Tailscale with Surfshark",
+      "timestamp": "2026-03-05T16:58:04.583305"
     },
     {
       "file": {
-        "path": "./ComfyUI & OpenWebUI Integration Guide.pdf",
-        "hash": "sha256:cbb909b66fb1900403dc018dc2ad032da8278d979c18d6d494fefb085b1e5fe9",
-        "size": 108191,
-        "readable_version": "./md_outputs/ComfyUI & OpenWebUI Integration Guide.md"
+        "path": "./StatusHub.docx",
+        "hash": "sha256:581ea2627015ea2aa1bfdf985858fe17f1a967d129fbdcebd1c2a27b1b4a4870",
+        "size": 51103,
+        "readable_version": "./md_outputs/StatusHub.md"
       },
-      "summary": "This document provides a step-by-step guide for integrating ComfyUI with OpenWebUI, including setup instructions and configuration details.",
-      "category": "Guides",
+      "summary": "This document outlines the planning phase for a web-based fleet status dashboard using Python checkers and Flask APIs, with no coding begun yet.",
+      "category": "Workflows",
       "is_new_category": false,
-      "title": "ComfyUI & OpenWebUI Integration Guide",
-      "timestamp": "2026-01-30T13:22:56.998900"
+      "title": "StatusHub",
+      "timestamp": "2026-03-05T16:58:07.607919"
     },
     {
       "file": {
-        "path": "./comfyui_openwebui_guide.md",
-        "hash": "sha256:a8e9870e21547486d16309c47e5ed2ca16f2403031fed4aa1f86d6ae3018c435",
-        "size": 11398
+        "path": "./GLiNet_Opal_Surfshark_Guide.docx",
+        "hash": "sha256:97a046a8d39ff8dbb94289ad22112ac65d4de634a9f6481648450d216dc474ed",
+        "size": 10955,
+        "readable_version": "./md_outputs/GLiNet_Opal_Surfshark_Guide.md"
       },
-      "summary": "This guide provides steps for integrating ComfyUI with OpenWebUI including setup instructions and configuration details.",
+      "summary": "This document provides step-by-step instructions for setting up the GL.iNet Opal router with Surfshark VPN on cruise ships, ensuring secure and private internet access.",
       "category": "Guides",
       "is_new_category": false,
-      "title": "comfyui_openwebui_guide",
-      "timestamp": "2026-01-30T13:24:01.702305"
+      "title": "GLiNet_Opal_Surfshark_Guide",
+      "timestamp": "2026-03-05T16:58:10.861352"
     }
   ]
 }
