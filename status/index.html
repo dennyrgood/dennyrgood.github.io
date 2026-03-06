@@ -10,8 +10,8 @@
             --bg-color: #04060b;
             --text-main: #a9b7c6;
             --neon-green: #39ff14;
-            --neon-red: #ff2a2a;
-            --node-blue: #4a6fa5;
+            --neon-red: #7a1515;
+            --node-blue: #6b93cf;
             --grid: rgba(57, 255, 20, 0.03);
         }
 
@@ -42,14 +42,14 @@
 
         /* Graph Elements */
         #graph-container { width: 100vw; height: 100vh; position: relative; z-index: 5; }
-        .link { fill: none; stroke-opacity: 0.8; stroke-linecap: round; transition: stroke 0.3s; }
+        .link { fill: none; stroke-opacity: 0.8; stroke-linecap: round; transition: stroke 0.3s; stroke-dasharray: none; animation: none; }
         .link.backbone { stroke-width: 12px; filter: drop-shadow(0 0 5px var(--neon-green)); }
         .link.backbone.down, .link.backbone.unknown { filter: drop-shadow(0 0 5px var(--neon-red)); }
         .link.sub { stroke-width: 2px; stroke-opacity: 0.4; }
         
         .link.up { stroke: var(--neon-green); }
-        .link.down, .link.unknown { stroke: var(--neon-red); stroke-dasharray: 8,8; animation: dash 1.5s linear infinite; stroke-width: 4px !important; }
-        .link.backbone.down, .link.backbone.unknown { stroke-width: 12px !important; }
+        .link.down, .link.unknown { stroke: var(--neon-red); stroke-dasharray: none; animation: none; stroke-width: 4px !important; }
+        .link.backbone.down, .link.backbone.unknown { stroke-width: 12px !important; animation: none; stroke-dasharray: none;}
         /* Sub-links whose parent host is already down — muted grey, no alarm color */
         .link.host-down { stroke: #4a5060; stroke-dasharray: 5,5; stroke-width: 2px !important; stroke-opacity: 0.55 !important; }
         
@@ -96,7 +96,11 @@
 
     <script>
         // Update this URL to your live endpoint or local JSON file
-        const API_URL = 'https://fleet.ldmathes.cc/api/status'; 
+        //const API_URL = 'https://fleet.ldmathes.cc/api/status';
+        const params = new URLSearchParams(window.location.search);
+        const API_URL = params.has('bkp')
+            ? 'https://fleet-bkp.ldmathes.cc/api/status'
+            : 'https://fleet.ldmathes.cc/api/status'; 
         
         let svg, g, simulation, width, height;
         let lastTimestamp = null;
