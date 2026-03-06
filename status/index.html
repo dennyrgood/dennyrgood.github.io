@@ -2,144 +2,340 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fleet Status Hub</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Fleet Ops - Tactical Command v6</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
-        .status-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
-        body { font-family: 'JetBrains Mono', monospace; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .text-glow-green { text-shadow: 0 0 12px rgba(16, 185, 129, 0.6); }
-        /* Prevent extra scrolling */
-        html, body { height: 100%; margin: 0; padding: 0; overflow-x: hidden; }
+        :root {
+            --bg-color: #04060b;
+            --text-main: #a9b7c6;
+            --neon-green: #39ff14;
+            --neon-red: #ff2a2a;
+            --node-blue: #4a6fa5;
+            --grid: rgba(57, 255, 20, 0.03);
+        }
+
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Share Tech Mono', monospace;
+            overflow: hidden;
+        }
+
+        /* Tactical Background */
+        #ui-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+            background-size: 60px 60px; pointer-events: none; z-index: 1;
+        }
+
+        /* Header & Meta */
+        #header { position: absolute; top: 30px; left: 40px; z-index: 10; }
+        #title { font-size: 38px; font-weight: bold; color: #fff; display: flex; align-items: center; letter-spacing: 3px; }
+        #cursor { width: 14px; height: 28px; background: var(--neon-green); margin-left: 12px; animation: blink 1s step-end infinite; }
+        #meta { font-size: 14px; margin-top: 10px; color: #5e6d7a; text-transform: uppercase; }
+        .highlight { color: var(--text-main); }
+        .age { color: #f2a93b; font-weight: bold; }
+
+        @keyframes blink { 50% { opacity: 0; } }
+
+        /* Graph Elements */
+        #graph-container { width: 100vw; height: 100vh; position: relative; z-index: 5; }
+        .link { fill: none; stroke-opacity: 0.8; stroke-linecap: round; transition: stroke 0.3s; }
+        .link.backbone { stroke-width: 12px; filter: drop-shadow(0 0 5px var(--neon-green)); }
+        .link.backbone.down, .link.backbone.unknown { filter: drop-shadow(0 0 5px var(--neon-red)); }
+        .link.sub { stroke-width: 2px; stroke-opacity: 0.4; }
+        
+        .link.up { stroke: var(--neon-green); }
+        .link.down, .link.unknown { stroke: var(--neon-red); stroke-dasharray: 8,8; animation: dash 1.5s linear infinite; stroke-width: 4px !important; }
+        .link.backbone.down, .link.backbone.unknown { stroke-width: 12px !important; }
+        /* Sub-links whose parent host is already down — muted grey, no alarm color */
+        .link.host-down { stroke: #4a5060; stroke-dasharray: 5,5; stroke-width: 2px !important; stroke-opacity: 0.55 !important; }
+        
+        @keyframes dash { to { stroke-dashoffset: -32; } }
+        
+        .node circle { stroke: #000; stroke-width: 2px; }
+        .node text { font-size: 14px; fill: #fff; pointer-events: none; text-shadow: 0 0 8px #000; font-weight: bold; }
+
+        #tooltip {
+            position: absolute; opacity: 0; background: rgba(5, 8, 15, 0.98);
+            border: 1px solid var(--node-blue); padding: 12px 16px; font-size: 12px;
+            z-index: 100; pointer-events: none; border-radius: 4px;
+            transition: opacity 0.15s ease; line-height: 1.7;
+            max-width: 320px; min-width: 220px;
+        }
+        .tt-divider { border: none; border-top: 1px solid #1a2535; margin: 6px 0; }
+        .tt-label { color: #5e6d7a; font-size: 10px; letter-spacing: 1px; }
+        .tt-priority { 
+            display: inline-block; padding: 1px 5px; border-radius: 2px;
+            background: rgba(242,169,59,0.15); color: #f2a93b; 
+            border: 1px solid rgba(242,169,59,0.3); font-size: 10px;
+        }
+
+        /* Debug Logger (Visible if fetch fails) */
+        #debug-log { position: absolute; top: 10px; right: 10px; font-size: 10px; color: #ff2a2a; z-index: 100; max-width: 200px; text-align: right; }
     </style>
 </head>
-<body class="bg-[#05070a] text-slate-200 p-6 md:p-10 selection:bg-emerald-500/30">
+<body>
 
-    <div class="max-w-[1900px] mx-auto pb-0">
-        <!-- Main Functional Header -->
-        <header class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-12 gap-8 border-b border-white/10 pb-10">
-            <div>
-                <h1 class="text-5xl font-black tracking-tighter text-white flex items-center gap-3">
-                    FLEET_OPS <span class="text-emerald-500 animate-pulse text-glow-green">_</span>
-                </h1>
-                <div id="sub-header" class="text-xs text-slate-500 mt-4 tracking-[0.4em] uppercase flex items-center gap-4">
-                    <span id="source-node">SOURCE_PENDING</span> 
-                    <span class="text-slate-800">/</span> 
-                    <span id="sync-time">SYNC_PENDING</span>
-                </div>
-            </div>
+    <div id="ui-layer"></div>
+    <div id="debug-log"></div>
 
-            <!-- Summary Stats -->
-            <div id="summary-container" class="flex gap-5 overflow-x-auto no-scrollbar">
-                <!-- Injected via JS -->
-            </div>
-
-            <div id="global-status" class="px-6 py-3 rounded-xl bg-slate-900/50 border border-white/10 flex items-center gap-4 shadow-xl">
-                <div class="w-3 h-3 rounded-full bg-slate-700"></div>
-                <span class="text-xs font-bold tracking-[0.2em] text-slate-500 uppercase font-mono">Awaiting Data</span>
-            </div>
-        </header>
-
-        <!-- Machine Grid -->
-        <main id="machine-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 items-start">
-            <!-- Injected via JS -->
-        </main>
-        
-        <!-- Redundant Footer Sections Removed -->
+    <div id="header">
+        <div id="title">FLEET_OPS <div id="cursor"></div></div>
+        <div id="meta">
+            SOURCE_NODE: <span id="src-host" class="highlight">DETECTING...</span> <br>
+            TIMESTAMP: <span id="data-time" class="highlight">--:--:--</span> // 
+            SYNC: <span id="data-age" class="age">0s ago</span>
+        </div>
     </div>
 
-    <script>
-        const API_BASE = "https://fleet.ldmathes.cc";
+    <div id="tooltip"></div>
+    <div id="graph-container"></div>
 
-        async function updateDashboard() {
+    <script>
+        // Update this URL to your live endpoint or local JSON file
+        const API_URL = 'https://fleet.ldmathes.cc/api/status'; 
+        
+        let svg, g, simulation, width, height;
+        let lastTimestamp = null;
+
+        function logDebug(msg) {
+            document.getElementById('debug-log').innerText = msg;
+            if (msg) console.warn(msg);
+        }
+
+        async function refreshFleet() {
             try {
-                const response = await fetch(`${API_BASE}/api/status`, { mode: 'cors' });
-                if (!response.ok) throw new Error('OFFLINE');
+                const response = await fetch(API_URL);
+                if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
                 const data = await response.json();
                 
-                renderSummary(data.summary);
-                renderGrid(data.machines);
-                renderHeader(data.meta);
+                // 1. Update Header Metadata
+                if (data.meta) {
+                    document.getElementById('src-host').innerText = data.meta.checker_host || "UNKNOWN";
+                    lastTimestamp = new Date(data.meta.timestamp_utc);
+                    document.getElementById('data-time').innerText = lastTimestamp.toLocaleTimeString();
+                }
+
+                // 2. Render
+                drawNetwork(data);
+                logDebug(""); // Clear errors on success
             } catch (err) {
-                console.error("Fetch Error:", err);
-                document.getElementById('global-status').innerHTML = `<div class="w-3 h-3 rounded-full bg-red-500 status-pulse"></div> <span class="text-red-500 text-xs font-bold tracking-widest uppercase">Link_Lost</span>`;
+                logDebug(`Sync Error: ${err.message}`);
+                // Attempt to draw with whatever data we might have or stay blank
             }
         }
 
-        function renderSummary(s) {
-            const container = document.getElementById('summary-container');
-            const stats = [
-                { label: 'HOSTS', val: `${s.machines_up}/${s.machines_total}`, color: 'emerald' },
-                { label: 'SERVICES', val: `${s.services_up}/${s.services_total}`, color: 'blue' },
-                { label: 'PUBLIC', val: `${s.public_endpoints_up}/${s.public_endpoints_total}`, color: 'purple' }
-            ];
-            container.innerHTML = stats.map(st => `
-                <div class="bg-slate-900/40 border border-white/10 p-4 rounded-xl min-w-[140px] shadow-lg">
-                    <div class="text-[10px] font-bold text-slate-500 tracking-[0.2em] mb-2 uppercase opacity-60">${st.label}</div>
-                    <div class="text-2xl font-black text-${st.color}-400 tabular-nums">${st.val}</div>
-                </div>
-            `).join('');
-        }
+        // Live Age Counter
+        setInterval(() => {
+            if (lastTimestamp) {
+                const seconds = Math.floor((new Date() - lastTimestamp) / 1000);
+                document.getElementById('data-age').innerText = `${seconds}s ago`;
+            }
+        }, 1000);
 
-        function renderGrid(machines) {
-            const grid = document.getElementById('machine-grid');
-            grid.innerHTML = machines.map(m => {
-                const isUp = m.host.status === 'up';
-                return `
-                <div class="bg-slate-900/10 border-2 ${isUp ? 'border-white/5' : 'border-red-900/40'} rounded-2xl p-8 hover:bg-slate-900/30 transition-all group shadow-2xl">
-                    <div class="flex justify-between items-start mb-8">
-                        <div class="max-w-[75%]">
-                            <h2 class="text-2xl font-black tracking-tight leading-none text-white group-hover:text-emerald-400 transition-colors truncate">${m.machine.display_name.toUpperCase()}</h2>
-                            <p class="text-[11px] text-slate-500 mt-3 uppercase tracking-[0.2em] font-bold opacity-80">${m.machine.primary_role}</p>
-                        </div>
-                        <div class="flex items-center gap-3 bg-black/60 px-3 py-1.5 rounded-lg border border-white/10">
-                            <span class="text-xs font-bold text-slate-500 tabular-nums">${m.host.response_time_ms || 0}ms</span>
-                            <div class="w-3 h-3 rounded-full ${isUp ? 'bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.7)]' : 'bg-red-500 status-pulse'}"></div>
-                        </div>
-                    </div>
+        function drawNetwork(data) {
+            width = window.innerWidth;
+            height = window.innerHeight;
 
-                    <div class="space-y-6">
-                        ${m.services.map(s => {
-                            const svcUp = (s.public_check?.status === 'up') || (s.tailscale_check?.status === 'up');
-                            const detail = s.tailscale_check?.detail || s.public_check?.detail || "";
-                            return `
-                            <div class="border-l-4 ${svcUp ? 'border-emerald-500/30' : 'border-red-500/30'} pl-4 py-1">
-                                <div class="flex justify-between items-center mb-1">
-                                    <div class="flex items-center gap-3">
-                                        <span class="text-[10px] px-1.5 py-0.5 bg-slate-800 text-slate-300 rounded font-black uppercase tracking-tighter">${s.priority}</span>
-                                        <span class="text-[14px] text-slate-200 font-bold tracking-tight">${s.name}</span>
-                                    </div>
-                                    <span class="text-xs font-black tracking-tighter ${svcUp ? 'text-emerald-400' : 'text-red-400'}">${svcUp ? 'OK' : 'ERR'}</span>
-                                </div>
-                                ${detail ? `<p class="text-[11px] text-slate-500/90 leading-relaxed uppercase font-medium italic group-hover:text-slate-400 transition-opacity">${detail.replace(' — service alive', '')}</p>` : ''}
-                            </div>
-                            `;
-                        }).join('')}
-                    </div>
-
-                    <div class="mt-10 pt-6 border-t border-white/5 flex justify-between items-center opacity-30 group-hover:opacity-100 transition-all duration-500">
-                        <span class="text-[11px] font-mono tabular-nums tracking-wider">${m.machine.tailscale_ip}</span>
-                        <span class="text-[11px] font-mono tracking-tighter">${m.machine.tailscale_name}</span>
-                    </div>
-                </div>
-                `;
-            }).join('');
-        }
-
-        function renderHeader(meta) {
-            let host = meta.checker_host || 'unknown';
-            if(host.toLowerCase().includes('amsterdam')) host = 'AMSTERDAM';
+            d3.select("#graph-container").selectAll("*").remove();
+            svg = d3.select("#graph-container").append("svg").attr("width", width).attr("height", height);
             
-            document.getElementById('source-node').innerText = `SOURCE: ${host.toUpperCase()}`;
-            document.getElementById('sync-time').innerText = `T: ${new Date(meta.timestamp_utc).toLocaleTimeString([], { hour12: false })}`;
-            document.getElementById('global-status').innerHTML = `<div class="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.8)]"></div> <span class="text-emerald-500 text-xs font-black tracking-[0.25em] uppercase">Operational</span>`;
+            const zoom = d3.zoom().scaleExtent([0.5, 2]).on("zoom", (e) => g.attr("transform", e.transform));
+            svg.call(zoom);
+            g = svg.append("g");
+
+            const summary = data.summary || {};
+            const nodes = [{ 
+                id: "CORE", label: "FLEET_HUB", type: 'root', 
+                x: width/2, y: height/2, fx: width/2, fy: height/2,
+                summary
+            }];
+            const links = [];
+
+            // Track which hosts are down so sub-links can be quieted
+            const hostDownSet = new Set();
+
+            // Process Machines and Services
+            if (data.machines) {
+                data.machines.forEach(m => {
+                    const mID = m.machine.tailscale_name;
+                    if (m.host.status !== 'up') hostDownSet.add(mID);
+                    nodes.push({ 
+                        id: mID, label: m.machine.display_name, status: m.host.status, 
+                        type: 'host', ip: m.machine.tailscale_ip, ping: m.host.response_time_ms,
+                        role: m.machine.primary_role, tsname: mID
+                    });
+                    
+                    // Backbone Link (Hub -> Machine)
+                    links.push({ source: "CORE", target: mID, status: m.host.status, tier: 'backbone' });
+
+                    if (m.services) {
+                        m.services.forEach(s => {
+                            const sID = `${mID}_${s.name}`;
+                            const sStatus = s.tailscale_check ? s.tailscale_check.status : 'unknown';
+                            // If host is down, mute sub-links so only the backbone link alarms
+                            const subLinkStatus = hostDownSet.has(mID) ? 'host-down' : sStatus;
+                            nodes.push({ 
+                                id: sID, label: s.name, status: sStatus, 
+                                type: 'service', detail: s.tailscale_check?.detail,
+                                port: s.port, priority: s.priority,
+                                ts_ms: s.tailscale_check?.response_time_ms,
+                                pub_url: s.public_check?.url,
+                                pub_status: s.public_check?.status,
+                                pub_ms: s.public_check?.response_time_ms
+                            });
+                            links.push({ source: mID, target: sID, status: subLinkStatus, tier: 'sub' });
+                        });
+                    }
+                });
+            }
+
+            simulation = d3.forceSimulation(nodes)
+                .force("link", d3.forceLink(links).id(d => d.id).distance(d => d.tier === 'backbone' ? 220 : 80))
+                .force("charge", d3.forceManyBody().strength(-2000))
+                .force("center", d3.forceCenter(width / 2, height / 2))
+                .force("collide", d3.forceCollide().radius(100));
+
+            const linkElements = g.append("g").selectAll("path")
+                .data(links).enter().append("path")
+                .attr("class", d => `link ${d.status} ${d.tier}`);
+
+            const nodeElements = g.append("g").selectAll("g")
+                .data(nodes).enter().append("g")
+                .attr("class", "node")
+                .call(d3.drag().on("start", dragStart).on("drag", dragging).on("end", dragEnd));
+
+            nodeElements.append("circle")
+                .attr("r", d => d.type === 'root' ? 15 : (d.type === 'host' ? 12 : 7))
+                .attr("fill", d => d.type === 'root' ? '#fff' : (d.status === 'up' ? 'var(--node-blue)' : 'var(--neon-red)'));
+
+            // Invisible larger hit target for easier hover (especially small service nodes)
+            nodeElements.append("circle")
+                .attr("r", d => d.type === 'root' ? 22 : (d.type === 'host' ? 22 : 18))
+                .attr("fill", "transparent")
+                .attr("stroke", "none")
+                .on("mouseover", showTooltip).on("mouseout", scheduleHideTooltip);
+
+            // Node label + optional priority tag
+            nodeElements.append("text").attr("dx", 18).attr("dy", 5)
+                .text(d => {
+                    if (d.type === 'service' && d.priority) return `${d.label} [${d.priority}]`;
+                    return d.label;
+                })
+                .attr("fill", d => {
+                    if (d.type === 'service' && d.priority === 'P') return '#fff';
+                    if (d.type === 'service') return '#8a9ab0';
+                    return '#fff';
+                });
+
+            simulation.on("tick", () => {
+                // Bounding Box Constraint (keeps nodes inside viewport)
+                nodes.forEach(d => {
+                    d.x = Math.max(100, Math.min(width - 100, d.x));
+                    d.y = Math.max(150, Math.min(height - 100, d.y));
+                });
+
+                linkElements.attr("d", d => {
+                    const dx = d.target.x - d.source.x, dy = d.target.y - d.source.y;
+                    const dr = Math.sqrt(dx * dx + dy * dy) * 1.5;
+                    return `M${d.source.x},${d.source.y}A${dr},${dr} 0 0,1 ${d.target.x},${d.target.y}`;
+                });
+                nodeElements.attr("transform", d => `translate(${d.x},${d.y})`);
+            });
         }
 
-        updateDashboard();
-        setInterval(updateDashboard, 30000);
+        let tooltipHideTimer = null;
+
+        function showTooltip(event, d) {
+            // Cancel any pending hide
+            if (tooltipHideTimer) { clearTimeout(tooltipHideTimer); tooltipHideTimer = null; }
+
+            const tt = d3.select("#tooltip");
+            const statusColor = d.status === 'up' ? 'var(--neon-green)' : (d.status === 'down' ? 'var(--neon-red)' : '#f2a93b');
+            let content = '';
+
+            if (d.type === 'root') {
+                // FLEET_HUB summary tooltip
+                const s = d.summary || {};
+                content += `<strong style='font-size:13px;color:#fff'>FLEET_HUB</strong>`;
+                content += `<hr class='tt-divider'>`;
+                content += `<span class='tt-label'>HOSTS</span><br>`;
+                content += `&nbsp; TOTAL: <span style='color:var(--text-main)'>${s.machines_total ?? '--'}</span>`;
+                content += ` &nbsp; UP: <span style='color:var(--neon-green)'>${s.machines_up ?? '--'}</span>`;
+                content += ` &nbsp; DOWN: <span style='color:${(s.machines_down||0)>0?"var(--neon-red)":"var(--text-main)"}'>${s.machines_down ?? '--'}</span>`;
+                content += `<hr class='tt-divider'>`;
+                content += `<span class='tt-label'>SERVICES</span><br>`;
+                content += `&nbsp; TOTAL: <span style='color:var(--text-main)'>${s.services_total ?? '--'}</span>`;
+                content += ` &nbsp; UP: <span style='color:var(--neon-green)'>${s.services_up ?? '--'}</span>`;
+                content += ` &nbsp; DOWN: <span style='color:${(s.services_down||0)>0?"var(--neon-red)":"var(--text-main)"}'>${s.services_down ?? '--'}</span>`;
+                content += `<hr class='tt-divider'>`;
+                content += `<span class='tt-label'>PUBLIC ENDPOINTS</span><br>`;
+                content += `&nbsp; TOTAL: <span style='color:var(--text-main)'>${s.public_endpoints_total ?? '--'}</span>`;
+                content += ` &nbsp; UP: <span style='color:var(--neon-green)'>${s.public_endpoints_up ?? '--'}</span>`;
+                content += ` &nbsp; DOWN: <span style='color:${(s.public_endpoints_down||0)>0?"var(--neon-red)":"var(--text-main)"}'>${s.public_endpoints_down ?? '--'}</span>`;
+            } else if (d.type === 'host') {
+                content += `<strong style='font-size:13px;color:#fff'>${d.label}</strong>`;
+                if (d.tsname) content += ` <span style='color:#5e6d7a;font-size:10px'>${d.tsname}</span>`;
+                if (d.role) content += `<br><span style='color:#5e6d7a'>${d.role.toUpperCase()}</span>`;
+                content += `<hr class='tt-divider'>`;
+                content += `STATUS: <span style='color:${statusColor}'>${d.status.toUpperCase()}</span>`;
+                if (d.ip) content += `<br>IP: <span style='color:var(--text-main)'>${d.ip}</span>`;
+                if (d.ping != null) content += `<br>LATENCY: <span style='color:var(--text-main)'>${d.ping}ms</span>`;
+            } else {
+                content += `<strong style='font-size:13px;color:#fff'>${d.label}</strong>`;
+                if (d.priority) content += ` <span class='tt-priority'>${d.priority}</span>`;
+                content += `<hr class='tt-divider'>`;
+                content += `STATUS: <span style='color:${statusColor}'>${d.status.toUpperCase()}</span>`;
+                if (d.port) content += `<br>PORT: <span style='color:var(--text-main)'>:${d.port}</span>`;
+                if (d.ts_ms != null) content += `<br>TS LATENCY: <span style='color:var(--text-main)'>${d.ts_ms}ms</span>`;
+                if (d.detail) content += `<br><span style='color:#777;font-size:11px'>> ${d.detail}</span>`;
+                if (d.pub_url) {
+                    const pubColor = d.pub_status === 'up' ? 'var(--neon-green)' : 'var(--neon-red)';
+                    content += `<hr class='tt-divider'>`;
+                    content += `<span class='tt-label'>PUBLIC</span><br>`;
+                    content += `<span style='color:${pubColor}'>${d.pub_url.replace('https://','')}</span>`;
+                    if (d.pub_ms != null) content += ` <span style='color:#777'>${d.pub_ms}ms</span>`;
+                } else {
+                    content += `<hr class='tt-divider'><span style='color:#5e6d7a;font-size:10px'>TAILSCALE ONLY — NO PUBLIC ENDPOINT</span>`;
+                }
+            }
+
+            tt.html(content).style("opacity", 1);
+
+            // Smart positioning: measure tooltip then clamp to viewport
+            const ttNode = document.getElementById('tooltip');
+            const tw = ttNode.offsetWidth, th = ttNode.offsetHeight;
+            const pad = 16;
+            let left = event.pageX + 20;
+            let top  = event.pageY - 20;
+            if (left + tw + pad > window.innerWidth)  left = event.pageX - tw - 20;
+            if (top  + th + pad > window.innerHeight) top  = event.pageY - th;
+            if (top < pad) top = pad;
+            if (left < pad) left = pad;
+            tt.style("left", left + "px").style("top", top + "px");
+        }
+
+        function scheduleHideTooltip() {
+            tooltipHideTimer = setTimeout(() => {
+                d3.select("#tooltip").style("opacity", 0);
+                tooltipHideTimer = null;
+            }, 300);
+        }
+        function dragStart(event) { if (!event.active) simulation.alphaTarget(0.3).restart(); event.subject.fx = event.subject.x; event.subject.fy = event.subject.y; }
+        function dragging(event) { event.subject.fx = event.x; event.subject.fy = event.y; }
+        function dragEnd(event) { if (!event.active) simulation.alphaTarget(0); event.subject.fx = null; event.subject.fy = null; }
+
+        window.addEventListener('resize', () => { 
+            width = window.innerWidth; height = window.innerHeight; 
+            if (simulation) simulation.force("center", d3.forceCenter(width/2, height/2)).restart(); 
+        });
+
+        // Initialize
+        refreshFleet();
+        setInterval(refreshFleet, 30000); // 30s Refresh
     </script>
 </body>
 </html>
