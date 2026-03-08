@@ -52,7 +52,13 @@
     </div>
 
     <script>
-        const API_BASE = "https://fleet.ldmathes.cc";
+        //const API_BASE = "https://fleet.ldmathes.cc";
+// Update this URL to your live endpoint or local JSON file
+//const API_URL = 'https://fleet.ldmathes.cc/api/status';
+        const params = new URLSearchParams(window.location.search);
+        const API_BASE = params.has('bkp')
+         ? 'https://fleet-bkp.ldmathes.cc'
+         : 'https://fleet.ldmathes.cc';
 
         async function updateDashboard() {
             try {

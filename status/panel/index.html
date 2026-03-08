@@ -499,14 +499,20 @@ body::before {
 <div class="pagefooter">
   <div class="pagefooter-wordmark">FLEET<span>_</span>STATUS</div>
   <div class="pagefooter-meta">
-    <a href="/status/" id="altFeedLink">↗ PRIMARY FEED</a>
+    <a href="/status-bkp/" id="altFeedLink">↗ BACKUP FEED</a>
     <span id="footerMeta">POLL: 30S</span>
     <span id="footerChecker">—</span>
   </div>
 </div>
 
 <script>
-const API_URL = 'https://fleet-bkp.ldmathes.cc/api/status';
+//const API_URL = 'https://fleet.ldmathes.cc/api/status';
+// Update this URL to your live endpoint or local JSON file
+//const API_URL = 'https://fleet.ldmathes.cc/api/status';
+const params = new URLSearchParams(window.location.search);
+const API_URL = params.has('bkp')
+  ? 'https://fleet-bkp.ldmathes.cc/api/status'
+  : 'https://fleet.ldmathes.cc/api/status'; 
 const POLL_MS = 30000;
 const STALE_S = 90;
 const SECONDARY = new Set(['denniss-macbook-air','denniss-2nd-macbook-air']);
