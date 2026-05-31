@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Travel Alignment Dashboard</title>
+<style>
+:root {
+  --bg:#ffffff; --bg2:#f5f4f0; --bg3:#eeede9;
+  --text:#1a1a18; --text2:#5f5e5a; --text3:#888780;
+  --border:rgba(0,0,0,0.1); --border2:rgba(0,0,0,0.2);
+  --radius:8px; --radius-lg:12px;
+  --green:#1D9E75; --blue:#378ADD; --amber:#BA7517;
+  --orange:#D85A30; --red:#E24B4A; --purple:#534AB7; --pink:#D4537E; --gray:#888780;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:#1e1e1c; --bg2:#2a2a28; --bg3:#333331;
+    --text:#f0efeb; --text2:#a8a79f; --text3:#6b6a65;
+    --border:rgba(255,255,255,0.1); --border2:rgba(255,255,255,0.2);
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg3);color:var(--text);font-size:14px;min-height:100vh;}
+.app{max-width:1100px;margin:0 auto;padding:24px 20px;}
+h1{font-size:20px;font-weight:500;margin-bottom:2px;}
+.subtitle{font-size:13px;color:var(--text3);margin-bottom:18px;}
+
+.drop-zone{border:1.5px dashed var(--border2);border-radius:var(--radius-lg);padding:24px;text-align:center;background:var(--bg);cursor:pointer;transition:background 0.15s;margin-bottom:18px;}
+.drop-zone.dragover{background:var(--bg2);}
+.drop-zone.loaded{border-style:solid;border-color:var(--green);}
+.drop-zone p{color:var(--text2);font-size:13px;margin-top:4px;}
+.drop-zone strong{font-size:15px;font-weight:500;}
+input[type=file]{display:none;}
+
+.stats{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px;}
+.stat{background:var(--bg2);border-radius:var(--radius);padding:10px 16px;min-width:110px;}
+.stat-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:2px;}
+.stat-val{font-size:22px;font-weight:500;}
+.stat-val.small{font-size:15px;padding-top:4px;}
+
+.panel{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:14px;}
+.panel-title{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:12px;}
+
+.filters{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start;}
+.filter-group{display:flex;flex-direction:column;gap:5px;}
+.filter-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.04em;}
+.filter-btns{display:flex;flex-wrap:wrap;gap:4px;}
+button.tog{font-size:12px;padding:3px 10px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text2);cursor:pointer;transition:background 0.1s;}
+button.tog.active{background:var(--bg3);color:var(--text);font-weight:500;}
+button.tog:hover{background:var(--bg2);}
+
+/* SCATTERPLOT */
+.scatter-wrap{position:relative;width:100%;height:500px;}
+#scatterCanvas{position:absolute;top:0;left:0;width:100%;height:100%;}
+
+/* QUADRANT */
+.quad-controls{display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-bottom:14px;}
+.quad-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.quad-card{border-radius:var(--radius-lg);padding:12px;min-height:80px;}
+.quad-title{font-size:12px;font-weight:500;margin-bottom:2px;}
+.quad-sub{font-size:11px;opacity:0.7;margin-bottom:8px;}
+.quad-chips{display:flex;flex-wrap:wrap;gap:4px;}
+.chip{font-size:11px;padding:2px 7px;border-radius:10px;cursor:default;white-space:nowrap;border:1px solid transparent;}
+.chip:hover{opacity:0.75;}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{text-align:left;font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.04em;padding:6px 8px;border-bottom:0.5px solid var(--border2);cursor:pointer;white-space:nowrap;user-select:none;}
+th:hover{color:var(--text);}
+td{padding:6px 8px;border-bottom:0.5px solid var(--border);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--bg2);}
+.bar-wrap{display:flex;align-items:center;gap:5px;}
+.bar{height:5px;border-radius:3px;}
+.pip{display:inline-block;width:7px;height:7px;border-radius:50%;margin:1px;}
+.row-count{font-size:12px;color:var(--text3);margin-bottom:8px;}
+
+/* TOOLTIP */
+.tooltip{position:fixed;pointer-events:none;background:var(--bg);border:0.5px solid var(--border2);border-radius:var(--radius);padding:10px 14px;font-size:12px;min-width:180px;z-index:200;display:none;}
+.tt-name{font-size:14px;font-weight:500;margin-bottom:6px;}
+.tt-row{display:flex;justify-content:space-between;gap:16px;padding:2px 0;border-bottom:0.5px solid var(--border);}
+.tt-row:last-child{border-bottom:none;}
+.tt-key{color:var(--text3);}
+.tt-val{font-weight:500;}
+
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--text2);padding:8px 0 0;}
+.ldot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:middle;}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>Travel Alignment Dashboard</h1>
+  <p class="subtitle">Your desire (x) vs Laura's desire (y)</p>
+
+  <div class="drop-zone" id="dropZone">
+    <strong id="dropTitle">Drop your CSV here</strong>
+    <p id="dropSub">or click to browse — l_rank, my desire, place, num visits, solo, friend, family, bekah, laura</p>
+    <input type="file" id="fileInput" accept=".csv">
+  </div>
+
+  <div id="dashboard" style="display:none">
+    <div class="stats">
+      <div class="stat"><div class="stat-label">showing</div><div class="stat-val" id="statCount">—</div></div>
+      <div class="stat"><div class="stat-label">your avg desire</div><div class="stat-val" id="statYou">—</div></div>
+      <div class="stat"><div class="stat-label">laura's avg desire</div><div class="stat-val" id="statLaura">—</div></div>
+      <div class="stat"><div class="stat-label">top alignment</div><div class="stat-val small" id="statTop">—</div></div>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="panel">
+      <div class="panel-title">filters</div>
+      <div class="filters">
+        <div class="filter-group">
+          <div class="filter-label">show trips valid for</div>
+          <div class="filter-btns">
+            <button class="tog active" id="fAll"    onclick="setCompFilter('all')">all</button>
+            <button class="tog" id="fSolo"   onclick="setCompFilter('solo')">solo</button>
+            <button class="tog" id="fFriend" onclick="setCompFilter('friend')">friend</button>
+            <button class="tog" id="fFamily" onclick="setCompFilter('family')">family</button>
+            <button class="tog" id="fBekah"  onclick="setCompFilter('bekah')">Bekah</button>
+            <button class="tog" id="fLaura"  onclick="setCompFilter('laura')">Laura</button>
+          </div>
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">visits</div>
+          <div class="filter-btns">
+            <button class="tog active" id="fVAll" onclick="setVisitFilter('all')">all</button>
+            <button class="tog" id="fVNew"  onclick="setVisitFilter('new')">never been</button>
+            <button class="tog" id="fVFam"  onclick="setVisitFilter('familiar')">been before</button>
+          </div>
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">your desire ≥ <span id="desireVal" style="font-weight:500;color:var(--text)">1</span></div>
+          <input type="range" min="1" max="10" value="1" step="1" id="desireSlider" oninput="setDesireMin(this.value)">
+        </div>
+        <div class="filter-group" style="margin-left:auto;margin-top:auto;">
+          <button class="tog" onclick="resetFilters()" style="padding:5px 14px;">reset</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCATTERPLOT -->
+    <div class="panel">
+      <div class="panel-title">scatter — your desire (x) · laura's desire (y) · size = versatility</div>
+      <div class="scatter-wrap">
+        <canvas id="scatterCanvas" role="img" aria-label="Scatterplot of destinations by your desire vs Laura's desire"></canvas>
+      </div>
+      <div class="legend" id="scatterLegend"></div>
+    </div>
+
+    <!-- QUADRANT -->
+    <div class="panel">
+      <div class="panel-title">quadrant view</div>
+      <div class="quad-controls">
+        <div class="filter-group">
+          <div class="filter-label">your desire threshold: <span id="qYouVal" style="font-weight:500;color:var(--text)">8</span></div>
+          <input type="range" min="1" max="10" value="8" step="1" id="qYouSlider" oninput="setQThresh('you',this.value)">
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">laura's desire threshold: <span id="qLauraVal" style="font-weight:500;color:var(--text)">8</span></div>
+          <input type="range" min="1" max="10" value="8" step="1" id="qLauraSlider" oninput="setQThresh('laura',this.value)">
+        </div>
+      </div>
+      <div class="quad-grid" id="quadGrid"></div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="panel">
+      <div class="row-count" id="rowCount"></div>
+      <table>
+        <thead>
+          <tr>
+            <th onclick="sortBy('name')" id="th-name">destination <span class="sa">↕</span></th>
+            <th onclick="sortBy('desire')" id="th-desire">your desire <span class="sa">↕</span></th>
+            <th onclick="sortBy('lauraScore')" id="th-lauraScore">laura <span class="sa">↕</span></th>
+            <th onclick="sortBy('lrank')" id="th-lrank">l rank <span class="sa">↕</span></th>
+            <th onclick="sortBy('visits')" id="th-visits">visits <span class="sa">↕</span></th>
+            <th onclick="sortBy('versatility')" id="th-versatility">versatility <span class="sa">↕</span></th>
+            <th>companions</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="tooltip" id="tooltip" style="max-height:420px;overflow-y:auto;">
+  <div id="ttBody"></div>
+</div>
+
+<script>
+const VISIT_COLORS=['#1D9E75','#378ADD','#BA7517','#D85A30','#E24B4A','#A32D2D'];
+const VISIT_LABELS=['never','once','twice','3×','4×','often'];
+const COMP_COLORS={laura:'#534AB7',bekah:'#D4537E',family:'#1D9E75',friend:'#378ADD',solo:'#888780'};
+const COMP_ORDER=['laura','bekah','family','friend','solo'];
+
+let allData=[], filteredCache=[];
+let compFilter='all', visitFilter='all', desireMin=1;
+let sortCol='desire', sortDir=-1;
+let qYou=8, qLaura=8;
+
+// canvas state
+let dots=[], animFrame=null;
+
+function splitLine(line){
+  const v=[];let c='',q=false;
+  for(let ch of line){if(ch==='"'){q=!q;}else if(ch===','&&!q){v.push(c.trim());c='';}else c+=ch;}
+  v.push(c.trim());return v;
+}
+
+function parseCSV(text){
+  const lines=text.trim().split(/\r?\n/);
+  if(lines.length<2)return[];
+  const raw=splitLine(lines[0]).map(h=>h.replace(/^"|"$/g,'').trim().toLowerCase());
+  const hm={};
+  raw.forEach((h,i)=>{
+    if(h==='l rank')hm.l_rank=i;
+    else if(h==='my desire')hm.desire=i;
+    else if(h==='place')hm.place=i;
+    else if(h.startsWith('num visit'))hm.visits=i;
+    else if(h==='solo')hm.solo=i;
+    else if(h==='friend')hm.friend=i;
+    else if(h==='family')hm.family=i;
+    else if(h==='bekah')hm.bekah=i;
+    else if(h==='laura')hm.laura=i;
+  });
+  return lines.slice(1).map(line=>{
+    const v=splitLine(line);
+    const r={};
+    Object.entries(hm).forEach(([k,i])=>r[k]=v[i]||'');
+    return r;
+  }).filter(r=>r.place&&r.desire);
+}
+
+function processRow(r){
+  const lrank=r.l_rank!==''&&!isNaN(r.l_rank)?parseFloat(r.l_rank):null;
+  const desire=parseFloat(r.desire)||0;
+  const visits=parseInt(r.visits)||0;
+  const lraw=(r.laura||'').toLowerCase().trim();
+  const lval=lraw==='x'?'x':lraw==='?'?'?':false;
+  let lauraScore=null;
+  if(lval==='x'&&lrank!=null)lauraScore=lrank;
+  else if(lval==='?'&&lrank!=null)lauraScore=Math.round(lrank*0.5);
+  else if(lval==='x'&&lrank==null)lauraScore=5;
+  const solo=(r.solo||'').toLowerCase().trim()==='x';
+  const friend=(r.friend||'').toLowerCase().trim()==='x';
+  const family=(r.family||'').toLowerCase().trim()==='x';
+  const bekah=(r.bekah||'').toLowerCase().trim()==='x';
+  const lcheck=lval!==false;
+  const versatility=[solo,friend,family,bekah,lcheck].filter(Boolean).length;
+  const compList=[];
+  if(solo)compList.push('solo');
+  if(friend)compList.push('friend');
+  if(family)compList.push('family');
+  if(bekah)compList.push('Bekah');
+  if(lcheck)compList.push('Laura'+(lval==='?'?'?':''));
+  let dominant='solo';
+  if(lcheck)dominant='laura';
+  else if(bekah)dominant='bekah';
+  else if(family)dominant='family';
+  else if(friend)dominant='friend';
+  return{name:r.place.trim(),lrank,desire,visits,solo,friend,family,bekah,laura:lval,lauraScore,versatility,compList,dominant};
+}
+
+function passesFilters(d){
+  if(d.desire<desireMin)return false;
+  if(visitFilter==='new'&&d.visits>0)return false;
+  if(visitFilter==='familiar'&&d.visits===0)return false;
+  if(compFilter==='solo'&&!d.solo)return false;
+  if(compFilter==='friend'&&!d.friend)return false;
+  if(compFilter==='family'&&!d.family)return false;
+  if(compFilter==='bekah'&&!d.bekah)return false;
+  if(compFilter==='laura'&&d.laura===false)return false;
+  return true;
+}
+
+// ── SCATTERPLOT (canvas) ──────────────────────────────────────────────
+function isDark(){return window.matchMedia('(prefers-color-scheme:dark)').matches;}
+
+function drawScatter(data){
+  const canvas=document.getElementById('scatterCanvas');
+  const wrap=canvas.parentElement;
+  const dpr=window.devicePixelRatio||1;
+  const W=wrap.clientWidth, H=wrap.clientHeight;
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+
+  const dark=isDark();
+  const PAD={l:48,r:24,t:24,b:44};
+  const plotW=W-PAD.l-PAD.r;
+  const plotH=H-PAD.t-PAD.b;
+
+  // helpers
+  function px(x){return PAD.l+((x-0.5)/10.5)*plotW;}
+  function py(y){return PAD.t+(1-(y/10.5))*plotH;}
+
+  // background
+  ctx.fillStyle=dark?'#1e1e1c':'#ffffff';
+  ctx.fillRect(0,0,W,H);
+
+  // grid lines
+  ctx.strokeStyle=dark?'rgba(255,255,255,0.07)':'rgba(0,0,0,0.07)';
+  ctx.lineWidth=0.5;
+  for(let i=1;i<=10;i++){
+    ctx.beginPath();ctx.moveTo(px(i),PAD.t);ctx.lineTo(px(i),PAD.t+plotH);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(PAD.l,py(i));ctx.lineTo(PAD.l+plotW,py(i));ctx.stroke();
+  }
+
+  // axes
+  ctx.strokeStyle=dark?'rgba(255,255,255,0.25)':'rgba(0,0,0,0.25)';
+  ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(PAD.l,PAD.t);ctx.lineTo(PAD.l,PAD.t+plotH);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(PAD.l,PAD.t+plotH);ctx.lineTo(PAD.l+plotW,PAD.t+plotH);ctx.stroke();
+
+  // tick labels
+  ctx.fillStyle=dark?'#6b6a65':'#888780';
+  ctx.font='10px -apple-system,sans-serif';
+  ctx.textAlign='center';
+  for(let i=1;i<=10;i++){
+    ctx.fillText(i,px(i),PAD.t+plotH+14);
+  }
+  ctx.textAlign='right';
+  for(let i=1;i<=10;i++){
+    ctx.fillText(i,PAD.l-5,py(i)+3);
+  }
+
+  // axis labels
+  ctx.fillStyle=dark?'#6b6a65':'#888780';
+  ctx.font='11px -apple-system,sans-serif';
+  ctx.textAlign='center';
+  ctx.fillText('your desire →',PAD.l+plotW/2,H-6);
+  ctx.save();
+  ctx.translate(12,PAD.t+plotH/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText("laura's desire →",0,0);
+  ctx.restore();
+
+  // group destinations by coordinate key (desire, lauraScore)
+  const groups={};
+  data.forEach(d=>{
+    const ky=d.lauraScore!=null?d.lauraScore:0;
+    const key=d.desire+'|'+ky;
+    if(!groups[key])groups[key]={items:[],desire:d.desire,lauraY:ky};
+    groups[key].items.push(d);
+  });
+
+  // build dots — one per group
+  dots=[];
+  Object.values(groups).forEach(g=>{
+    const x=px(g.desire);
+    const y=g.lauraY>0?py(g.lauraY):py(0.3);
+    // size = max versatility in group + count bonus
+    const maxV=Math.max(...g.items.map(d=>d.versatility));
+    const r=Math.max(8, maxV*4+2 + (g.items.length>1?4:0));
+    const noLaura=g.lauraY===0;
+    // color: dominant companion of highest-desire item
+    const lead=g.items.slice().sort((a,b)=>b.desire-a.desire)[0];
+    const col=noLaura?'#888780':COMP_COLORS[lead.dominant]||'#888780';
+    dots.push({x,y,r,col,noLaura,items:g.items,count:g.items.length});
+  });
+
+  // draw dots back to front
+  dots.slice().sort((a,b)=>b.r-a.r).forEach(dot=>{
+    ctx.beginPath();
+    ctx.arc(dot.x,dot.y,dot.r,0,Math.PI*2);
+    ctx.fillStyle=dot.col+(dot.noLaura?'33':'88');
+    ctx.fill();
+    ctx.strokeStyle=dot.col+(dot.noLaura?'77':'bb');
+    ctx.lineWidth=1.5;
+    ctx.stroke();
+
+    // badge count if >1
+    if(dot.count>1){
+      const br=8;
+      const bx=dot.x+dot.r*0.7;
+      const by=dot.y-dot.r*0.7;
+      ctx.beginPath();
+      ctx.arc(bx,by,br,0,Math.PI*2);
+      ctx.fillStyle=dark?'#333331':'#ffffff';
+      ctx.fill();
+      ctx.strokeStyle=dot.col;
+      ctx.lineWidth=1.5;
+      ctx.stroke();
+      ctx.fillStyle=dot.col;
+      ctx.font='bold 9px -apple-system,sans-serif';
+      ctx.textAlign='center';
+      ctx.textBaseline='middle';
+      ctx.fillText(dot.count,bx,by);
+      ctx.textBaseline='alphabetic';
+    }
+  });
+
+  // labels — one per dot, show first item name (+ "& N more" if group)
+  ctx.font='bold 10px -apple-system,sans-serif';
+  const drawn=[];
+  const sortedDots=[...dots].sort((a,b)=>b.items[0].desire-a.items[0].desire);
+  sortedDots.forEach(dot=>{
+    const lead=dot.items.slice().sort((a,b)=>b.desire-a.desire)[0];
+    const label=dot.count>1?lead.name+' +'+( dot.count-1):lead.name;
+    const lw=ctx.measureText(label).width;
+    const lx=dot.x+dot.r+3;
+    const ly=dot.y+3;
+    const box={x:lx-1,y:ly-10,w:lw+2,h:12};
+    const overlaps=drawn.some(b=>box.x<b.x+b.w&&box.x+box.w>b.x&&box.y<b.y+b.h&&box.y+box.h>b.y);
+    if(!overlaps&&lx+lw<W-4){
+      ctx.textAlign='left';
+      ctx.fillStyle=dot.noLaura?(dark?'#6b6a65':'#aaa'):(dark?'#c8c7c0':'#333');
+      ctx.fillText(label,lx,ly);
+      drawn.push(box);
+    }
+  });
+}
+
+function hitTest(mx,my){
+  const HOVER=10;
+  const hits=[];
+  dots.forEach(dot=>{
+    const dx=mx-dot.x,dy=my-dot.y;
+    const dist=Math.sqrt(dx*dx+dy*dy);
+    if(dist<=dot.r+HOVER)hits.push({dot,dist});
+  });
+  hits.sort((a,b)=>a.dist-b.dist);
+  return hits.length?hits[0].dot:null;
+}
+
+function setupScatterEvents(){
+  const canvas=document.getElementById('scatterCanvas');
+  canvas.addEventListener('mousemove',e=>{
+    const rect=canvas.getBoundingClientRect();
+    const mx=(e.clientX-rect.left);
+    const my=(e.clientY-rect.top);
+    const hit=hitTest(mx,my);
+    const tt=document.getElementById('tooltip');
+    if(hit){
+      const ttBody=document.getElementById('ttBody');
+      ttBody.innerHTML='';
+      // header: count if multiple
+      if(hit.count>1){
+        const hdr=document.createElement('div');
+        hdr.style.cssText='font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px;';
+        hdr.textContent=hit.count+' destinations at this spot';
+        ttBody.appendChild(hdr);
+      }
+      hit.items.forEach((d,i)=>{
+        if(i>0){
+          const div=document.createElement('div');
+          div.style.cssText='border-top:0.5px solid var(--border);margin-top:6px;padding-top:6px;';
+          ttBody.appendChild(div);
+        }
+        const nameEl=document.createElement('div');
+        nameEl.style.cssText='font-size:14px;font-weight:500;margin-bottom:4px;color:var(--text);';
+        nameEl.textContent=d.name;
+        ttBody.appendChild(nameEl);
+        const rows=[
+          ['your desire', d.desire],
+          ['laura', d.lauraScore!=null?d.lauraScore+(d.laura==='?'?' (tentative)':''):'—'],
+          ['visits', d.visits+' ('+VISIT_LABELS[Math.min(d.visits,5)]+')'],
+          ['companions', d.compList.join(', ')||'—'],
+          ['versatility', d.versatility+'/5'],
+        ];
+        rows.forEach(([k,v])=>{
+          const row=document.createElement('div');
+          row.style.cssText='display:flex;justify-content:space-between;gap:16px;padding:1px 0;font-size:12px;';
+          row.innerHTML=`<span style="color:var(--text3)">${k}</span><span style="font-weight:500">${v}</span>`;
+          ttBody.appendChild(row);
+        });
+      });
+      tt.style.left=(e.clientX+16)+'px';
+      tt.style.top=Math.max(8,e.clientY-40)+'px';
+      tt.style.display='block';
+      canvas.style.cursor='pointer';
+    }else{
+      tt.style.display='none';
+      canvas.style.cursor='default';
+    }
+  });
+  canvas.addEventListener('mouseleave',()=>{
+    document.getElementById('tooltip').style.display='none';
+  });
+}
+
+function buildScatterLegend(){
+  const el=document.getElementById('scatterLegend');
+  el.innerHTML='';
+  Object.entries(COMP_COLORS).forEach(([k,c])=>{
+    el.innerHTML+=`<span><span class="ldot" style="background:${c}"></span>${k}</span> `;
+  });
+  el.innerHTML+=`<span><span class="ldot" style="background:#88878044;border:1px solid #888780"></span>no laura score</span>`;
+}
+
+// ── QUADRANT ──────────────────────────────────────────────────────────
+function chipColor(d){
+  const base=COMP_COLORS[d.dominant]||'#888780';
+  return{bg:base+'22',border:base+'88',text:base};
+}
+function makeChip(d){
+  const c=chipColor(d);
+  const el=document.createElement('span');
+  el.className='chip';
+  el.textContent=d.name;
+  el.style.cssText=`background:${c.bg};border-color:${c.border};color:${c.text};`;
+  return el;
+}
+
+function renderQuadrant(data){
+  const qg=document.getElementById('quadGrid');
+  qg.innerHTML='';
+  const defs=[
+    {label:'both want it',sub:`you ≥${qYou} · laura ≥${qLaura}`,
+     bg:'#EAF3DE',border:'#1D9E75',
+     test:d=>d.desire>=qYou&&d.lauraScore!=null&&d.lauraScore>=qLaura},
+    {label:'laura more than you',sub:`you <${qYou} · laura ≥${qLaura}`,
+     bg:'#E6F1FB',border:'#378ADD',
+     test:d=>d.desire<qYou&&d.lauraScore!=null&&d.lauraScore>=qLaura},
+    {label:'you more than laura',sub:`you ≥${qYou} · laura <${qLaura} or unscored`,
+     bg:'#FCEBEB',border:'#E24B4A',
+     test:d=>d.desire>=qYou&&(d.lauraScore==null||d.lauraScore<qLaura)},
+    {label:'neither priority',sub:`you <${qYou} · laura <${qLaura} or unscored`,
+     bg:'#FAEEDA',border:'#BA7517',
+     test:d=>d.desire<qYou&&(d.lauraScore==null||d.lauraScore<qLaura)},
+  ];
+  defs.forEach(q=>{
+    const members=data.filter(q.test);
+    const card=document.createElement('div');
+    card.className='quad-card';
+    card.style.cssText=`background:${q.bg};border:1px solid ${q.border}44;border-radius:var(--radius-lg);padding:12px;`;
+    const title=document.createElement('div');
+    title.className='quad-title';
+    title.style.cssText=`color:${q.border};`;
+    title.textContent=q.label+' ('+members.length+')';
+    const sub=document.createElement('div');
+    sub.className='quad-sub';
+    sub.style.cssText=`color:${q.border};`;
+    sub.textContent=q.sub;
+    const chips=document.createElement('div');
+    chips.className='quad-chips';
+    members.forEach(d=>chips.appendChild(makeChip(d)));
+    card.appendChild(title);card.appendChild(sub);card.appendChild(chips);
+    qg.appendChild(card);
+  });
+}
+
+// ── TABLE ─────────────────────────────────────────────────────────────
+function renderTable(data){
+  const sorted=[...data].sort((a,b)=>{
+    const av=a[sortCol]??-Infinity,bv=b[sortCol]??-Infinity;
+    if(typeof av==='string')return sortDir*av.localeCompare(bv);
+    return sortDir*(av-bv);
+  });
+  document.getElementById('rowCount').textContent=sorted.length+' destination'+(sorted.length!==1?'s':'');
+  const tbody=document.getElementById('tableBody');
+  tbody.innerHTML='';
+  sorted.forEach(d=>{
+    const tr=document.createElement('tr');
+    const lDisp=d.lauraScore!=null?d.lauraScore+(d.laura==='?'?'?':''):'—';
+    const pips=d.compList.map(c=>{
+      const k=c.toLowerCase().replace('?','');
+      const col=COMP_COLORS[k]||COMP_COLORS.solo;
+      return`<span class="pip" style="background:${col}55;border:1px solid ${col}" title="${c}"></span>`;
+    }).join('');
+    tr.innerHTML=`
+      <td style="font-weight:500">${d.name}</td>
+      <td><div class="bar-wrap"><div class="bar" style="width:${d.desire*16}px;background:var(--green)"></div><span style="font-size:12px">${d.desire}</span></div></td>
+      <td>${d.lauraScore!=null?`<div class="bar-wrap"><div class="bar" style="width:${d.lauraScore*16}px;background:var(--purple)"></div><span style="font-size:12px">${lDisp}</span></div>`:`<span style="color:var(--text3)">—</span>`}</td>
+      <td style="color:var(--text2);font-size:12px">${d.lrank!=null?d.lrank:'—'}</td>
+      <td><span style="color:${VISIT_COLORS[Math.min(d.visits,5)]};font-weight:500">${d.visits}</span> <span style="color:var(--text3);font-size:11px">${VISIT_LABELS[Math.min(d.visits,5)]}</span></td>
+      <td style="color:var(--text2);font-size:12px">${d.versatility}/5</td>
+      <td>${pips}<span style="font-size:11px;color:var(--text3);margin-left:3px">${d.compList.join(', ')}</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+  document.querySelectorAll('th[id^="th-"]').forEach(th=>{
+    const col=th.id.replace('th-','');
+    th.classList.toggle('sorted',col===sortCol);
+    const sa=th.querySelector('.sa');
+    if(sa)sa.textContent=col===sortCol?(sortDir===-1?'↓':'↑'):'↕';
+  });
+}
+
+// ── STATS ─────────────────────────────────────────────────────────────
+function updateStats(data){
+  document.getElementById('statCount').textContent=data.length;
+  if(!data.length)return;
+  document.getElementById('statYou').textContent=(data.reduce((s,d)=>s+d.desire,0)/data.length).toFixed(1);
+  const ld=data.filter(d=>d.lauraScore!=null);
+  document.getElementById('statLaura').textContent=ld.length?(ld.reduce((s,d)=>s+d.lauraScore,0)/ld.length).toFixed(1):'—';
+  if(ld.length){
+    const top=[...ld].sort((a,b)=>(b.desire+b.lauraScore)-(a.desire+a.lauraScore))[0];
+    document.getElementById('statTop').textContent=top.name;
+  }else document.getElementById('statTop').textContent='—';
+}
+
+// ── MAIN RENDER ───────────────────────────────────────────────────────
+function render(){
+  filteredCache=allData.filter(passesFilters);
+  updateStats(filteredCache);
+  drawScatter(filteredCache);
+  buildScatterLegend();
+  renderQuadrant(filteredCache);
+  renderTable(filteredCache);
+}
+
+// ── CONTROLS ──────────────────────────────────────────────────────────
+function sortBy(col){
+  if(sortCol===col)sortDir*=-1;else{sortCol=col;sortDir=-1;}
+  renderTable(filteredCache);
+}
+function setCompFilter(v){
+  compFilter=v;
+  ['All','Solo','Friend','Family','Bekah','Laura'].forEach(s=>{
+    const el=document.getElementById('f'+s);
+    if(el)el.classList.toggle('active',v===s.toLowerCase());
+  });
+  render();
+}
+function setVisitFilter(v){
+  visitFilter=v;
+  document.getElementById('fVAll').classList.toggle('active',v==='all');
+  document.getElementById('fVNew').classList.toggle('active',v==='new');
+  document.getElementById('fVFam').classList.toggle('active',v==='familiar');
+  render();
+}
+function setDesireMin(v){
+  desireMin=parseInt(v);
+  document.getElementById('desireVal').textContent=v;
+  render();
+}
+function setQThresh(who,v){
+  if(who==='you'){qYou=parseInt(v);document.getElementById('qYouVal').textContent=v;}
+  else{qLaura=parseInt(v);document.getElementById('qLauraVal').textContent=v;}
+  renderQuadrant(filteredCache);
+}
+function resetFilters(){
+  compFilter='all';visitFilter='all';desireMin=1;
+  ['All','Solo','Friend','Family','Bekah','Laura'].forEach(s=>{
+    const el=document.getElementById('f'+s);
+    if(el)el.classList.toggle('active',s==='All');
+  });
+  document.getElementById('fVAll').classList.add('active');
+  document.getElementById('fVNew').classList.remove('active');
+  document.getElementById('fVFam').classList.remove('active');
+  document.getElementById('desireSlider').value=1;
+  document.getElementById('desireVal').textContent='1';
+  render();
+}
+
+// ── LOAD ──────────────────────────────────────────────────────────────
+function loadCSV(text){
+  const rows=parseCSV(text);
+  allData=rows.map(processRow).filter(d=>d.desire>0);
+  if(allData.length){
+    document.getElementById('dropZone').classList.add('loaded');
+    document.getElementById('dropTitle').textContent=allData.length+' destinations loaded';
+    document.getElementById('dropSub').textContent='Drop a new file to reload';
+    document.getElementById('dashboard').style.display='block';
+    setupScatterEvents();
+    render();
+    window.addEventListener('resize',()=>drawScatter(filteredCache));
+  }
+}
+
+const dz=document.getElementById('dropZone');
+const fi=document.getElementById('fileInput');
+dz.addEventListener('click',()=>fi.click());
+fi.addEventListener('change',e=>{const f=e.target.files[0];if(f){const r=new FileReader();r.onload=ev=>loadCSV(ev.target.result);r.readAsText(f);}});
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('dragover');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('dragover'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('dragover');const f=e.dataTransfer.files[0];if(f){const r=new FileReader();r.onload=ev=>loadCSV(ev.target.result);r.readAsText(f);}});
+</script>
+</body>
+</html>

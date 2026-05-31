@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Travel Alignment Dashboard</title>
+<style>
+:root {
+  --bg:#ffffff; --bg2:#f5f4f0; --bg3:#eeede9;
+  --text:#1a1a18; --text2:#5f5e5a; --text3:#888780;
+  --border:rgba(0,0,0,0.1); --border2:rgba(0,0,0,0.2);
+  --radius:8px; --radius-lg:12px;
+  --green:#1D9E75; --blue:#378ADD; --amber:#BA7517;
+  --orange:#D85A30; --red:#E24B4A; --darkred:#A32D2D;
+  --purple:#534AB7; --pink:#D4537E; --gray:#888780;
+  --q-tl:#E6F1FB; --q-tr:#EAF3DE; --q-bl:#FAEEDA; --q-br:#FCEBEB;
+  --q-tl-b:#378ADD; --q-tr-b:#1D9E75; --q-bl-b:#BA7517; --q-br-b:#E24B4A;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:#1e1e1c; --bg2:#2a2a28; --bg3:#333331;
+    --text:#f0efeb; --text2:#a8a79f; --text3:#6b6a65;
+    --border:rgba(255,255,255,0.1); --border2:rgba(255,255,255,0.2);
+    --q-tl:#0c447c33; --q-tr:#27500a33; --q-bl:#63380633; --q-br:#50131333;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg3);color:var(--text);font-size:14px;min-height:100vh;}
+.app{max-width:1100px;margin:0 auto;padding:24px 20px;}
+h1{font-size:20px;font-weight:500;margin-bottom:2px;}
+.subtitle{font-size:13px;color:var(--text3);margin-bottom:18px;}
+
+.drop-zone{border:1.5px dashed var(--border2);border-radius:var(--radius-lg);padding:24px;text-align:center;background:var(--bg);cursor:pointer;transition:background 0.15s;margin-bottom:18px;}
+.drop-zone.dragover{background:var(--bg2);}
+.drop-zone.loaded{border-style:solid;border-color:var(--green);}
+.drop-zone p{color:var(--text2);font-size:13px;margin-top:4px;}
+.drop-zone strong{font-size:15px;font-weight:500;}
+input[type=file]{display:none;}
+
+.stats{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px;}
+.stat{background:var(--bg2);border-radius:var(--radius);padding:10px 16px;min-width:110px;}
+.stat-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:2px;}
+.stat-val{font-size:22px;font-weight:500;}
+
+.panel{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:14px;}
+.panel-title{font-size:12px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:12px;}
+
+.filters{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start;}
+.filter-group{display:flex;flex-direction:column;gap:5px;}
+.filter-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.04em;}
+.filter-btns{display:flex;flex-wrap:wrap;gap:4px;}
+button.tog{font-size:12px;padding:3px 10px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text2);cursor:pointer;transition:background 0.1s;}
+button.tog.active{background:var(--bg3);color:var(--text);font-weight:500;}
+button.tog:hover{background:var(--bg2);}
+.range-row{display:flex;gap:6px;align-items:center;font-size:12px;color:var(--text2);}
+.range-val{min-width:14px;font-weight:500;color:var(--text);}
+
+/* HEAT MATRIX */
+.matrix-wrap{overflow-x:auto;}
+.matrix{display:grid;border:0.5px solid var(--border);}
+.matrix-cell{border-right:0.5px solid var(--border);border-bottom:0.5px solid var(--border);padding:4px;min-height:48px;min-width:60px;display:flex;flex-wrap:wrap;gap:2px;align-content:flex-start;transition:background 0.15s;}
+.matrix-cell:hover{background:var(--bg2);}
+.matrix-label-x{font-size:10px;color:var(--text3);text-align:center;padding:4px 2px;}
+.matrix-label-y{font-size:10px;color:var(--text3);writing-mode:horizontal-tb;display:flex;align-items:center;justify-content:flex-end;padding-right:4px;}
+.matrix-axis-title{font-size:11px;color:var(--text2);text-align:center;padding:4px;}
+.chip{font-size:10px;padding:2px 5px;border-radius:10px;cursor:pointer;white-space:nowrap;border:1px solid transparent;transition:opacity 0.1s;}
+.chip:hover{opacity:0.75;}
+
+/* QUADRANT */
+.quad-controls{display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-bottom:14px;}
+.quad-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.quad-card{border-radius:var(--radius-lg);padding:12px;min-height:100px;}
+.quad-title{font-size:12px;font-weight:500;margin-bottom:2px;}
+.quad-sub{font-size:11px;opacity:0.7;margin-bottom:8px;}
+.quad-chips{display:flex;flex-wrap:wrap;gap:4px;}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{text-align:left;font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.04em;padding:6px 8px;border-bottom:0.5px solid var(--border2);cursor:pointer;white-space:nowrap;user-select:none;}
+th:hover{color:var(--text);}
+td{padding:6px 8px;border-bottom:0.5px solid var(--border);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--bg2);}
+.bar-wrap{display:flex;align-items:center;gap:5px;}
+.bar{height:5px;border-radius:3px;}
+.pip{display:inline-block;width:7px;height:7px;border-radius:50%;margin:1px;}
+.row-count{font-size:12px;color:var(--text3);margin-bottom:8px;}
+
+/* TOOLTIP */
+.tooltip{position:fixed;pointer-events:none;background:var(--bg);border:0.5px solid var(--border2);border-radius:var(--radius);padding:10px 14px;font-size:12px;min-width:180px;z-index:200;display:none;}
+.tt-name{font-size:14px;font-weight:500;margin-bottom:6px;}
+.tt-row{display:flex;justify-content:space-between;gap:16px;padding:2px 0;border-bottom:0.5px solid var(--border);}
+.tt-row:last-child{border-bottom:none;}
+.tt-key{color:var(--text3);}
+.tt-val{font-weight:500;}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>Travel Alignment Dashboard</h1>
+  <p class="subtitle">Your desire vs Laura's desire across destinations</p>
+
+  <div class="drop-zone" id="dropZone">
+    <strong id="dropTitle">Drop your CSV here</strong>
+    <p id="dropSub">or click to browse</p>
+    <input type="file" id="fileInput" accept=".csv">
+  </div>
+
+  <div id="dashboard" style="display:none">
+    <div class="stats">
+      <div class="stat"><div class="stat-label">showing</div><div class="stat-val" id="statCount">—</div></div>
+      <div class="stat"><div class="stat-label">your avg desire</div><div class="stat-val" id="statYou">—</div></div>
+      <div class="stat"><div class="stat-label">laura's avg desire</div><div class="stat-val" id="statLaura">—</div></div>
+      <div class="stat"><div class="stat-label">top alignment</div><div class="stat-val" id="statTop" style="font-size:15px;padding-top:4px;">—</div></div>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="panel">
+      <div class="panel-title">filters</div>
+      <div class="filters">
+        <div class="filter-group">
+          <div class="filter-label">companions</div>
+          <div class="filter-btns">
+            <button class="tog" id="fSolo"   onclick="toggleComp('solo')">solo</button>
+            <button class="tog" id="fFriend" onclick="toggleComp('friend')">friend</button>
+            <button class="tog" id="fFamily" onclick="toggleComp('family')">family</button>
+            <button class="tog" id="fBekah"  onclick="toggleComp('bekah')">Bekah</button>
+            <button class="tog" id="fLaura"  onclick="toggleComp('laura')">Laura</button>
+          </div>
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">laura scored</div>
+          <div class="filter-btns">
+            <button class="tog active" id="fLauraAll"  onclick="setLauraFilter('all')">all</button>
+            <button class="tog" id="fLauraOnly" onclick="setLauraFilter('only')">scored only</button>
+            <button class="tog" id="fLauraExcl" onclick="setLauraFilter('exclude')">unscored only</button>
+          </div>
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">visits</div>
+          <div class="filter-btns">
+            <button class="tog active" id="fVAll" onclick="setVisitFilter('all')">all</button>
+            <button class="tog" id="fVNew"  onclick="setVisitFilter('new')">never been</button>
+            <button class="tog" id="fVFam"  onclick="setVisitFilter('familiar')">been before</button>
+          </div>
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">your desire ≥ <span id="desireVal" class="range-val">1</span></div>
+          <input type="range" min="1" max="10" value="1" step="1" id="desireSlider" oninput="setDesireMin(this.value)">
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">laura's desire ≥ <span id="lauraVal" class="range-val">1</span></div>
+          <input type="range" min="1" max="10" value="1" step="1" id="lauraSlider" oninput="setLauraMin(this.value)">
+        </div>
+        <div class="filter-group" style="margin-left:auto;justify-content:flex-end;margin-top:auto;">
+          <button class="tog" onclick="resetFilters()" style="padding:5px 14px;">reset</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- HEAT MATRIX -->
+    <div class="panel">
+      <div class="panel-title">alignment matrix — your desire (x) vs laura's desire (y)</div>
+      <div class="matrix-wrap">
+        <div id="matrixContainer"></div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-top:8px;">hover a chip for details · gray = no laura score (plotted at y=0)</div>
+    </div>
+
+    <!-- QUADRANT -->
+    <div class="panel">
+      <div class="panel-title">quadrant view</div>
+      <div class="quad-controls">
+        <div class="filter-group">
+          <div class="filter-label">your desire threshold: <span id="qYouVal" class="range-val">8</span></div>
+          <input type="range" min="1" max="10" value="8" step="1" id="qYouSlider" oninput="setQThresh('you',this.value)">
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">laura's desire threshold: <span id="qLauraVal" class="range-val">8</span></div>
+          <input type="range" min="1" max="10" value="8" step="1" id="qLauraSlider" oninput="setQThresh('laura',this.value)">
+        </div>
+      </div>
+      <div class="quad-grid" id="quadGrid"></div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="panel">
+      <div class="row-count" id="rowCount"></div>
+      <table>
+        <thead>
+          <tr>
+            <th onclick="sortBy('name')" id="th-name">destination <span class="sa">↕</span></th>
+            <th onclick="sortBy('desire')" id="th-desire">your desire <span class="sa">↕</span></th>
+            <th onclick="sortBy('lauraScore')" id="th-lauraScore">laura <span class="sa">↕</span></th>
+            <th onclick="sortBy('lrank')" id="th-lrank">l rank <span class="sa">↕</span></th>
+            <th onclick="sortBy('visits')" id="th-visits">visits <span class="sa">↕</span></th>
+            <th onclick="sortBy('versatility')" id="th-versatility">versatility <span class="sa">↕</span></th>
+            <th>companions</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="tooltip" id="tooltip">
+  <div class="tt-name" id="ttName"></div>
+  <div class="tt-row"><span class="tt-key">your desire</span><span class="tt-val" id="ttYou"></span></div>
+  <div class="tt-row"><span class="tt-key">laura's desire</span><span class="tt-val" id="ttLaura"></span></div>
+  <div class="tt-row"><span class="tt-key">l rank</span><span class="tt-val" id="ttLrank"></span></div>
+  <div class="tt-row"><span class="tt-key">visits</span><span class="tt-val" id="ttVisits"></span></div>
+  <div class="tt-row"><span class="tt-key">companions</span><span class="tt-val" id="ttComp"></span></div>
+  <div class="tt-row"><span class="tt-key">versatility</span><span class="tt-val" id="ttVers"></span></div>
+</div>
+
+<script>
+const VISIT_COLORS=['#1D9E75','#378ADD','#BA7517','#D85A30','#E24B4A','#A32D2D'];
+const VISIT_LABELS=['never','once','twice','3×','4×','often'];
+const COMP_COLORS={laura:'#534AB7',bekah:'#D4537E',family:'#1D9E75',friend:'#378ADD',solo:'#888780'};
+
+let allData=[], filteredCache=[];
+let lauraFilter='all', visitFilter='all', desireMin=1, lauraMin=1;
+let compFilters=new Set();
+let sortCol='desire', sortDir=-1;
+let qYou=8, qLaura=8;
+
+function splitLine(line){
+  const v=[];let c='',q=false;
+  for(let ch of line){if(ch==='"'){q=!q;}else if(ch===','&&!q){v.push(c.trim());c='';}else c+=ch;}
+  v.push(c.trim());return v;
+}
+
+function parseCSV(text){
+  const lines=text.trim().split(/\r?\n/);
+  if(lines.length<2)return[];
+  const raw=splitLine(lines[0]).map(h=>h.replace(/^"|"$/g,'').trim().toLowerCase());
+  const hm={};
+  raw.forEach((h,i)=>{
+    if(h==='l rank')hm.l_rank=i;
+    else if(h==='my desire')hm.desire=i;
+    else if(h==='place')hm.place=i;
+    else if(h.startsWith('num visit'))hm.visits=i;
+    else if(h==='solo')hm.solo=i;
+    else if(h==='friend')hm.friend=i;
+    else if(h==='family')hm.family=i;
+    else if(h==='bekah')hm.bekah=i;
+    else if(h==='laura')hm.laura=i;
+  });
+  return lines.slice(1).map(line=>{
+    const v=splitLine(line);
+    const r={};
+    Object.entries(hm).forEach(([k,i])=>r[k]=v[i]||'');
+    return r;
+  }).filter(r=>r.place&&r.desire);
+}
+
+function processRow(r){
+  const lrank=r.l_rank!==''&&!isNaN(r.l_rank)?parseFloat(r.l_rank):null;
+  const desire=parseFloat(r.desire)||0;
+  const visits=parseInt(r.visits)||0;
+  const lraw=(r.laura||'').toLowerCase().trim();
+  const lval=lraw==='x'?'x':lraw==='?'?'?':false;
+  let lauraScore=null;
+  if(lval==='x'&&lrank!=null)lauraScore=lrank;
+  else if(lval==='?'&&lrank!=null)lauraScore=Math.round(lrank*0.5);
+  else if(lval==='x'&&lrank==null)lauraScore=5;
+  const solo=(r.solo||'').toLowerCase().trim()==='x';
+  const friend=(r.friend||'').toLowerCase().trim()==='x';
+  const family=(r.family||'').toLowerCase().trim()==='x';
+  const bekah=(r.bekah||'').toLowerCase().trim()==='x';
+  const lcheck=lval!==false;
+  const versatility=[solo,friend,family,bekah,lcheck].filter(Boolean).length;
+  const compList=[];
+  if(solo)compList.push('solo');
+  if(friend)compList.push('friend');
+  if(family)compList.push('family');
+  if(bekah)compList.push('Bekah');
+  if(lcheck)compList.push('Laura'+(lval==='?'?'?':''));
+  let dominant='solo';
+  if(lcheck)dominant='laura';
+  else if(bekah)dominant='bekah';
+  else if(family)dominant='family';
+  else if(friend)dominant='friend';
+  return{name:r.place.trim(),lrank,desire,visits,solo,friend,family,bekah,laura:lval,lauraScore,versatility,compList,dominant};
+}
+
+function passesFilters(d){
+  if(d.desire<desireMin)return false;
+  if(lauraFilter==='only'&&d.lauraScore==null)return false;
+  if(lauraFilter==='exclude'&&d.lauraScore!=null)return false;
+  if(lauraFilter!=='exclude'&&d.lauraScore!=null&&d.lauraScore<lauraMin)return false;
+  if(visitFilter==='new'&&d.visits>0)return false;
+  if(visitFilter==='familiar'&&d.visits===0)return false;
+  if(compFilters.size>0){
+    const ok=[...compFilters].every(c=>{
+      if(c==='solo')return d.solo;
+      if(c==='friend')return d.friend;
+      if(c==='family')return d.family;
+      if(c==='bekah')return d.bekah;
+      if(c==='laura')return d.laura!==false;
+      return false;
+    });
+    if(!ok)return false;
+  }
+  return true;
+}
+
+function chipColor(d){
+  const base=COMP_COLORS[d.dominant]||'#888780';
+  return{bg:base+'22',border:base+'88',text:base};
+}
+
+function makeChip(d){
+  const c=chipColor(d);
+  const el=document.createElement('span');
+  el.className='chip';
+  el.textContent=d.name;
+  el.style.cssText=`background:${c.bg};border-color:${c.border};color:${c.text};`;
+  el.addEventListener('mousemove',e=>showTT(e,d));
+  el.addEventListener('mouseleave',hideTT);
+  return el;
+}
+
+function showTT(e,d){
+  const tt=document.getElementById('tooltip');
+  document.getElementById('ttName').textContent=d.name;
+  document.getElementById('ttYou').textContent=d.desire;
+  document.getElementById('ttLaura').textContent=d.lauraScore!=null?d.lauraScore+(d.laura==='?'?' (tentative)':''):'—';
+  document.getElementById('ttLrank').textContent=d.lrank!=null?d.lrank:'—';
+  document.getElementById('ttVisits').textContent=d.visits+' ('+VISIT_LABELS[Math.min(d.visits,5)]+')';
+  document.getElementById('ttComp').textContent=d.compList.join(', ')||'—';
+  document.getElementById('ttVers').textContent=d.versatility+'/5';
+  tt.style.left=(e.clientX+16)+'px';
+  tt.style.top=Math.max(8,e.clientY-80)+'px';
+  tt.style.display='block';
+}
+function hideTT(){document.getElementById('tooltip').style.display='none';}
+
+function renderMatrix(data){
+  const container=document.getElementById('matrixContainer');
+  container.innerHTML='';
+
+  // build score->destinations map: y=lauraScore(0-10), x=desire(1-10)
+  // for unscored, y=0
+  const minX=1,maxX=10,minY=0,maxY=10;
+  const cols=maxX-minX+1; // 10 cols
+  const rows=maxY-minY+1; // 11 rows (0-10)
+
+  // grid: CSS grid with y-axis label col + 10 data cols + corner
+  const grid=document.createElement('div');
+  grid.style.cssText=`display:inline-grid;grid-template-columns:28px repeat(${cols},minmax(52px,1fr));`;
+
+  // top-left corner
+  const corner=document.createElement('div');
+  corner.style.cssText='padding:4px;font-size:10px;color:var(--text3);display:flex;align-items:flex-end;justify-content:flex-end;';
+  corner.textContent='L↑/Y→';
+  grid.appendChild(corner);
+
+  // x-axis labels (top)
+  for(let x=minX;x<=maxX;x++){
+    const lbl=document.createElement('div');
+    lbl.className='matrix-label-x';
+    lbl.textContent=x;
+    grid.appendChild(lbl);
+  }
+
+  // rows from top (high laura score) to bottom (0)
+  for(let y=maxY;y>=minY;y--){
+    // y-axis label
+    const ylbl=document.createElement('div');
+    ylbl.className='matrix-label-y';
+    ylbl.textContent=y===0?'—':y;
+    ylbl.style.cssText='font-size:10px;color:var(--text3);display:flex;align-items:flex-start;justify-content:flex-end;padding:4px 4px 0 0;';
+    grid.appendChild(ylbl);
+
+    for(let x=minX;x<=maxX;x++){
+      const cell=document.createElement('div');
+      cell.className='matrix-cell';
+      // slight tint based on position
+      const heat=Math.round(((x-1)/9+(y===0?0:y/10))/2*100);
+      cell.style.cssText=`border-right:0.5px solid var(--border);border-bottom:0.5px solid var(--border);padding:3px;min-height:40px;min-width:52px;display:flex;flex-wrap:wrap;gap:2px;align-content:flex-start;`;
+
+      const matches=data.filter(d=>{
+        const dy=d.lauraScore!=null?Math.round(d.lauraScore):0;
+        return d.desire===x&&dy===y;
+      });
+      matches.forEach(d=>cell.appendChild(makeChip(d)));
+      grid.appendChild(cell);
+    }
+  }
+
+  container.appendChild(grid);
+}
+
+function renderQuadrant(data){
+  const qg=document.getElementById('quadGrid');
+  qg.innerHTML='';
+
+  const quadDefs=[
+    {key:'tr',label:'both want it',sub:`you ≥ ${qYou} · laura ≥ ${qLaura}`,bg:'var(--q-tr)',border:'var(--q-tr-b)',test:d=>d.desire>=qYou&&d.lauraScore!=null&&d.lauraScore>=qLaura},
+    {key:'tl',label:'laura more than you',sub:`you < ${qYou} · laura ≥ ${qLaura}`,bg:'var(--q-tl)',border:'var(--q-tl-b)',test:d=>d.desire<qYou&&d.lauraScore!=null&&d.lauraScore>=qLaura},
+    {key:'br',label:'you more than laura',sub:`you ≥ ${qYou} · laura < ${qLaura} or unscored`,bg:'var(--q-br)',border:'var(--q-br-b)',test:d=>d.desire>=qYou&&(d.lauraScore==null||d.lauraScore<qLaura)},
+    {key:'bl',label:'neither priority',sub:`you < ${qYou} · laura < ${qLaura} or unscored`,bg:'var(--q-bl)',border:'var(--q-bl-b)',test:d=>d.desire<qYou&&(d.lauraScore==null||d.lauraScore<qLaura)},
+  ];
+
+  quadDefs.forEach(q=>{
+    const members=data.filter(q.test);
+    const card=document.createElement('div');
+    card.className='quad-card';
+    card.style.cssText=`background:${q.bg};border:1px solid ${q.border}44;border-radius:var(--radius-lg);padding:12px;`;
+    const title=document.createElement('div');
+    title.className='quad-title';
+    title.style.cssText=`color:${q.border};font-size:12px;font-weight:500;`;
+    title.textContent=q.label+' ('+members.length+')';
+    const sub=document.createElement('div');
+    sub.className='quad-sub';
+    sub.style.cssText=`color:${q.border};font-size:11px;opacity:0.7;margin-bottom:8px;`;
+    sub.textContent=q.sub;
+    const chips=document.createElement('div');
+    chips.className='quad-chips';
+    members.forEach(d=>chips.appendChild(makeChip(d)));
+    card.appendChild(title);
+    card.appendChild(sub);
+    card.appendChild(chips);
+    qg.appendChild(card);
+  });
+}
+
+function renderTable(data){
+  const sorted=[...data].sort((a,b)=>{
+    const av=a[sortCol]??-Infinity,bv=b[sortCol]??-Infinity;
+    if(typeof av==='string')return sortDir*av.localeCompare(bv);
+    return sortDir*(av-bv);
+  });
+  document.getElementById('rowCount').textContent=sorted.length+' destination'+(sorted.length!==1?'s':'');
+  const tbody=document.getElementById('tableBody');
+  tbody.innerHTML='';
+  sorted.forEach(d=>{
+    const tr=document.createElement('tr');
+    const lDisp=d.lauraScore!=null?d.lauraScore+(d.laura==='?'?'?':''):'—';
+    const pips=d.compList.map(c=>{
+      const k=c.toLowerCase().replace('?','');
+      const col=COMP_COLORS[k]||COMP_COLORS.solo;
+      return`<span class="pip" style="background:${col}55;border:1px solid ${col}" title="${c}"></span>`;
+    }).join('');
+    tr.innerHTML=`
+      <td style="font-weight:500">${d.name}</td>
+      <td><div class="bar-wrap"><div class="bar" style="width:${d.desire*16}px;background:var(--green)"></div><span style="font-size:12px">${d.desire}</span></div></td>
+      <td>${d.lauraScore!=null?`<div class="bar-wrap"><div class="bar" style="width:${d.lauraScore*16}px;background:var(--purple)"></div><span style="font-size:12px">${lDisp}</span></div>`:`<span style="color:var(--text3)">—</span>`}</td>
+      <td style="color:var(--text2);font-size:12px">${d.lrank!=null?d.lrank:'—'}</td>
+      <td><span style="color:${VISIT_COLORS[Math.min(d.visits,5)]};font-weight:500">${d.visits}</span> <span style="color:var(--text3);font-size:11px">${VISIT_LABELS[Math.min(d.visits,5)]}</span></td>
+      <td style="color:var(--text2);font-size:12px">${d.versatility}/5</td>
+      <td>${pips}<span style="font-size:11px;color:var(--text3);margin-left:3px">${d.compList.join(', ')}</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+  document.querySelectorAll('th[id^="th-"]').forEach(th=>{
+    const col=th.id.replace('th-','');
+    th.classList.toggle('sorted',col===sortCol);
+    const sa=th.querySelector('.sa');
+    if(sa)sa.textContent=col===sortCol?(sortDir===-1?'↓':'↑'):'↕';
+  });
+}
+
+function updateStats(data){
+  document.getElementById('statCount').textContent=data.length;
+  if(!data.length)return;
+  document.getElementById('statYou').textContent=(data.reduce((s,d)=>s+d.desire,0)/data.length).toFixed(1);
+  const ld=data.filter(d=>d.lauraScore!=null);
+  document.getElementById('statLaura').textContent=ld.length?(ld.reduce((s,d)=>s+d.lauraScore,0)/ld.length).toFixed(1):'—';
+  if(ld.length){
+    const top=[...ld].sort((a,b)=>(b.desire+b.lauraScore)-(a.desire+a.lauraScore))[0];
+    document.getElementById('statTop').textContent=top.name;
+  }else document.getElementById('statTop').textContent='—';
+}
+
+function render(){
+  filteredCache=allData.filter(passesFilters);
+  updateStats(filteredCache);
+  renderMatrix(filteredCache);
+  renderQuadrant(filteredCache);
+  renderTable(filteredCache);
+}
+
+function sortBy(col){
+  if(sortCol===col)sortDir*=-1;else{sortCol=col;sortDir=-1;}
+  renderTable(filteredCache);
+}
+
+function toggleComp(c){
+  if(compFilters.has(c))compFilters.delete(c);else compFilters.add(c);
+  const id='f'+c.charAt(0).toUpperCase()+c.slice(1);
+  document.getElementById(id).classList.toggle('active',compFilters.has(c));
+  render();
+}
+function setLauraFilter(v){
+  lauraFilter=v;
+  ['All','Only','Excl'].forEach(s=>{
+    const id='fLaura'+s;
+    const val=s==='Excl'?'exclude':s.toLowerCase();
+    document.getElementById(id).classList.toggle('active',v===val);
+  });
+  render();
+}
+function setVisitFilter(v){
+  visitFilter=v;
+  document.getElementById('fVAll').classList.toggle('active',v==='all');
+  document.getElementById('fVNew').classList.toggle('active',v==='new');
+  document.getElementById('fVFam').classList.toggle('active',v==='familiar');
+  render();
+}
+function setDesireMin(v){desireMin=parseInt(v);document.getElementById('desireVal').textContent=v;render();}
+function setLauraMin(v){lauraMin=parseInt(v);document.getElementById('lauraVal').textContent=v;render();}
+function setQThresh(who,v){
+  if(who==='you'){qYou=parseInt(v);document.getElementById('qYouVal').textContent=v;}
+  else{qLaura=parseInt(v);document.getElementById('qLauraVal').textContent=v;}
+  renderQuadrant(filteredCache);
+}
+function resetFilters(){
+  compFilters.clear();
+  ['Solo','Friend','Family','Bekah','Laura'].forEach(c=>document.getElementById('f'+c).classList.remove('active'));
+  lauraFilter='all';visitFilter='all';desireMin=1;lauraMin=1;
+  document.getElementById('desireSlider').value=1;
+  document.getElementById('lauraSlider').value=1;
+  document.getElementById('desireVal').textContent='1';
+  document.getElementById('lauraVal').textContent='1';
+  setLauraFilter('all');
+  setVisitFilter('all');
+  render();
+}
+
+function loadCSV(text){
+  const rows=parseCSV(text);
+  allData=rows.map(processRow).filter(d=>d.desire>0);
+  if(allData.length){
+    document.getElementById('dropZone').classList.add('loaded');
+    document.getElementById('dropTitle').textContent=allData.length+' destinations loaded';
+    document.getElementById('dropSub').textContent='Drop a new file to reload';
+    document.getElementById('dashboard').style.display='block';
+    render();
+  }
+}
+
+const dz=document.getElementById('dropZone');
+const fi=document.getElementById('fileInput');
+dz.addEventListener('click',()=>fi.click());
+fi.addEventListener('change',e=>{const f=e.target.files[0];if(f){const r=new FileReader();r.onload=ev=>loadCSV(ev.target.result);r.readAsText(f);}});
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('dragover');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('dragover'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('dragover');const f=e.dataTransfer.files[0];if(f){const r=new FileReader();r.onload=ev=>loadCSV(ev.target.result);r.readAsText(f);}});
+</script>
+</body>
+</html>
