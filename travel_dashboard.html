@@ -142,11 +142,47 @@ tr:hover td{background:var(--bg2);}
 
     <!-- SCATTERPLOT -->
     <div class="panel">
-      <div class="panel-title">scatter — your desire (x) · laura's desire (y) · size = versatility</div>
+      <div class="panel-title">alignment — your desire (x) · laura's desire (y) · size = versatility</div>
+      <div style="display:flex;gap:16px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
+        <div class="filter-group">
+          <div class="filter-label">show your desire ≥ <span id="scatterDesireVal" style="font-weight:500;color:var(--text)">7</span></div>
+          <input type="range" min="1" max="10" value="7" step="1" id="scatterDesireSlider" oninput="setScatterDesireMin(this.value)">
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">show laura's desire ≥ <span id="scatterLauraVal" style="font-weight:500;color:var(--text)">2</span></div>
+          <input type="range" min="1" max="10" value="2" step="1" id="scatterLauraSlider" oninput="setScatterLauraMin(this.value)">
+        </div>
+      </div>
       <div class="scatter-wrap">
         <canvas id="scatterCanvas" role="img" aria-label="Scatterplot of destinations by your desire vs Laura's desire"></canvas>
       </div>
       <div class="legend" id="scatterLegend"></div>
+    </div>
+
+    <!-- MY TRIPS CHART -->
+    <div class="panel">
+      <div class="panel-title">my trips — companion (x) · your desire (y) · size = versatility</div>
+      <div style="display:flex;gap:16px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
+        <div class="filter-group">
+          <div class="filter-label">show desire ≥ <span id="myTripsDesireVal" style="font-weight:500;color:var(--text)">7</span></div>
+          <input type="range" min="1" max="10" value="7" step="1" id="myTripsDesireSlider" oninput="setMyTripsDesireMin(this.value)">
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">companion</div>
+          <div class="filter-btns">
+            <button class="tog active" id="mtAll"    onclick="setMyTripsComp('all')">all</button>
+            <button class="tog" id="mtSolo"   onclick="setMyTripsComp('solo')">solo</button>
+            <button class="tog" id="mtFriend" onclick="setMyTripsComp('friend')">friend</button>
+            <button class="tog" id="mtFamily" onclick="setMyTripsComp('family')">family</button>
+            <button class="tog" id="mtBekah"  onclick="setMyTripsComp('bekah')">Bekah</button>
+            <button class="tog" id="mtLaura"  onclick="setMyTripsComp('laura')">Laura</button>
+          </div>
+        </div>
+      </div>
+      <div class="scatter-wrap">
+        <canvas id="myTripsCanvas" role="img" aria-label="My trips chart showing destinations by companion type and desire"></canvas>
+      </div>
+      <div class="legend" id="myTripsLegend"></div>
     </div>
 
     <!-- QUADRANT -->
@@ -162,7 +198,7 @@ tr:hover td{background:var(--bg2);}
           <input type="range" min="1" max="10" value="8" step="1" id="qLauraSlider" oninput="setQThresh('laura',this.value)">
         </div>
       </div>
-      <div class="quad-grid" id="quadGrid"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;" id="quadGrid"></div>
     </div>
 
     <!-- TABLE -->
@@ -203,6 +239,7 @@ let qYou=8, qLaura=8;
 
 // canvas state
 let dots=[], animFrame=null;
+let scatterDesireMin=7, scatterLauraMin=2;
 
 function splitLine(line){
   const v=[];let c='',q=false;
@@ -294,9 +331,23 @@ function drawScatter(data){
   const plotW=W-PAD.l-PAD.r;
   const plotH=H-PAD.t-PAD.b;
 
-  // helpers
-  function px(x){return PAD.l+((x-0.5)/10.5)*plotW;}
-  function py(y){return PAD.t+(1-(y/10.5))*plotH;}
+  // local filter using scatter-specific sliders
+  const localData=data.filter(d=>{
+    if(d.desire<scatterDesireMin)return false;
+    // if laura min > 1, hide unscored entirely
+    if(scatterLauraMin>1&&d.lauraScore==null)return false;
+    if(d.lauraScore!=null&&d.lauraScore<scatterLauraMin)return false;
+    return true;
+  });
+
+  // dynamic axis ranges
+  const xMin=scatterDesireMin, xMax=10;
+  const yMin=scatterLauraMin>1?scatterLauraMin:0, yMax=10;
+  const xRange=xMax-xMin+1;
+  const yRange=yMax-yMin+1;
+
+  function px(x){return PAD.l+((x-xMin+0.3)/(xRange+0.6))*plotW;}
+  function py(y){return PAD.t+(1-((y-yMin+0.3)/(yRange+0.6)))*plotH;}
 
   // background
   ctx.fillStyle=dark?'#1e1e1c':'#ffffff';
@@ -305,8 +356,10 @@ function drawScatter(data){
   // grid lines
   ctx.strokeStyle=dark?'rgba(255,255,255,0.07)':'rgba(0,0,0,0.07)';
   ctx.lineWidth=0.5;
-  for(let i=1;i<=10;i++){
+  for(let i=xMin;i<=xMax;i++){
     ctx.beginPath();ctx.moveTo(px(i),PAD.t);ctx.lineTo(px(i),PAD.t+plotH);ctx.stroke();
+  }
+  for(let i=yMin>0?yMin:1;i<=yMax;i++){
     ctx.beginPath();ctx.moveTo(PAD.l,py(i));ctx.lineTo(PAD.l+plotW,py(i));ctx.stroke();
   }
 
@@ -320,11 +373,11 @@ function drawScatter(data){
   ctx.fillStyle=dark?'#6b6a65':'#888780';
   ctx.font='10px -apple-system,sans-serif';
   ctx.textAlign='center';
-  for(let i=1;i<=10;i++){
+  for(let i=xMin;i<=xMax;i++){
     ctx.fillText(i,px(i),PAD.t+plotH+14);
   }
   ctx.textAlign='right';
-  for(let i=1;i<=10;i++){
+  for(let i=yMin>0?yMin:1;i<=yMax;i++){
     ctx.fillText(i,PAD.l-5,py(i)+3);
   }
 
@@ -339,31 +392,28 @@ function drawScatter(data){
   ctx.fillText("laura's desire →",0,0);
   ctx.restore();
 
-  // group destinations by coordinate key (desire, lauraScore)
+  // group by coordinate
   const groups={};
-  data.forEach(d=>{
+  localData.forEach(d=>{
     const ky=d.lauraScore!=null?d.lauraScore:0;
     const key=d.desire+'|'+ky;
     if(!groups[key])groups[key]={items:[],desire:d.desire,lauraY:ky};
     groups[key].items.push(d);
   });
 
-  // build dots — one per group
   dots=[];
   Object.values(groups).forEach(g=>{
     const x=px(g.desire);
     const y=g.lauraY>0?py(g.lauraY):py(0.3);
-    // size = max versatility in group + count bonus
     const maxV=Math.max(...g.items.map(d=>d.versatility));
-    const r=Math.max(8, maxV*4+2 + (g.items.length>1?4:0));
+    const r=Math.max(8,maxV*4+2+(g.items.length>1?4:0));
     const noLaura=g.lauraY===0;
-    // color: dominant companion of highest-desire item
     const lead=g.items.slice().sort((a,b)=>b.desire-a.desire)[0];
     const col=noLaura?'#888780':COMP_COLORS[lead.dominant]||'#888780';
     dots.push({x,y,r,col,noLaura,items:g.items,count:g.items.length});
   });
 
-  // draw dots back to front
+  // draw dots
   dots.slice().sort((a,b)=>b.r-a.r).forEach(dot=>{
     ctx.beginPath();
     ctx.arc(dot.x,dot.y,dot.r,0,Math.PI*2);
@@ -372,48 +422,39 @@ function drawScatter(data){
     ctx.strokeStyle=dot.col+(dot.noLaura?'77':'bb');
     ctx.lineWidth=1.5;
     ctx.stroke();
-
-    // badge count if >1
     if(dot.count>1){
-      const br=8;
-      const bx=dot.x+dot.r*0.7;
-      const by=dot.y-dot.r*0.7;
-      ctx.beginPath();
-      ctx.arc(bx,by,br,0,Math.PI*2);
+      const br=8,bx=dot.x+dot.r*0.7,by=dot.y-dot.r*0.7;
+      ctx.beginPath();ctx.arc(bx,by,br,0,Math.PI*2);
       ctx.fillStyle=dark?'#333331':'#ffffff';
       ctx.fill();
-      ctx.strokeStyle=dot.col;
-      ctx.lineWidth=1.5;
-      ctx.stroke();
+      ctx.strokeStyle=dot.col;ctx.lineWidth=1.5;ctx.stroke();
       ctx.fillStyle=dot.col;
       ctx.font='bold 9px -apple-system,sans-serif';
-      ctx.textAlign='center';
-      ctx.textBaseline='middle';
+      ctx.textAlign='center';ctx.textBaseline='middle';
       ctx.fillText(dot.count,bx,by);
       ctx.textBaseline='alphabetic';
     }
   });
 
-  // labels — one per dot, show first item name (+ "& N more" if group)
+  // stacked labels
   ctx.font='bold 10px -apple-system,sans-serif';
   const drawn=[];
-  const sortedDots=[...dots].sort((a,b)=>b.items[0].desire-a.items[0].desire);
-  sortedDots.forEach(dot=>{
-    const lead=dot.items.slice().sort((a,b)=>b.desire-a.desire)[0];
-    const label=dot.count>1?lead.name+' +'+( dot.count-1):lead.name;
-    const lw=ctx.measureText(label).width;
-    const lx=dot.x+dot.r+3;
-    const ly=dot.y+3;
-    const box={x:lx-1,y:ly-10,w:lw+2,h:12};
+  [...dots].sort((a,b)=>b.items[0].desire-a.items[0].desire).forEach(dot=>{
+    const names=dot.items.slice().sort((a,b)=>b.desire-a.desire).map(d=>d.name);
+    const lineH=12,totalH=names.length*lineH;
+    const maxW=Math.max(...names.map(n=>ctx.measureText(n).width));
+    const lx=dot.x+dot.r+3,ly=dot.y-(totalH/2)+lineH;
+    const box={x:lx-1,y:ly-lineH,w:maxW+2,h:totalH+2};
     const overlaps=drawn.some(b=>box.x<b.x+b.w&&box.x+box.w>b.x&&box.y<b.y+b.h&&box.y+box.h>b.y);
-    if(!overlaps&&lx+lw<W-4){
+    if(!overlaps&&lx+maxW<W-4){
       ctx.textAlign='left';
       ctx.fillStyle=dot.noLaura?(dark?'#6b6a65':'#aaa'):(dark?'#c8c7c0':'#333');
-      ctx.fillText(label,lx,ly);
+      names.forEach((name,i)=>ctx.fillText(name,lx,ly+i*lineH));
       drawn.push(box);
     }
   });
 }
+
 
 function hitTest(mx,my){
   const HOVER=10;
@@ -492,6 +533,276 @@ function buildScatterLegend(){
   el.innerHTML+=`<span><span class="ldot" style="background:#88878044;border:1px solid #888780"></span>no laura score</span>`;
 }
 
+// ── MY TRIPS CHART ───────────────────────────────────────────────────
+const COMP_X = {solo:-5, friend:-2.5, family:0.5, bekah:3, laura:5.5};
+const COMP_NAMES = {solo:'solo', friend:'friend', family:'family', bekah:'Bekah', laura:'Laura'};
+let myTripsDots=[];
+let myTripsDesireMin=7, myTripsComp='all';
+
+function drawMyTrips(data){
+  const canvas=document.getElementById('myTripsCanvas');
+  const wrap=canvas.parentElement;
+  const dpr=window.devicePixelRatio||1;
+  const W=wrap.clientWidth, H=wrap.clientHeight;
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+
+  const dark=isDark();
+  const PAD={l:48,r:160,t:24,b:52};
+  const plotW=W-PAD.l-PAD.r;
+  const plotH=H-PAD.t-PAD.b;
+
+  // filter by local controls
+  const localData=data.filter(d=>{
+    if(d.desire<myTripsDesireMin)return false;
+    if(myTripsComp==='solo'&&!d.solo)return false;
+    if(myTripsComp==='friend'&&!d.friend)return false;
+    if(myTripsComp==='family'&&!d.family)return false;
+    if(myTripsComp==='bekah'&&!d.bekah)return false;
+    if(myTripsComp==='laura'&&d.laura===false)return false;
+    return true;
+  });
+
+  // dynamic Y range based on local desire filter
+  const yMin=Math.max(0, myTripsDesireMin-1);
+  const yMax=10;
+  const yRange=yMax-yMin;
+
+  // x: -5 to +5 companion spectrum, y: dynamic desire range
+  function px(x){return PAD.l+((x+5.5)/11)*plotW;}
+  function py(y){return PAD.t+(1-((y-yMin)/yRange))*plotH;}
+
+  // background
+  ctx.fillStyle=dark?'#1e1e1c':'#ffffff';
+  ctx.fillRect(0,0,W,H);
+
+
+
+  // grid lines - companion positions
+  ctx.strokeStyle=dark?'rgba(255,255,255,0.07)':'rgba(0,0,0,0.07)';
+  ctx.lineWidth=0.5;
+  Object.values(COMP_X).forEach(cx=>{
+    ctx.beginPath();ctx.moveTo(px(cx),PAD.t);ctx.lineTo(px(cx),PAD.t+plotH);ctx.stroke();
+  });
+  for(let i=yMin;i<=yMax;i++){
+    ctx.beginPath();ctx.moveTo(PAD.l,py(i));ctx.lineTo(PAD.l+plotW,py(i));ctx.stroke();
+  }
+
+
+
+  // axes
+  ctx.strokeStyle=dark?'rgba(255,255,255,0.25)':'rgba(0,0,0,0.25)';
+  ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(PAD.l,PAD.t);ctx.lineTo(PAD.l,PAD.t+plotH);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(PAD.l,PAD.t+plotH);ctx.lineTo(PAD.l+plotW,PAD.t+plotH);ctx.stroke();
+
+  // y tick labels (desire) — only show visible range
+  ctx.fillStyle=dark?'#6b6a65':'#888780';
+  ctx.font='10px -apple-system,sans-serif';
+  ctx.textAlign='right';
+  for(let i=yMin;i<=yMax;i++){
+    if(i<yMin)continue;
+    ctx.fillText(i,PAD.l-5,py(i)+3);
+  }
+
+  // x axis companion labels
+  ctx.textAlign='center';
+  ctx.font='11px -apple-system,sans-serif';
+  Object.entries(COMP_X).forEach(([k,cx])=>{
+    const col=COMP_COLORS[k]||'#888780';
+    ctx.fillStyle=col;
+    ctx.fillText(COMP_NAMES[k],px(cx),PAD.t+plotH+16);
+  });
+
+  // axis title
+  ctx.fillStyle=dark?'#6b6a65':'#888780';
+  ctx.font='11px -apple-system,sans-serif';
+  ctx.textAlign='center';
+  ctx.fillText('← solo · companion type · laura →',PAD.l+plotW/2,PAD.t+plotH+32);
+  ctx.save();
+  ctx.translate(12,PAD.t+plotH/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText('your desire →',0,0);
+  ctx.restore();
+
+  // build dots — one per destination per valid companion
+  myTripsDots=[];
+  const compKeys= myTripsComp==='all'
+    ? ['solo','friend','family','bekah','laura']
+    : [myTripsComp];
+
+  // group by (compKey, desire) to handle stacking
+  const groups={};
+  localData.forEach(d=>{
+    compKeys.forEach(ck=>{
+      if(ck==='solo'&&!d.solo)return;
+      if(ck==='friend'&&!d.friend)return;
+      if(ck==='family'&&!d.family)return;
+      if(ck==='bekah'&&!d.bekah)return;
+      if(ck==='laura'&&d.laura===false)return;
+      const key=ck+'|'+d.desire;
+      if(!groups[key])groups[key]={items:[],ck,desire:d.desire};
+      groups[key].items.push(d);
+    });
+  });
+
+  // jitter seed per group key so it's deterministic
+  function seededJitter(seed, range){
+    const x=Math.sin(seed*9301+49297)*233280;
+    return ((x-Math.floor(x))-0.5)*range;
+  }
+
+  Object.entries(groups).forEach(([key,g])=>{
+    const seed=key.split('').reduce((a,c)=>a+c.charCodeAt(0),0);
+    const baseX=px(COMP_X[g.ck]);
+    // jitter x slightly within column so same-desire dots spread
+    const jitter=g.items.length>1?0:seededJitter(seed,20);
+    const x=baseX+jitter;
+    const y=py(g.desire);
+    const maxV=Math.max(...g.items.map(d=>d.versatility));
+    const r=Math.max(8,maxV*4+2+(g.items.length>1?4:0));
+    const col=COMP_COLORS[g.ck]||'#888780';
+    myTripsDots.push({x,y,r,col,items:g.items,count:g.items.length,ck:g.ck});
+  });
+
+  // draw dots
+  myTripsDots.slice().sort((a,b)=>b.r-a.r).forEach(dot=>{
+    ctx.beginPath();
+    ctx.arc(dot.x,dot.y,dot.r,0,Math.PI*2);
+    ctx.fillStyle=dot.col+'88';
+    ctx.fill();
+    ctx.strokeStyle=dot.col+'cc';
+    ctx.lineWidth=1.5;
+    ctx.stroke();
+
+    // badge
+    if(dot.count>1){
+      const br=8;
+      const bx=dot.x+dot.r*0.7;
+      const by=dot.y-dot.r*0.7;
+      ctx.beginPath();ctx.arc(bx,by,br,0,Math.PI*2);
+      ctx.fillStyle=dark?'#333331':'#ffffff';
+      ctx.fill();
+      ctx.strokeStyle=dot.col;
+      ctx.lineWidth=1.5;
+      ctx.stroke();
+      ctx.fillStyle=dot.col;
+      ctx.font='bold 9px -apple-system,sans-serif';
+      ctx.textAlign='center';
+      ctx.textBaseline='middle';
+      ctx.fillText(dot.count,bx,by);
+      ctx.textBaseline='alphabetic';
+    }
+  });
+
+  // labels — stacked names
+  ctx.font='bold 10px -apple-system,sans-serif';
+  const drawn=[];
+  const sortedDots=[...myTripsDots].sort((a,b)=>b.items[0].desire-a.items[0].desire);
+  sortedDots.forEach(dot=>{
+    const names=dot.items.slice().sort((a,b)=>b.desire-a.desire).map(d=>d.name);
+    const lineH=12;
+    const totalH=names.length*lineH;
+    const maxW=Math.max(...names.map(n=>ctx.measureText(n).width));
+    const lx=dot.x+dot.r+3;
+    const ly=dot.y-(totalH/2)+lineH;
+    const box={x:lx-1,y:ly-lineH,w:maxW+2,h:totalH+2};
+    const overlaps=drawn.some(b=>box.x<b.x+b.w&&box.x+box.w>b.x&&box.y<b.y+b.h&&box.y+box.h>b.y);
+    if(!overlaps&&lx+maxW<W-4){
+      ctx.textAlign='left';
+      ctx.fillStyle=dark?'#c8c7c0':'#333';
+      names.forEach((name,i)=>ctx.fillText(name,lx,ly+i*lineH));
+      drawn.push(box);
+    }
+  });
+}
+
+function setupMyTripsEvents(){
+  const canvas=document.getElementById('myTripsCanvas');
+  canvas.addEventListener('mousemove',e=>{
+    const rect=canvas.getBoundingClientRect();
+    const mx=e.clientX-rect.left;
+    const my=e.clientY-rect.top;
+    let best=null,bestDist=Infinity;
+    myTripsDots.forEach(dot=>{
+      const dx=mx-dot.x,dy=my-dot.y;
+      const dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<=dot.r+10&&dist<bestDist){bestDist=dist;best=dot;}
+    });
+    const tt=document.getElementById('tooltip');
+    if(best){
+      const ttBody=document.getElementById('ttBody');
+      ttBody.innerHTML='';
+      const hdr=document.createElement('div');
+      hdr.style.cssText='font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px;';
+      hdr.textContent=(best.count>1?best.count+' destinations · ':'')+COMP_NAMES[best.ck]+' trips';
+      ttBody.appendChild(hdr);
+      best.items.forEach((d,i)=>{
+        if(i>0){const div=document.createElement('div');div.style.cssText='border-top:0.5px solid var(--border);margin-top:6px;padding-top:6px;';ttBody.appendChild(div);}
+        const nameEl=document.createElement('div');
+        nameEl.style.cssText='font-size:14px;font-weight:500;margin-bottom:4px;color:var(--text);';
+        nameEl.textContent=d.name;
+        ttBody.appendChild(nameEl);
+        [['your desire',d.desire],['laura',d.lauraScore!=null?d.lauraScore+(d.laura==='?'?' (tentative)':''):'—'],['visits',d.visits+' ('+VISIT_LABELS[Math.min(d.visits,5)]+')'],['versatility',d.versatility+'/5']].forEach(([k,v])=>{
+          const row=document.createElement('div');
+          row.style.cssText='display:flex;justify-content:space-between;gap:16px;padding:1px 0;font-size:12px;';
+          row.innerHTML=`<span style="color:var(--text3)">${k}</span><span style="font-weight:500">${v}</span>`;
+          ttBody.appendChild(row);
+        });
+      });
+      tt.style.left=(e.clientX+16)+'px';
+      tt.style.top=Math.max(8,e.clientY-40)+'px';
+      tt.style.display='block';
+      canvas.style.cursor='pointer';
+    }else{
+      tt.style.display='none';
+      canvas.style.cursor='default';
+    }
+  });
+  canvas.addEventListener('mouseleave',()=>{document.getElementById('tooltip').style.display='none';});
+}
+
+function buildMyTripsLegend(){
+  const el=document.getElementById('myTripsLegend');
+  el.innerHTML='';
+  Object.entries(COMP_COLORS).forEach(([k,c])=>{
+    el.innerHTML+=`<span><span class="ldot" style="background:${c}"></span>${COMP_NAMES[k]}</span> `;
+  });
+}
+
+function setScatterDesireMin(v){
+  scatterDesireMin=parseInt(v);
+  document.getElementById('scatterDesireVal').textContent=v;
+  drawScatter(filteredCache);
+  buildScatterLegend();
+}
+
+function setScatterLauraMin(v){
+  scatterLauraMin=parseInt(v);
+  document.getElementById('scatterLauraVal').textContent=v;
+  drawScatter(filteredCache);
+  buildScatterLegend();
+}
+
+function setMyTripsDesireMin(v){
+  myTripsDesireMin=parseInt(v);
+  document.getElementById('myTripsDesireVal').textContent=v;
+  drawMyTrips(filteredCache);
+  buildMyTripsLegend();
+}
+
+function setMyTripsComp(v){
+  myTripsComp=v;
+  ['All','Solo','Friend','Family','Bekah','Laura'].forEach(s=>{
+    const el=document.getElementById('mt'+s);
+    if(el)el.classList.toggle('active',v===s.toLowerCase());
+  });
+  drawMyTrips(filteredCache);
+  buildMyTripsLegend();
+}
+
 // ── QUADRANT ──────────────────────────────────────────────────────────
 function chipColor(d){
   const base=COMP_COLORS[d.dominant]||'#888780';
@@ -516,9 +827,12 @@ function renderQuadrant(data){
     {label:'laura more than you',sub:`you <${qYou} · laura ≥${qLaura}`,
      bg:'#E6F1FB',border:'#378ADD',
      test:d=>d.desire<qYou&&d.lauraScore!=null&&d.lauraScore>=qLaura},
-    {label:'you more than laura',sub:`you ≥${qYou} · laura <${qLaura} or unscored`,
+    {label:'you want it, she scored lower',sub:`you ≥${qYou} · laura scored but <${qLaura}`,
      bg:'#FCEBEB',border:'#E24B4A',
-     test:d=>d.desire>=qYou&&(d.lauraScore==null||d.lauraScore<qLaura)},
+     test:d=>d.desire>=qYou&&d.lauraScore!=null&&d.lauraScore<qLaura},
+    {label:'you want it, she hasn\'t scored',sub:`you ≥${qYou} · no laura score`,
+     bg:'#F5EEF8',border:'#8E44AD',
+     test:d=>d.desire>=qYou&&d.lauraScore==null},
     {label:'neither priority',sub:`you <${qYou} · laura <${qLaura} or unscored`,
      bg:'#FAEEDA',border:'#BA7517',
      test:d=>d.desire<qYou&&(d.lauraScore==null||d.lauraScore<qLaura)},
@@ -600,6 +914,8 @@ function render(){
   updateStats(filteredCache);
   drawScatter(filteredCache);
   buildScatterLegend();
+  drawMyTrips(filteredCache);
+  buildMyTripsLegend();
   renderQuadrant(filteredCache);
   renderTable(filteredCache);
 }
@@ -636,6 +952,8 @@ function setQThresh(who,v){
 }
 function resetFilters(){
   compFilter='all';visitFilter='all';desireMin=1;
+  scatterDesireMin=7;scatterLauraMin=2;
+  myTripsDesireMin=7;myTripsComp='all';
   ['All','Solo','Friend','Family','Bekah','Laura'].forEach(s=>{
     const el=document.getElementById('f'+s);
     if(el)el.classList.toggle('active',s==='All');
@@ -645,6 +963,16 @@ function resetFilters(){
   document.getElementById('fVFam').classList.remove('active');
   document.getElementById('desireSlider').value=1;
   document.getElementById('desireVal').textContent='1';
+  document.getElementById('scatterDesireSlider').value=7;
+  document.getElementById('scatterDesireVal').textContent='7';
+  document.getElementById('scatterLauraSlider').value=2;
+  document.getElementById('scatterLauraVal').textContent='2';
+  document.getElementById('myTripsDesireSlider').value=7;
+  document.getElementById('myTripsDesireVal').textContent='7';
+  ['All','Solo','Friend','Family','Bekah','Laura'].forEach(s=>{
+    const el=document.getElementById('mt'+s);
+    if(el)el.classList.toggle('active',s==='All');
+  });
   render();
 }
 
@@ -658,8 +986,9 @@ function loadCSV(text){
     document.getElementById('dropSub').textContent='Drop a new file to reload';
     document.getElementById('dashboard').style.display='block';
     setupScatterEvents();
+    setupMyTripsEvents();
     render();
-    window.addEventListener('resize',()=>drawScatter(filteredCache));
+    window.addEventListener('resize',()=>{drawScatter(filteredCache);drawMyTrips(filteredCache);});
   }
 }
 
