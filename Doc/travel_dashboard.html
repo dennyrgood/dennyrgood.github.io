@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Travel Alignment Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg2: #f5f4f0;
+    --bg3: #eeede9;
+    --text: #1a1a18;
+    --text2: #5f5e5a;
+    --text3: #888780;
+    --border: rgba(0,0,0,0.12);
+    --border2: rgba(0,0,0,0.22);
+    --radius: 8px;
+    --radius-lg: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1e1e1c;
+      --bg2: #2a2a28;
+      --bg3: #333331;
+      --text: #f0efeb;
+      --text2: #a8a79f;
+      --text3: #6b6a65;
+      --border: rgba(255,255,255,0.12);
+      --border2: rgba(255,255,255,0.22);
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg3); color: var(--text); font-size: 14px; min-height: 100vh; }
+  .app { max-width: 960px; margin: 0 auto; padding: 24px 20px; }
+  h1 { font-size: 20px; font-weight: 500; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: var(--text3); margin-bottom: 20px; }
+
+  .drop-zone { border: 1.5px dashed var(--border2); border-radius: var(--radius-lg); padding: 32px; text-align: center; background: var(--bg); cursor: pointer; transition: background 0.15s; margin-bottom: 20px; }
+  .drop-zone.dragover { background: var(--bg2); }
+  .drop-zone.loaded { border-style: solid; border-color: #1D9E75; }
+  .drop-zone p { color: var(--text2); font-size: 13px; margin-top: 6px; }
+  .drop-zone strong { font-size: 15px; font-weight: 500; color: var(--text); }
+  .drop-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+
+  .stats { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+  .stat { background: var(--bg2); border-radius: var(--radius); padding: 10px 16px; min-width: 110px; }
+  .stat-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px; }
+  .stat-val { font-size: 22px; font-weight: 500; }
+
+  .controls { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 14px 16px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .ctrl-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .ctrl-label { font-size: 12px; color: var(--text3); min-width: 80px; }
+  button.tog { font-size: 12px; padding: 4px 11px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--bg); color: var(--text2); cursor: pointer; transition: background 0.1s, color 0.1s; }
+  button.tog.active { background: var(--bg3); color: var(--text); border-color: var(--border2); font-weight: 500; }
+  button.tog:hover { background: var(--bg2); }
+
+  .chart-wrap { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 16px; margin-bottom: 12px; position: relative; }
+  .chart-inner { position: relative; width: 100%; height: 420px; }
+
+  .tooltip { position: fixed; pointer-events: none; background: var(--bg); border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 10px 14px; font-size: 12px; min-width: 180px; z-index: 100; display: none; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+  .tt-name { font-size: 15px; font-weight: 500; margin-bottom: 8px; color: var(--text); }
+  .tt-row { display: flex; justify-content: space-between; gap: 20px; padding: 2px 0; border-bottom: 0.5px solid var(--border); }
+  .tt-row:last-child { border-bottom: none; }
+  .tt-key { color: var(--text3); }
+  .tt-val { color: var(--text); font-weight: 500; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 10px; font-size: 12px; color: var(--text2); padding: 4px 0; }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .ldot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+  .empty { text-align: center; padding: 60px 20px; color: var(--text3); }
+  .empty strong { display: block; font-size: 16px; font-weight: 500; color: var(--text2); margin-bottom: 6px; }
+
+  input[type=file] { display: none; }
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>Travel Alignment Dashboard</h1>
+  <p class="subtitle">Drag in your CSV to explore destinations</p>
+
+  <div class="drop-zone" id="dropZone">
+    <strong id="dropTitle">Drop your CSV here</strong>
+    <p id="dropSub">or click to browse — columns: l_rank, desire, place, visits, solo, friend, family, bekah, laura</p>
+    <input type="file" id="fileInput" accept=".csv">
+  </div>
+
+  <div id="dashboard" style="display:none">
+    <div class="stats">
+      <div class="stat"><div class="stat-label">destinations</div><div class="stat-val" id="statCount">—</div></div>
+      <div class="stat"><div class="stat-label">your avg desire</div><div class="stat-val" id="statYou">—</div></div>
+      <div class="stat"><div class="stat-label">laura's avg desire</div><div class="stat-val" id="statLaura">—</div></div>
+      <div class="stat"><div class="stat-label">top alignment</div><div class="stat-val" id="statTop">—</div></div>
+    </div>
+
+    <div class="controls">
+      <div class="ctrl-row">
+        <span class="ctrl-label">laura filter</span>
+        <button class="tog" id="btnLaura" onclick="toggleLaura()">show all</button>
+        <span style="font-size:11px;color:var(--text3);margin-left:4px">toggle to show only places laura scored</span>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">y-axis</span>
+        <button class="tog active" id="btnYAlign" onclick="setY('alignment')">laura's desire</button>
+        <button class="tog" id="btnYNovel" onclick="setY('novelty')">novelty (inverse visits)</button>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">bubble size</span>
+        <button class="tog active" id="btnSzV" onclick="setSz('versatility')">versatility</button>
+        <button class="tog" id="btnSzY" onclick="setSz('desire')">your desire</button>
+        <button class="tog" id="btnSzL" onclick="setSz('laura')">laura's desire</button>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">color by</span>
+        <button class="tog active" id="btnColV" onclick="setCol('visits')">visits</button>
+        <button class="tog" id="btnColC" onclick="setCol('companion')">companion</button>
+      </div>
+    </div>
+
+    <div class="chart-wrap">
+      <div class="chart-inner">
+        <canvas id="chart" role="img" aria-label="Bubble chart of travel destinations by desire alignment"></canvas>
+      </div>
+    </div>
+
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <div id="emptyState" style="display:none" class="empty">
+    <strong>No plottable data</strong>
+    Check that your CSV has the right headers and at least one row with valid desire/visit values.
+  </div>
+</div>
+
+<div class="tooltip" id="tooltip">
+  <div class="tt-name" id="ttName"></div>
+  <div class="tt-row"><span class="tt-key">your desire</span><span class="tt-val" id="ttYou"></span></div>
+  <div class="tt-row"><span class="tt-key">laura's desire</span><span class="tt-val" id="ttLaura"></span></div>
+  <div class="tt-row"><span class="tt-key">l rank</span><span class="tt-val" id="ttLrank"></span></div>
+  <div class="tt-row"><span class="tt-key">visits</span><span class="tt-val" id="ttVisits"></span></div>
+  <div class="tt-row"><span class="tt-key">companions</span><span class="tt-val" id="ttComp"></span></div>
+  <div class="tt-row"><span class="tt-key">versatility</span><span class="tt-val" id="ttVers"></span></div>
+</div>
+
+<script>
+const VISIT_COLORS = ['#1D9E75','#378ADD','#BA7517','#D85A30','#E24B4A','#A32D2D'];
+const VISIT_LABELS = ['never','once','twice','3×','4×','often'];
+const COMP_COLORS  = { laura:'#534AB7', bekah:'#D4537E', family:'#1D9E75', friend:'#378ADD', solo:'#888780' };
+const COMP_LABELS  = { laura:'Laura', bekah:'Bekah', family:'family', friend:'friend', solo:'solo only' };
+
+let allData = [];
+let yMode = 'alignment', szMode = 'versatility', colMode = 'visits', lauraOnly = false;
+let chartInst = null;
+
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/);
+  if (lines.length < 2) return [];
+  const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/\s+/g,'_'));
+  return lines.slice(1).map(line => {
+    const vals = line.split(',').map(v => v.trim());
+    const row = {};
+    headers.forEach((h, i) => row[h] = vals[i] || '');
+    return row;
+  }).filter(r => r.place && r.desire);
+}
+
+function processRow(r) {
+  const lrank = r.l_rank !== '' && !isNaN(r.l_rank) ? parseFloat(r.l_rank) : null;
+  const desire = parseFloat(r.desire) || 0;
+  const visits = parseInt(r.visits) || 0;
+  const laura = r.laura ? r.laura.toLowerCase().trim() : '';
+  const lauraVal = laura === 'x' ? 'x' : laura === '?' ? '?' : false;
+
+  let lauraScore = null;
+  if (lauraVal === 'x' && lrank != null) lauraScore = lrank;
+  else if (lauraVal === '?' && lrank != null) lauraScore = Math.round(lrank * 0.5);
+  else if (lauraVal === 'x' && lrank == null) lauraScore = 5;
+
+  const solo   = (r.solo||'').toLowerCase() === 'x';
+  const friend = (r.friend||'').toLowerCase() === 'x';
+  const family = (r.family||'').toLowerCase() === 'x';
+  const bekah  = (r.bekah||'').toLowerCase() === 'x';
+  const lauraCheck = lauraVal !== false;
+
+  const versatility = [solo, friend, family, bekah, lauraCheck].filter(Boolean).length;
+
+  const compList = [];
+  if (solo)      compList.push('solo');
+  if (friend)    compList.push('friend');
+  if (family)    compList.push('family');
+  if (bekah)     compList.push('Bekah');
+  if (lauraCheck) compList.push('Laura' + (lauraVal === '?' ? '?' : ''));
+
+  let dominant = 'solo';
+  if (lauraCheck)  dominant = 'laura';
+  else if (bekah)  dominant = 'bekah';
+  else if (family) dominant = 'family';
+  else if (friend) dominant = 'friend';
+
+  return { name: r.place, lrank, desire, visits, solo, friend, family, bekah, laura: lauraVal, lauraScore, versatility, compList, dominant };
+}
+
+function getY(d) {
+  if (yMode === 'alignment') return d.lauraScore;
+  return 10 - Math.min(d.visits, 5) * 2;
+}
+
+function getSz(d) {
+  if (szMode === 'versatility') return Math.max(d.versatility, 1) * 7;
+  if (szMode === 'desire')  return d.desire * 4.5;
+  if (szMode === 'laura')   return d.lauraScore != null ? d.lauraScore * 4.5 : 10;
+  return 10;
+}
+
+function getColor(d) {
+  if (colMode === 'visits') return VISIT_COLORS[Math.min(d.visits, 5)];
+  return COMP_COLORS[d.dominant];
+}
+
+function filteredData() {
+  return allData.filter(d => {
+    if (lauraOnly && d.lauraScore == null) return false;
+    if (yMode === 'alignment' && d.lauraScore == null) return false;
+    return true;
+  });
+}
+
+function updateStats(data) {
+  document.getElementById('statCount').textContent = data.length;
+  if (!data.length) return;
+  const youAvg = (data.reduce((s,d) => s + d.desire, 0) / data.length).toFixed(1);
+  document.getElementById('statYou').textContent = youAvg;
+  const ld = data.filter(d => d.lauraScore != null);
+  document.getElementById('statLaura').textContent = ld.length ? (ld.reduce((s,d) => s + d.lauraScore, 0) / ld.length).toFixed(1) : '—';
+  if (ld.length) {
+    const top = [...ld].sort((a,b) => (b.desire + b.lauraScore) - (a.desire + a.lauraScore))[0];
+    document.getElementById('statTop').textContent = top.name;
+  } else {
+    document.getElementById('statTop').textContent = '—';
+  }
+}
+
+function buildLegend() {
+  const el = document.getElementById('legend');
+  el.innerHTML = '';
+  if (colMode === 'visits') {
+    VISIT_LABELS.forEach((lbl, i) => {
+      el.innerHTML += `<span class="legend-item"><span class="ldot" style="background:${VISIT_COLORS[i]}"></span>${lbl}</span>`;
+    });
+  } else {
+    Object.entries(COMP_LABELS).forEach(([k, lbl]) => {
+      el.innerHTML += `<span class="legend-item"><span class="ldot" style="background:${COMP_COLORS[k]}"></span>${lbl}</span>`;
+    });
+  }
+}
+
+function render() {
+  const data = filteredData();
+  updateStats(data);
+  buildLegend();
+
+  if (!data.length) {
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('emptyState').style.display = 'block';
+    return;
+  }
+  document.getElementById('dashboard').style.display = 'block';
+  document.getElementById('emptyState').style.display = 'none';
+
+  const pts = data.map(d => ({
+    x: d.desire,
+    y: getY(d),
+    r: getSz(d),
+    _d: d
+  })).filter(p => p.y != null);
+
+  if (chartInst) chartInst.destroy();
+  const ctx = document.getElementById('chart').getContext('2d');
+  chartInst = new Chart(ctx, {
+    type: 'bubble',
+    data: {
+      datasets: pts.map(p => ({
+        label: p._d.name,
+        data: [{ x: p.x, y: p.y, r: p.r }],
+        backgroundColor: getColor(p._d) + 'cc',
+        borderColor: getColor(p._d),
+        borderWidth: 1.5,
+      }))
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: { padding: 24 },
+      plugins: { legend: { display: false }, tooltip: { enabled: false } },
+      scales: {
+        x: {
+          min: 0, max: 11,
+          title: { display: true, text: 'your desire →', color: '#888780', font: { size: 12 } },
+          grid: { color: 'rgba(136,135,128,0.12)' },
+          ticks: { color: '#888780', font: { size: 11 }, stepSize: 1 }
+        },
+        y: {
+          min: 0, max: 11,
+          title: {
+            display: true,
+            text: yMode === 'alignment' ? "laura's desire →" : 'novelty →',
+            color: '#888780', font: { size: 12 }
+          },
+          grid: { color: 'rgba(136,135,128,0.12)' },
+          ticks: { color: '#888780', font: { size: 11 }, stepSize: 1 }
+        }
+      },
+      onHover: (evt, els) => {
+        const tt = document.getElementById('tooltip');
+        if (els.length) {
+          const d = pts[els[0].datasetIndex]._d;
+          document.getElementById('ttName').textContent = d.name;
+          document.getElementById('ttYou').textContent = d.desire;
+          document.getElementById('ttLaura').textContent = d.lauraScore != null ? d.lauraScore + (d.laura === '?' ? ' (tentative)' : '') : '—';
+          document.getElementById('ttLrank').textContent = d.lrank != null ? d.lrank : '—';
+          document.getElementById('ttVisits').textContent = d.visits + ' (' + VISIT_LABELS[Math.min(d.visits,5)] + ')';
+          document.getElementById('ttComp').textContent = d.compList.join(', ') || '—';
+          document.getElementById('ttVers').textContent = d.versatility + ' / 5';
+          tt.style.left = (evt.native.clientX + 18) + 'px';
+          tt.style.top  = Math.max(8, evt.native.clientY - 80) + 'px';
+          tt.style.display = 'block';
+        } else {
+          tt.style.display = 'none';
+        }
+      }
+    }
+  });
+
+  document.getElementById('chart').addEventListener('mouseleave', () => {
+    document.getElementById('tooltip').style.display = 'none';
+  });
+}
+
+function loadCSV(text) {
+  const rows = parseCSV(text);
+  allData = rows.map(processRow).filter(d => d.desire > 0);
+  if (allData.length) {
+    document.getElementById('dropZone').classList.add('loaded');
+    document.getElementById('dropTitle').textContent = `${allData.length} destinations loaded`;
+    document.getElementById('dropSub').textContent = 'Drop a new file to reload';
+    render();
+  }
+}
+
+function toggleLaura() {
+  lauraOnly = !lauraOnly;
+  const btn = document.getElementById('btnLaura');
+  btn.textContent = lauraOnly ? 'laura scored only' : 'show all';
+  btn.classList.toggle('active', lauraOnly);
+  render();
+}
+function setY(m) {
+  yMode = m;
+  document.getElementById('btnYAlign').classList.toggle('active', m === 'alignment');
+  document.getElementById('btnYNovel').classList.toggle('active', m === 'novelty');
+  render();
+}
+function setSz(m) {
+  szMode = m;
+  ['v','y','l'].forEach((k,i) => {
+    document.getElementById('btnSz'+k.toUpperCase()).classList.toggle('active', ['versatility','desire','laura'][i] === m);
+  });
+  render();
+}
+function setCol(m) {
+  colMode = m;
+  document.getElementById('btnColV').classList.toggle('active', m === 'visits');
+  document.getElementById('btnColC').classList.toggle('active', m === 'companion');
+  render();
+}
+
+const dz = document.getElementById('dropZone');
+const fi = document.getElementById('fileInput');
+dz.addEventListener('click', () => fi.click());
+fi.addEventListener('change', e => {
+  const f = e.target.files[0];
+  if (f) { const r = new FileReader(); r.onload = ev => loadCSV(ev.target.result); r.readAsText(f); }
+});
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+dz.addEventListener('drop', e => {
+  e.preventDefault();
+  dz.classList.remove('dragover');
+  const f = e.dataTransfer.files[0];
+  if (f) { const r = new FileReader(); r.onload = ev => loadCSV(ev.target.result); r.readAsText(f); }
+});
+</script>
+</body>
+</html>
