@@ -534,7 +534,7 @@ function buildScatterLegend(){
 }
 
 // ── MY TRIPS CHART ───────────────────────────────────────────────────
-const COMP_X = {solo:-5, friend:-2.5, family:0.5, bekah:3, laura:5.5};
+const COMP_X = {solo:-4.5, friend:-2, family:0.5, bekah:2.8, laura:4.5};
 const COMP_NAMES = {solo:'solo', friend:'friend', family:'family', bekah:'Bekah', laura:'Laura'};
 let myTripsDots=[];
 let myTripsDesireMin=7, myTripsComp='all';
@@ -571,7 +571,7 @@ function drawMyTrips(data){
   const yRange=yMax-yMin;
 
   // x: -5 to +5 companion spectrum, y: dynamic desire range
-  function px(x){return PAD.l+((x+5.5)/11)*plotW;}
+  function px(x){return PAD.l+((x+5)/10)*plotW;}
   function py(y){return PAD.t+(1-((y-yMin)/yRange))*plotH;}
 
   // background
