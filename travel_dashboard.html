@@ -108,7 +108,7 @@ tr:hover td{background:var(--bg2);}
 
     <!-- CHART 1: ALIGNMENT -->
     <div class="panel">
-      <div class="panel-title">alignment — your desire (x) · laura's desire (y) · size = versatility · color = laura's score intensity</div>
+      <div class="panel-title">alignment — your desire (x) · laura's desire (y) · color = laura's score intensity</div>
       <div class="panel-controls">
         <div class="filter-group">
           <div class="filter-label">your desire ≥ <span id="c1YouVal" style="font-weight:500;color:var(--text)">7</span></div>
@@ -125,7 +125,7 @@ tr:hover td{background:var(--bg2);}
           </div>
         </div>
       </div>
-      <div class="canvas-wrap"><canvas id="c1Canvas"></canvas></div>
+      <div class="canvas-wrap" id="c1Wrap" style="height:480px"><canvas id="c1Canvas"></canvas></div>
     </div>
 
     <!-- CHART 2: MY TRIPS -->
@@ -409,6 +409,8 @@ function lauraColor(score,alpha){
 }
 
 function drawChart1(data){
+  // expand height when showing unscored
+  document.getElementById('c1Wrap').style.height=(c1ShowUnscored?'680px':'480px');
   const{ctx,W,H}=setupCanvas('c1Canvas');
   const dark=isDark();
   const PAD={l:48,r:30,t:24,b:44};
@@ -465,8 +467,7 @@ function drawChart1(data){
   Object.values(groups).forEach(g=>{
     const x=px(g.desire);
     const y=g.ly>0?py(g.ly):py(c1ShowUnscored?0.3:yMin);
-    const maxV=Math.max(...g.items.map(d=>d.versatility));
-    const r=Math.max(8,maxV*5+2+(g.items.length>1?3:0));
+    const r=g.items.length>1?16:12;
     const noLaura=g.ly===0;
     // color by laura score intensity
     const avgLaura=g.ly>0?g.ly:0;
