@@ -22,9 +22,10 @@
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg3);color:var(--text);font-size:14px;min-height:100vh;}
-.app{max-width:1100px;margin:0 auto;padding:24px 20px;}
+.app{max-width:100%;margin:0 auto;padding:24px 20px;}
 h1{font-size:20px;font-weight:500;margin-bottom:2px;}
 .subtitle{font-size:13px;color:var(--text3);margin-bottom:18px;}
+.constrained{max-width:1100px;margin:0 auto;}
 .drop-zone{border:1.5px dashed var(--border2);border-radius:var(--radius-lg);padding:20px;text-align:center;background:var(--bg);cursor:pointer;transition:background 0.15s;margin-bottom:18px;}
 .drop-zone.dragover{background:var(--bg2);}
 .drop-zone.loaded{border-style:solid;border-color:var(--green);}
@@ -80,13 +81,16 @@ tr:hover td{background:var(--bg2);}
   <h1>Travel Alignment Dashboard</h1>
   <p class="subtitle">Your desire vs Laura's desire</p>
 
+  <div class="constrained">
   <div class="drop-zone" id="dropZone">
     <strong id="dropTitle">Drop your CSV here</strong>
     <p id="dropSub">or click to browse</p>
     <input type="file" id="fileInput" accept=".csv">
   </div>
+  </div><!-- end constrained -->
 
   <div id="dashboard" style="display:none">
+    <div class="constrained">
     <div class="stats">
       <div class="stat"><div class="stat-label">destinations</div><div class="stat-val" id="statTotal">—</div></div>
       <div class="stat"><div class="stat-label">your avg desire</div><div class="stat-val" id="statYou">—</div></div>
@@ -94,6 +98,7 @@ tr:hover td{background:var(--bg2);}
       <div class="stat"><div class="stat-label">top alignment</div><div class="stat-val small" id="statTop">—</div></div>
     </div>
 
+    </div><!-- end constrained stats -->
     <!-- CHART 1 -->
     <div class="panel">
       <div class="panel-title">alignment — your desire (x) · laura's desire (y) · color = laura's score intensity</div>
@@ -153,6 +158,7 @@ tr:hover td{background:var(--bg2);}
       <div class="legend" id="c2Legend"></div>
     </div>
 
+    <div class="constrained">
     <!-- GLOBAL FILTERS -->
     <div class="panel">
       <div class="panel-title">filters — apply to quadrant view and table below</div>
