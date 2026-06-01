@@ -294,18 +294,24 @@ function processRow(r){
 // ── HELPERS ───────────────────────────────────────────────────────────
 function isDark(){return window.matchMedia('(prefers-color-scheme:dark)').matches;}
 
-function setupCanvas(id,h){
+function setupCanvas(id,fixedH){
   const canvas=document.getElementById(id);
   const wrap=canvas.parentElement;
-  wrap.style.height=h+'px';
-  canvas.style.height=h+'px';
+  // dynamic: fill remaining viewport height after panel controls
+  const panel=wrap.closest('.panel');
+  const panelTop=panel?panel.getBoundingClientRect().top+window.scrollY:0;
+  const controlsHeight=wrap.previousElementSibling?wrap.previousElementSibling.getBoundingClientRect().bottom-panel.getBoundingClientRect().top:80;
+  const availH=Math.max(300, window.innerHeight - controlsHeight - 80);
+  const H=fixedH||availH;
+  wrap.style.height=H+'px';
+  canvas.style.height=H+'px';
   const dpr=window.devicePixelRatio||1;
   const W=wrap.clientWidth;
-  canvas.width=W*dpr;canvas.height=h*dpr;
+  canvas.width=W*dpr;canvas.height=H*dpr;
   canvas.style.width=W+'px';
   const ctx=canvas.getContext('2d');
   ctx.scale(dpr,dpr);
-  return{ctx,W,H:h};
+  return{ctx,W,H};
 }
 
 function lauraColor(score,alpha){
@@ -409,8 +415,8 @@ function drawAxes(ctx,PAD,plotW,plotH,W,H,xMin,xMax,yMin,yMax,px,py,dark,xLabel,
 
 // ── CHART 1 ───────────────────────────────────────────────────────────
 function drawChart1(){
-  const h=c1ShowUnscored?680:480;
-  const{ctx,W,H}=setupCanvas('c1Canvas',h);
+  const fixedH=c1ShowUnscored?null:null;
+  const{ctx,W,H}=setupCanvas('c1Canvas',null);
   const dark=isDark();
   const PAD={l:48,r:30,t:24,b:44};
   const plotW=W-PAD.l-PAD.r,plotH=H-PAD.t-PAD.b;
@@ -470,8 +476,7 @@ function setupC1Events(){
 
 // ── CHART 2 ───────────────────────────────────────────────────────────
 function drawChart2(){
-  const h=480;
-  const{ctx,W,H}=setupCanvas('c2Canvas',h);
+  const{ctx,W,H}=setupCanvas('c2Canvas',null);
   const dark=isDark();
   const PAD={l:48,r:160,t:24,b:52};
   const plotW=W-PAD.l-PAD.r,plotH=H-PAD.t-PAD.b;
