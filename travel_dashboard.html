@@ -25,46 +25,36 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .app{max-width:1100px;margin:0 auto;padding:24px 20px;}
 h1{font-size:20px;font-weight:500;margin-bottom:2px;}
 .subtitle{font-size:13px;color:var(--text3);margin-bottom:18px;}
-
 .drop-zone{border:1.5px dashed var(--border2);border-radius:var(--radius-lg);padding:20px;text-align:center;background:var(--bg);cursor:pointer;transition:background 0.15s;margin-bottom:18px;}
 .drop-zone.dragover{background:var(--bg2);}
 .drop-zone.loaded{border-style:solid;border-color:var(--green);}
 .drop-zone p{color:var(--text2);font-size:13px;margin-top:4px;}
 .drop-zone strong{font-size:15px;font-weight:500;}
 input[type=file]{display:none;}
-
 .stats{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px;}
 .stat{background:var(--bg2);border-radius:var(--radius);padding:10px 16px;min-width:110px;}
 .stat-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:2px;}
 .stat-val{font-size:22px;font-weight:500;}
 .stat-val.small{font-size:15px;padding-top:4px;}
-
 .panel{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:14px;}
 .panel-title{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:12px;}
 .panel-controls{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-bottom:12px;}
-
 .filter-group{display:flex;flex-direction:column;gap:5px;}
 .filter-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.04em;}
 .filter-btns{display:flex;flex-wrap:wrap;gap:4px;}
 button.tog{font-size:12px;padding:3px 10px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text2);cursor:pointer;transition:background 0.1s;}
 button.tog.active{background:var(--bg3);color:var(--text);font-weight:500;}
 button.tog:hover{background:var(--bg2);}
-button.tog.check{padding:3px 10px 3px 6px;}
-button.tog.check.active{background:var(--bg3);}
-
-.canvas-wrap{position:relative;width:100%;height:480px;}
-canvas{position:absolute;top:0;left:0;width:100%;height:100%;}
-
+.canvas-wrap{position:relative;width:100%;}
+canvas{display:block;width:100%;}
 .legend{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--text2);padding:8px 0 0;}
 .ldot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:middle;}
-
 .quad-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .quad-card{border-radius:var(--radius-lg);padding:12px;}
 .quad-title{font-size:12px;font-weight:500;margin-bottom:2px;}
 .quad-sub{font-size:11px;opacity:0.7;margin-bottom:8px;}
 .quad-chips{display:flex;flex-wrap:wrap;gap:4px;}
 .chip{font-size:11px;padding:2px 7px;border-radius:10px;white-space:nowrap;border:1px solid transparent;}
-
 table{width:100%;border-collapse:collapse;font-size:13px;}
 th{text-align:left;font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.04em;padding:6px 8px;border-bottom:0.5px solid var(--border2);cursor:pointer;white-space:nowrap;user-select:none;}
 th:hover{color:var(--text);}
@@ -75,15 +65,14 @@ tr:hover td{background:var(--bg2);}
 .bar{height:5px;border-radius:3px;}
 .pip{display:inline-block;width:7px;height:7px;border-radius:50%;margin:1px;}
 .row-count{font-size:12px;color:var(--text3);margin-bottom:8px;}
-
 .tooltip{position:fixed;pointer-events:none;background:var(--bg);border:0.5px solid var(--border2);border-radius:var(--radius);padding:10px 14px;font-size:12px;min-width:180px;z-index:200;display:none;box-shadow:0 4px 12px rgba(0,0,0,0.15);}
 .tt-name{font-size:14px;font-weight:500;margin-bottom:6px;}
 .tt-row{display:flex;justify-content:space-between;gap:16px;padding:2px 0;border-bottom:0.5px solid var(--border);}
 .tt-row:last-child{border-bottom:none;}
 .tt-key{color:var(--text3);}
 .tt-val{font-weight:500;}
-.tt-group-hdr{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px;}
 .tt-sep{border-top:0.5px solid var(--border);margin:6px 0;}
+.tt-hdr{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px;}
 </style>
 </head>
 <body>
@@ -93,12 +82,11 @@ tr:hover td{background:var(--bg2);}
 
   <div class="drop-zone" id="dropZone">
     <strong id="dropTitle">Drop your CSV here</strong>
-    <p id="dropSub">or click to browse — l_rank · my desire · place · num visits · solo · friend · family · bekah · laura</p>
+    <p id="dropSub">or click to browse</p>
     <input type="file" id="fileInput" accept=".csv">
   </div>
 
   <div id="dashboard" style="display:none">
-
     <div class="stats">
       <div class="stat"><div class="stat-label">destinations</div><div class="stat-val" id="statTotal">—</div></div>
       <div class="stat"><div class="stat-label">your avg desire</div><div class="stat-val" id="statYou">—</div></div>
@@ -106,7 +94,7 @@ tr:hover td{background:var(--bg2);}
       <div class="stat"><div class="stat-label">top alignment</div><div class="stat-val small" id="statTop">—</div></div>
     </div>
 
-    <!-- CHART 1: ALIGNMENT -->
+    <!-- CHART 1 -->
     <div class="panel">
       <div class="panel-title">alignment — your desire (x) · laura's desire (y) · color = laura's score intensity</div>
       <div class="panel-controls">
@@ -120,17 +108,15 @@ tr:hover td{background:var(--bg2);}
         </div>
         <div class="filter-group">
           <div class="filter-label">unscored</div>
-          <div class="filter-btns">
-            <button class="tog" id="c1UnscoredBtn" onclick="toggleC1Unscored()">show unscored</button>
-          </div>
+          <button class="tog" id="c1UnscoredBtn" onclick="toggleC1Unscored()">show unscored</button>
         </div>
       </div>
-      <div class="canvas-wrap" id="c1Wrap" style="height:480px"><canvas id="c1Canvas"></canvas></div>
+      <div class="canvas-wrap" id="c1Wrap"><canvas id="c1Canvas"></canvas></div>
     </div>
 
-    <!-- CHART 2: MY TRIPS -->
+    <!-- CHART 2 -->
     <div class="panel">
-      <div class="panel-title">my trips — companion columns (x) · your desire (y) · size = versatility</div>
+      <div class="panel-title">my trips — companion columns (x) · your desire (y) · size = versatility · color = visits</div>
       <div class="panel-controls">
         <div class="filter-group">
           <div class="filter-label">your desire ≥ <span id="c2DesireVal" style="font-weight:500;color:var(--text)">7</span></div>
@@ -138,16 +124,16 @@ tr:hover td{background:var(--bg2);}
         </div>
         <div class="filter-group">
           <div class="filter-label">show companion columns</div>
-          <div class="filter-btns" id="c2CompBtns">
-            <button class="tog check active" id="c2solo"   onclick="toggleC2Comp('solo')">✓ solo</button>
-            <button class="tog check active" id="c2friend" onclick="toggleC2Comp('friend')">✓ friend</button>
-            <button class="tog check active" id="c2family" onclick="toggleC2Comp('family')">✓ family</button>
-            <button class="tog check active" id="c2bekah"  onclick="toggleC2Comp('bekah')">✓ Bekah</button>
-            <button class="tog check active" id="c2laura"  onclick="toggleC2Comp('laura')">✓ Laura</button>
+          <div class="filter-btns">
+            <button class="tog active" id="c2solo"   onclick="toggleC2Comp('solo')">✓ solo</button>
+            <button class="tog active" id="c2friend" onclick="toggleC2Comp('friend')">✓ friend</button>
+            <button class="tog active" id="c2family" onclick="toggleC2Comp('family')">✓ family</button>
+            <button class="tog active" id="c2bekah"  onclick="toggleC2Comp('bekah')">✓ Bekah</button>
+            <button class="tog active" id="c2laura"  onclick="toggleC2Comp('laura')">✓ Laura</button>
           </div>
         </div>
       </div>
-      <div class="canvas-wrap"><canvas id="c2Canvas"></canvas></div>
+      <div class="canvas-wrap" id="c2Wrap"><canvas id="c2Canvas"></canvas></div>
       <div class="legend" id="c2Legend"></div>
     </div>
 
@@ -216,38 +202,26 @@ tr:hover td{background:var(--bg2);}
         <tbody id="tableBody"></tbody>
       </table>
     </div>
-
-  </div><!-- end dashboard -->
-</div><!-- end app -->
-
+  </div>
+</div>
 <div class="tooltip" id="tooltip"><div id="ttBody"></div></div>
 
 <script>
-// ── CONSTANTS ─────────────────────────────────────────────────────────
 const VISIT_COLORS=['#1D9E75','#378ADD','#BA7517','#D85A30','#E24B4A','#A32D2D'];
 const VISIT_LABELS=['never','once','twice','3×','4×','often'];
 const COMP_COLORS={laura:'#534AB7',bekah:'#D4537E',family:'#1D9E75',friend:'#378ADD',solo:'#888780'};
 const COMP_NAMES={solo:'solo',friend:'friend',family:'family',bekah:'Bekah',laura:'Laura'};
-const COMP_X={solo:-4.5,friend:-2,family:0.5,bekah:2.8,laura:4.5};
 
-// ── STATE ─────────────────────────────────────────────────────────────
 let allData=[], gFiltered=[];
-
-// Chart 1
 let c1YouMin=7, c1LauraMin=2, c1ShowUnscored=false;
 let c1Dots=[];
-
-// Chart 2
-let c2DesireMin=7;
-let c2Comps=new Set(['solo','friend','family','bekah','laura']);
+let c2DesireMin=7, c2Comps=new Set(['solo','friend','family','bekah','laura']);
 let c2Dots=[];
-
-// Global
 let gComp='all', gVisit='all', gDesireMin=1;
 let qYou=8, qLaura=8;
 let sortCol='desire', sortDir=-1;
 
-// ── CSV PARSING ───────────────────────────────────────────────────────
+// ── CSV ───────────────────────────────────────────────────────────────
 function splitLine(line){
   const v=[];let c='',q=false;
   for(let ch of line){if(ch==='"'){q=!q;}else if(ch===','&&!q){v.push(c.trim());c='';}else c+=ch;}
@@ -270,8 +244,7 @@ function parseCSV(text){
     else if(h==='laura')hm.laura=i;
   });
   return lines.slice(1).map(line=>{
-    const v=splitLine(line);
-    const r={};
+    const v=splitLine(line);const r={};
     Object.entries(hm).forEach(([k,i])=>r[k]=v[i]||'');
     return r;
   }).filter(r=>r.place&&r.desire);
@@ -293,60 +266,57 @@ function processRow(r){
   const lcheck=lval!==false;
   const versatility=[solo,friend,family,bekah,lcheck].filter(Boolean).length;
   const compList=[];
-  if(solo)compList.push('solo');
-  if(friend)compList.push('friend');
-  if(family)compList.push('family');
-  if(bekah)compList.push('Bekah');
+  if(solo)compList.push('solo');if(friend)compList.push('friend');
+  if(family)compList.push('family');if(bekah)compList.push('Bekah');
   if(lcheck)compList.push('Laura'+(lval==='?'?'?':''));
   let dominant='solo';
-  if(lcheck)dominant='laura';
-  else if(bekah)dominant='bekah';
-  else if(family)dominant='family';
-  else if(friend)dominant='friend';
+  if(lcheck)dominant='laura';else if(bekah)dominant='bekah';
+  else if(family)dominant='family';else if(friend)dominant='friend';
   return{name:r.place.trim(),lrank,desire,visits,solo,friend,family,bekah,laura:lval,lauraScore,versatility,compList,dominant};
 }
 
 // ── HELPERS ───────────────────────────────────────────────────────────
 function isDark(){return window.matchMedia('(prefers-color-scheme:dark)').matches;}
 
-function setupCanvas(id){
+function setupCanvas(id,h){
   const canvas=document.getElementById(id);
   const wrap=canvas.parentElement;
+  wrap.style.height=h+'px';
+  canvas.style.height=h+'px';
   const dpr=window.devicePixelRatio||1;
-  const W=wrap.clientWidth,H=wrap.clientHeight;
-  canvas.width=W*dpr;canvas.height=H*dpr;
-  canvas.style.width=W+'px';canvas.style.height=H+'px';
+  const W=wrap.clientWidth;
+  canvas.width=W*dpr;canvas.height=h*dpr;
+  canvas.style.width=W+'px';
   const ctx=canvas.getContext('2d');
   ctx.scale(dpr,dpr);
-  return{ctx,W,H};
+  return{ctx,W,H:h};
 }
 
-function drawBackground(ctx,W,H){
-  ctx.fillStyle=isDark()?'#1e1e1c':'#ffffff';
-  ctx.fillRect(0,0,W,H);
+function lauraColor(score,alpha){
+  const t=Math.max(0,Math.min(1,(score-1)/9));
+  const r=Math.round(60+t*(83-60));
+  const g=Math.round(55+t*(55-55));
+  const b=Math.round(140+t*(183-140));
+  return`rgba(${r},${g},${b},${alpha})`;
+}
+
+function seededRand(seed){
+  const x=Math.sin(seed*9301+49297)*233280;
+  return x-Math.floor(x);
 }
 
 function showTooltip(e,items,header){
   const tt=document.getElementById('tooltip');
   const body=document.getElementById('ttBody');
   body.innerHTML='';
-  if(header){
-    const h=document.createElement('div');
-    h.className='tt-group-hdr';
-    h.textContent=header;
-    body.appendChild(h);
-  }
+  if(header){const h=document.createElement('div');h.className='tt-hdr';h.textContent=header;body.appendChild(h);}
   items.forEach((d,i)=>{
-    if(i>0){const sep=document.createElement('div');sep.className='tt-sep';body.appendChild(sep);}
+    if(i>0){const s=document.createElement('div');s.className='tt-sep';body.appendChild(s);}
     const nm=document.createElement('div');nm.className='tt-name';nm.textContent=d.name;body.appendChild(nm);
-    const rows=[
-      ['your desire',d.desire],
-      ['laura',d.lauraScore!=null?d.lauraScore+(d.laura==='?'?' (tentative)':''):'—'],
-      ['visits',d.visits+' ('+VISIT_LABELS[Math.min(d.visits,5)]+')'],
-      ['companions',d.compList.join(', ')||'—'],
-      ['versatility',d.versatility+'/5'],
-    ];
-    rows.forEach(([k,v])=>{
+    [['your desire',d.desire],['laura',d.lauraScore!=null?d.lauraScore+(d.laura==='?'?' (tentative)':''):'—'],
+     ['visits',d.visits+' ('+VISIT_LABELS[Math.min(d.visits,5)]+')'],
+     ['companions',d.compList.join(', ')||'—'],['versatility',d.versatility+'/5']
+    ].forEach(([k,v])=>{
       const row=document.createElement('div');row.className='tt-row';
       row.innerHTML=`<span class="tt-key">${k}</span><span class="tt-val">${v}</span>`;
       body.appendChild(row);
@@ -358,126 +328,112 @@ function showTooltip(e,items,header){
 }
 function hideTooltip(){document.getElementById('tooltip').style.display='none';}
 
-function drawStyledDot(ctx,x,y,r,fillColor,strokeColor,count,dark){
+function drawDot(ctx,x,y,r,fill,stroke,count,dark){
   ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);
-  ctx.fillStyle=fillColor;ctx.fill();
-  ctx.strokeStyle=strokeColor;ctx.lineWidth=1.5;ctx.stroke();
+  ctx.fillStyle=fill;ctx.fill();
+  ctx.strokeStyle=stroke;ctx.lineWidth=1.5;ctx.stroke();
   if(count>1){
     const br=8,bx=x+r*0.7,by=y-r*0.7;
     ctx.beginPath();ctx.arc(bx,by,br,0,Math.PI*2);
     ctx.fillStyle=dark?'#333331':'#ffffff';ctx.fill();
-    ctx.strokeStyle=strokeColor;ctx.lineWidth=1.5;ctx.stroke();
-    ctx.fillStyle=strokeColor;
-    ctx.font='bold 9px -apple-system,sans-serif';
+    ctx.strokeStyle=stroke;ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle=stroke;ctx.font='bold 9px -apple-system,sans-serif';
     ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.fillText(count,bx,by);ctx.textBaseline='alphabetic';
   }
 }
 
-function drawStackedLabels(ctx,dots,W,dark,textColor){
-  ctx.font='bold 10px -apple-system,sans-serif';
+function drawLabels(ctx,dots,W,dark){
   const drawn=[];
   [...dots].sort((a,b)=>{
-    const ad=a.items?a.items[0].desire:a.desire||0;
-    const bd=b.items?b.items[0].desire:b.desire||0;
+    const ad=a.items?a.items[0].desire:0;
+    const bd=b.items?b.items[0].desire:0;
     return bd-ad;
   }).forEach(dot=>{
     const names=(dot.items||[dot]).map(d=>d.name);
-    const lineH=12,totalH=names.length*lineH;
-    ctx.font='bold 10px -apple-system,sans-serif';
+    const count=names.length;
+    const fs=count>=6?8:count>=4?9:10;
+    const lineH=fs+3;
+    const totalH=count*lineH;
+    ctx.font=`bold ${fs}px -apple-system,sans-serif`;
     const maxW=Math.max(...names.map(n=>ctx.measureText(n).width));
-    const lx=dot.x+dot.r+3,ly=dot.y-(totalH/2)+lineH;
+    const col=dark?'#c8c7c0':'#333';
+    const ly=dot.y-(totalH/2)+lineH;
+
+    // try right, fall back to left
+    let lx=dot.x+dot.r+3;
+    if(lx+maxW>W-4) lx=dot.x-dot.r-3-maxW;
+
     const box={x:lx-1,y:ly-lineH,w:maxW+2,h:totalH+2};
     const overlaps=drawn.some(b=>box.x<b.x+b.w&&box.x+box.w>b.x&&box.y<b.y+b.h&&box.y+box.h>b.y);
-    if(!overlaps&&lx+maxW<W-4){
-      ctx.textAlign='left';
-      ctx.fillStyle=textColor||(dark?'#c8c7c0':'#333');
-      names.forEach((name,i)=>ctx.fillText(name,lx,ly+i*lineH));
+    if(!overlaps){
+      ctx.textAlign='left';ctx.fillStyle=col;
+      names.forEach((n,i)=>ctx.fillText(n,lx,ly+i*lineH));
       drawn.push(box);
     }
   });
 }
 
-// ── CHART 1: ALIGNMENT ────────────────────────────────────────────────
-function lauraColor(score,alpha){
-  // gradient: low score = muted gray-purple, high = rich purple
-  const t=Math.max(0,Math.min(1,(score-1)/9));
-  const r=Math.round(80+t*(83-80));
-  const g=Math.round(80+t*(75-80));
-  const b=Math.round(120+t*(183-120));
-  return`rgba(${r},${g},${b},${alpha})`;
+function drawAxes(ctx,PAD,plotW,plotH,W,H,xMin,xMax,yMin,yMax,px,py,dark,xLabel,yLabel){
+  ctx.strokeStyle=dark?'rgba(255,255,255,0.07)':'rgba(0,0,0,0.07)';ctx.lineWidth=0.5;
+  for(let i=xMin;i<=xMax;i++){ctx.beginPath();ctx.moveTo(px(i),PAD.t);ctx.lineTo(px(i),PAD.t+plotH);ctx.stroke();}
+  for(let i=Math.max(1,yMin);i<=yMax;i++){ctx.beginPath();ctx.moveTo(PAD.l,py(i));ctx.lineTo(PAD.l+plotW,py(i));ctx.stroke();}
+  ctx.strokeStyle=dark?'rgba(255,255,255,0.25)':'rgba(0,0,0,0.25)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(PAD.l,PAD.t);ctx.lineTo(PAD.l,PAD.t+plotH);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(PAD.l,PAD.t+plotH);ctx.lineTo(PAD.l+plotW,PAD.t+plotH);ctx.stroke();
+  ctx.fillStyle=dark?'#6b6a65':'#888780';ctx.font='10px -apple-system,sans-serif';
+  ctx.textAlign='center';
+  for(let i=xMin;i<=xMax;i++)ctx.fillText(i,px(i),PAD.t+plotH+14);
+  ctx.textAlign='right';
+  for(let i=Math.max(1,yMin);i<=yMax;i++)ctx.fillText(i,PAD.l-5,py(i)+3);
+  ctx.font='11px -apple-system,sans-serif';ctx.textAlign='center';
+  ctx.fillText(xLabel,PAD.l+plotW/2,H-6);
+  ctx.save();ctx.translate(12,PAD.t+plotH/2);ctx.rotate(-Math.PI/2);ctx.fillText(yLabel,0,0);ctx.restore();
 }
 
-function drawChart1(data){
-  // expand height when showing unscored
-  document.getElementById('c1Wrap').style.height=(c1ShowUnscored?'680px':'480px');
-  const{ctx,W,H}=setupCanvas('c1Canvas');
+// ── CHART 1 ───────────────────────────────────────────────────────────
+function drawChart1(){
+  const h=c1ShowUnscored?680:480;
+  const{ctx,W,H}=setupCanvas('c1Canvas',h);
   const dark=isDark();
   const PAD={l:48,r:30,t:24,b:44};
-  const plotW=W-PAD.l-PAD.r, plotH=H-PAD.t-PAD.b;
+  const plotW=W-PAD.l-PAD.r,plotH=H-PAD.t-PAD.b;
 
-  // filter
-  const local=data.filter(d=>{
+  const local=allData.filter(d=>{
     if(d.desire<c1YouMin)return false;
     if(!c1ShowUnscored&&d.lauraScore==null)return false;
     if(d.lauraScore!=null&&d.lauraScore<c1LauraMin)return false;
     return true;
   });
 
-  const xMin=c1YouMin,xMax=10,yMin=c1ShowUnscored?0:c1LauraMin>1?c1LauraMin:0,yMax=10;
+  const xMin=c1YouMin,xMax=10;
+  const yMin=c1ShowUnscored?0:(c1LauraMin>1?c1LauraMin:0),yMax=10;
   const xR=xMax-xMin+1,yR=yMax-yMin+1;
   function px(x){return PAD.l+((x-xMin+0.3)/(xR+0.6))*plotW;}
   function py(y){return PAD.t+(1-((y-yMin+0.3)/(yR+0.6)))*plotH;}
 
-  drawBackground(ctx,W,H);
+  ctx.fillStyle=dark?'#1e1e1c':'#ffffff';ctx.fillRect(0,0,W,H);
+  drawAxes(ctx,PAD,plotW,plotH,W,H,xMin,xMax,yMin,yMax,px,py,dark,'your desire →',"laura's desire →");
 
-  // grid
-  ctx.strokeStyle=dark?'rgba(255,255,255,0.07)':'rgba(0,0,0,0.07)';
-  ctx.lineWidth=0.5;
-  for(let i=xMin;i<=xMax;i++){ctx.beginPath();ctx.moveTo(px(i),PAD.t);ctx.lineTo(px(i),PAD.t+plotH);ctx.stroke();}
-  for(let i=Math.max(1,yMin);i<=yMax;i++){ctx.beginPath();ctx.moveTo(PAD.l,py(i));ctx.lineTo(PAD.l+plotW,py(i));ctx.stroke();}
-
-  // axes
-  ctx.strokeStyle=dark?'rgba(255,255,255,0.25)':'rgba(0,0,0,0.25)';ctx.lineWidth=1;
-  ctx.beginPath();ctx.moveTo(PAD.l,PAD.t);ctx.lineTo(PAD.l,PAD.t+plotH);ctx.stroke();
-  ctx.beginPath();ctx.moveTo(PAD.l,PAD.t+plotH);ctx.lineTo(PAD.l+plotW,PAD.t+plotH);ctx.stroke();
-
-  // ticks
-  ctx.fillStyle=dark?'#6b6a65':'#888780';ctx.font='10px -apple-system,sans-serif';
-  ctx.textAlign='center';
-  for(let i=xMin;i<=xMax;i++)ctx.fillText(i,px(i),PAD.t+plotH+14);
-  ctx.textAlign='right';
-  for(let i=Math.max(1,yMin);i<=yMax;i++)ctx.fillText(i,PAD.l-5,py(i)+3);
-
-  // axis labels
-  ctx.fillStyle=dark?'#6b6a65':'#888780';ctx.font='11px -apple-system,sans-serif';ctx.textAlign='center';
-  ctx.fillText('your desire →',PAD.l+plotW/2,H-6);
-  ctx.save();ctx.translate(12,PAD.t+plotH/2);ctx.rotate(-Math.PI/2);ctx.fillText("laura's desire →",0,0);ctx.restore();
-
-  // group by coordinate
-  const groups={};
-  local.forEach(d=>{
-    const ky=d.lauraScore!=null?d.lauraScore:0;
-    const key=d.desire+'|'+ky;
-    if(!groups[key])groups[key]={items:[],desire:d.desire,ly:ky};
-    groups[key].items.push(d);
-  });
-
+  // build dots with jitter — one dot per destination (no grouping in chart 1)
   c1Dots=[];
-  Object.values(groups).forEach(g=>{
-    const x=px(g.desire);
-    const y=g.ly>0?py(g.ly):py(c1ShowUnscored?0.3:yMin);
-    const r=g.items.length>1?16:12;
-    const noLaura=g.ly===0;
-    // color by laura score intensity
-    const avgLaura=g.ly>0?g.ly:0;
-    const fill=noLaura?'rgba(136,135,128,0.2)':lauraColor(avgLaura,0.55);
-    const stroke=noLaura?'rgba(136,135,128,0.5)':lauraColor(avgLaura,0.9);
-    drawStyledDot(ctx,x,y,r,fill,stroke,g.items.length,dark);
-    c1Dots.push({x,y,r,items:g.items,noLaura});
+  local.forEach((d,idx)=>{
+    const baseX=px(d.desire);
+    const baseY=d.lauraScore!=null?py(d.lauraScore):py(c1ShowUnscored?0.3:yMin);
+    // deterministic jitter per destination
+    const seed=d.name.split('').reduce((a,c)=>a+c.charCodeAt(0),0);
+    const jx=(seededRand(seed)-0.5)*18;
+    const jy=(seededRand(seed+1)-0.5)*18;
+    const x=baseX+jx, y=baseY+jy;
+    const r=12;
+    const noLaura=d.lauraScore==null;
+    const fill=noLaura?'rgba(136,135,128,0.25)':lauraColor(d.lauraScore,0.6);
+    const stroke=noLaura?'rgba(136,135,128,0.6)':lauraColor(d.lauraScore,1);
+    drawDot(ctx,x,y,r,fill,stroke,1,dark);
+    c1Dots.push({x,y,r,items:[d],noLaura});
   });
 
-  drawStackedLabels(ctx,c1Dots,W,dark);
+  drawLabels(ctx,c1Dots,W,dark);
 }
 
 function setupC1Events(){
@@ -490,70 +446,53 @@ function setupC1Events(){
       const d=Math.sqrt((mx-dot.x)**2+(my-dot.y)**2);
       if(d<=dot.r+10&&d<bestD){bestD=d;best=dot;}
     });
-    if(best){
-      const hdr=best.items.length>1?best.items.length+' destinations at this spot':null;
-      showTooltip(e,best.items,hdr);
-      canvas.style.cursor='pointer';
-    }else{hideTooltip();canvas.style.cursor='default';}
+    if(best){showTooltip(e,best.items,null);canvas.style.cursor='pointer';}
+    else{hideTooltip();canvas.style.cursor='default';}
   });
   canvas.addEventListener('mouseleave',hideTooltip);
 }
 
-// ── CHART 2: MY TRIPS ─────────────────────────────────────────────────
-function drawChart2(data){
-  const{ctx,W,H}=setupCanvas('c2Canvas');
+// ── CHART 2 ───────────────────────────────────────────────────────────
+function drawChart2(){
+  const h=480;
+  const{ctx,W,H}=setupCanvas('c2Canvas',h);
   const dark=isDark();
   const PAD={l:48,r:160,t:24,b:52};
   const plotW=W-PAD.l-PAD.r,plotH=H-PAD.t-PAD.b;
 
   const activeComps=[...c2Comps];
-  if(activeComps.length===0){drawBackground(ctx,W,H);return;}
+  if(!activeComps.length){ctx.fillStyle=dark?'#1e1e1c':'#ffffff';ctx.fillRect(0,0,W,H);return;}
 
-  // filter data
-  const local=data.filter(d=>d.desire>=c2DesireMin);
-
+  const local=allData.filter(d=>d.desire>=c2DesireMin);
   const yMin=c2DesireMin>1?c2DesireMin:1,yMax=10,yR=yMax-yMin+1;
 
-  // x: only active companion columns, evenly spaced
-  const xPositions={};
-  const n=activeComps.length;
-  activeComps.forEach((ck,i)=>{xPositions[ck]=i/(Math.max(n-1,1));});
-
+  // evenly space active companion columns
+  const xPos={};
+  activeComps.forEach((ck,i)=>xPos[ck]=i/Math.max(activeComps.length-1,1));
   function px(t){return PAD.l+t*plotW;}
   function py(y){return PAD.t+(1-((y-yMin+0.3)/(yR+0.6)))*plotH;}
 
-  drawBackground(ctx,W,H);
+  ctx.fillStyle=dark?'#1e1e1c':'#ffffff';ctx.fillRect(0,0,W,H);
 
   // grid
   ctx.strokeStyle=dark?'rgba(255,255,255,0.07)':'rgba(0,0,0,0.07)';ctx.lineWidth=0.5;
-  activeComps.forEach(ck=>{
-    const x=px(xPositions[ck]);
-    ctx.beginPath();ctx.moveTo(x,PAD.t);ctx.lineTo(x,PAD.t+plotH);ctx.stroke();
-  });
+  activeComps.forEach(ck=>{ctx.beginPath();ctx.moveTo(px(xPos[ck]),PAD.t);ctx.lineTo(px(xPos[ck]),PAD.t+plotH);ctx.stroke();});
   for(let i=yMin;i<=yMax;i++){ctx.beginPath();ctx.moveTo(PAD.l,py(i));ctx.lineTo(PAD.l+plotW,py(i));ctx.stroke();}
-
-  // axes
   ctx.strokeStyle=dark?'rgba(255,255,255,0.25)':'rgba(0,0,0,0.25)';ctx.lineWidth=1;
   ctx.beginPath();ctx.moveTo(PAD.l,PAD.t);ctx.lineTo(PAD.l,PAD.t+plotH);ctx.stroke();
   ctx.beginPath();ctx.moveTo(PAD.l,PAD.t+plotH);ctx.lineTo(PAD.l+plotW,PAD.t+plotH);ctx.stroke();
 
-  // ticks y
+  // y ticks
   ctx.fillStyle=dark?'#6b6a65':'#888780';ctx.font='10px -apple-system,sans-serif';ctx.textAlign='right';
   for(let i=yMin;i<=yMax;i++)ctx.fillText(i,PAD.l-5,py(i)+3);
 
-  // x labels (companion names)
+  // x companion labels
   ctx.font='11px -apple-system,sans-serif';ctx.textAlign='center';
-  activeComps.forEach(ck=>{
-    ctx.fillStyle=COMP_COLORS[ck]||'#888780';
-    ctx.fillText(COMP_NAMES[ck],px(xPositions[ck]),PAD.t+plotH+16);
-  });
-
-  // axis label
-  ctx.fillStyle=dark?'#6b6a65':'#888780';ctx.font='11px -apple-system,sans-serif';ctx.textAlign='center';
-  ctx.fillText('companion →',PAD.l+plotW/2,PAD.t+plotH+34);
+  activeComps.forEach(ck=>{ctx.fillStyle=COMP_COLORS[ck];ctx.fillText(COMP_NAMES[ck],px(xPos[ck]),PAD.t+plotH+16);});
+  ctx.fillStyle=dark?'#6b6a65':'#888780';ctx.fillText('companion →',PAD.l+plotW/2,PAD.t+plotH+34);
   ctx.save();ctx.translate(12,PAD.t+plotH/2);ctx.rotate(-Math.PI/2);ctx.fillText('your desire →',0,0);ctx.restore();
 
-  // build groups per companion+desire
+  // group by companion+desire
   const groups={};
   local.forEach(d=>{
     activeComps.forEach(ck=>{
@@ -570,24 +509,21 @@ function drawChart2(data){
 
   c2Dots=[];
   Object.values(groups).forEach(g=>{
-    const t=xPositions[g.ck];
-    const x=px(t);
+    const x=px(xPos[g.ck]);
     const y=py(g.desire);
     const maxV=Math.max(...g.items.map(d=>d.versatility));
     const r=Math.max(8,maxV*5+2+(g.items.length>1?3:0));
-    const col=COMP_COLORS[g.ck]||'#888780';
-    drawStyledDot(ctx,x,y,r,col+'88',col+'cc',g.items.length,dark);
+    const lead=g.items.slice().sort((a,b)=>b.desire-a.desire)[0];
+    const col=VISIT_COLORS[Math.min(lead.visits,5)];
+    drawDot(ctx,x,y,r,col+'88',col+'cc',g.items.length,dark);
     c2Dots.push({x,y,r,items:g.items,ck:g.ck});
   });
 
-  drawStackedLabels(ctx,c2Dots,W,dark);
+  drawLabels(ctx,c2Dots,W,dark);
 
   // legend
-  const leg=document.getElementById('c2Legend');
-  leg.innerHTML='';
-  activeComps.forEach(ck=>{
-    leg.innerHTML+=`<span><span class="ldot" style="background:${COMP_COLORS[ck]}"></span>${COMP_NAMES[ck]}</span> `;
-  });
+  const leg=document.getElementById('c2Legend');leg.innerHTML='';
+  VISIT_LABELS.forEach((lbl,i)=>leg.innerHTML+=`<span><span class="ldot" style="background:${VISIT_COLORS[i]}"></span>${lbl}</span> `);
 }
 
 function setupC2Events(){
@@ -602,14 +538,13 @@ function setupC2Events(){
     });
     if(best){
       const hdr=(best.items.length>1?best.items.length+' destinations · ':'')+COMP_NAMES[best.ck]+' trips';
-      showTooltip(e,best.items,hdr);
-      canvas.style.cursor='pointer';
+      showTooltip(e,best.items,hdr);canvas.style.cursor='pointer';
     }else{hideTooltip();canvas.style.cursor='default';}
   });
   canvas.addEventListener('mouseleave',hideTooltip);
 }
 
-// ── GLOBAL FILTER ─────────────────────────────────────────────────────
+// ── GLOBAL / QUADRANT / TABLE ─────────────────────────────────────────
 function applyGlobal(){
   gFiltered=allData.filter(d=>{
     if(d.desire<gDesireMin)return false;
@@ -624,44 +559,30 @@ function applyGlobal(){
   });
 }
 
-// ── STATS ─────────────────────────────────────────────────────────────
 function updateStats(){
   document.getElementById('statTotal').textContent=allData.length;
   if(!allData.length)return;
   document.getElementById('statYou').textContent=(allData.reduce((s,d)=>s+d.desire,0)/allData.length).toFixed(1);
   const ld=allData.filter(d=>d.lauraScore!=null);
   document.getElementById('statLaura').textContent=ld.length?(ld.reduce((s,d)=>s+d.lauraScore,0)/ld.length).toFixed(1):'—';
-  if(ld.length){
-    const top=[...ld].sort((a,b)=>(b.desire+b.lauraScore)-(a.desire+a.lauraScore))[0];
-    document.getElementById('statTop').textContent=top.name;
-  }
+  if(ld.length){const top=[...ld].sort((a,b)=>(b.desire+b.lauraScore)-(a.desire+a.lauraScore))[0];document.getElementById('statTop').textContent=top.name;}
 }
 
-// ── QUADRANT ──────────────────────────────────────────────────────────
 function renderQuadrant(){
-  const qg=document.getElementById('quadGrid');
-  qg.innerHTML='';
+  const qg=document.getElementById('quadGrid');qg.innerHTML='';
   const defs=[
-    {label:'both want it',sub:`you ≥${qYou} · laura ≥${qLaura}`,bg:'#EAF3DE',border:'#1D9E75',
-     test:d=>d.desire>=qYou&&d.lauraScore!=null&&d.lauraScore>=qLaura},
-    {label:'laura more than you',sub:`you <${qYou} · laura ≥${qLaura}`,bg:'#E6F1FB',border:'#378ADD',
-     test:d=>d.desire<qYou&&d.lauraScore!=null&&d.lauraScore>=qLaura},
-    {label:'you want it, she scored lower',sub:`you ≥${qYou} · laura scored <${qLaura}`,bg:'#FCEBEB',border:'#E24B4A',
-     test:d=>d.desire>=qYou&&d.lauraScore!=null&&d.lauraScore<qLaura},
-    {label:"you want it, she hasn't scored",sub:`you ≥${qYou} · no laura score`,bg:'#F5EEF8',border:'#8E44AD',
-     test:d=>d.desire>=qYou&&d.lauraScore==null},
-    {label:'neither priority',sub:`you <${qYou} · laura <${qLaura} or unscored`,bg:'#FAEEDA',border:'#BA7517',
-     test:d=>d.desire<qYou&&(d.lauraScore==null||d.lauraScore<qLaura)},
+    {label:'both want it',sub:`you ≥${qYou} · laura ≥${qLaura}`,bg:'#EAF3DE',border:'#1D9E75',test:d=>d.desire>=qYou&&d.lauraScore!=null&&d.lauraScore>=qLaura},
+    {label:'laura more than you',sub:`you <${qYou} · laura ≥${qLaura}`,bg:'#E6F1FB',border:'#378ADD',test:d=>d.desire<qYou&&d.lauraScore!=null&&d.lauraScore>=qLaura},
+    {label:'you want it, she scored lower',sub:`you ≥${qYou} · laura scored <${qLaura}`,bg:'#FCEBEB',border:'#E24B4A',test:d=>d.desire>=qYou&&d.lauraScore!=null&&d.lauraScore<qLaura},
+    {label:"you want it, she hasn't scored",sub:`you ≥${qYou} · no laura score`,bg:'#F5EEF8',border:'#8E44AD',test:d=>d.desire>=qYou&&d.lauraScore==null},
+    {label:'neither priority',sub:`you <${qYou} · laura <${qLaura} or unscored`,bg:'#FAEEDA',border:'#BA7517',test:d=>d.desire<qYou&&(d.lauraScore==null||d.lauraScore<qLaura)},
   ];
   defs.forEach(q=>{
     const members=gFiltered.filter(q.test);
-    const card=document.createElement('div');
-    card.className='quad-card';
+    const card=document.createElement('div');card.className='quad-card';
     card.style.cssText=`background:${q.bg};border:1px solid ${q.border}44;border-radius:var(--radius-lg);padding:12px;`;
-    const title=document.createElement('div');title.className='quad-title';
-    title.style.cssText=`color:${q.border};`;title.textContent=q.label+' ('+members.length+')';
-    const sub=document.createElement('div');sub.className='quad-sub';
-    sub.style.cssText=`color:${q.border};`;sub.textContent=q.sub;
+    const title=document.createElement('div');title.className='quad-title';title.style.color=q.border;title.textContent=q.label+' ('+members.length+')';
+    const sub=document.createElement('div');sub.className='quad-sub';sub.style.color=q.border;sub.textContent=q.sub;
     const chips=document.createElement('div');chips.className='quad-chips';
     members.forEach(d=>{
       const c=document.createElement('span');c.className='chip';c.textContent=d.name;
@@ -669,12 +590,10 @@ function renderQuadrant(){
       c.style.cssText=`background:${col}22;border-color:${col}88;color:${col};`;
       chips.appendChild(c);
     });
-    card.appendChild(title);card.appendChild(sub);card.appendChild(chips);
-    qg.appendChild(card);
+    card.appendChild(title);card.appendChild(sub);card.appendChild(chips);qg.appendChild(card);
   });
 }
 
-// ── TABLE ─────────────────────────────────────────────────────────────
 function renderTable(){
   const sorted=[...gFiltered].sort((a,b)=>{
     const av=a[sortCol]??-Infinity,bv=b[sortCol]??-Infinity;
@@ -686,11 +605,7 @@ function renderTable(){
   sorted.forEach(d=>{
     const tr=document.createElement('tr');
     const lDisp=d.lauraScore!=null?d.lauraScore+(d.laura==='?'?'?':''):'—';
-    const pips=d.compList.map(c=>{
-      const k=c.toLowerCase().replace('?','');
-      const col=COMP_COLORS[k]||COMP_COLORS.solo;
-      return`<span class="pip" style="background:${col}55;border:1px solid ${col}" title="${c}"></span>`;
-    }).join('');
+    const pips=d.compList.map(c=>{const k=c.toLowerCase().replace('?','');const col=COMP_COLORS[k]||COMP_COLORS.solo;return`<span class="pip" style="background:${col}55;border:1px solid ${col}" title="${c}"></span>`;}).join('');
     tr.innerHTML=`
       <td style="font-weight:500">${d.name}</td>
       <td><div class="bar-wrap"><div class="bar" style="width:${d.desire*16}px;background:var(--green)"></div><span style="font-size:12px">${d.desire}</span></div></td>
@@ -698,74 +613,44 @@ function renderTable(){
       <td style="color:var(--text2);font-size:12px">${d.lrank!=null?d.lrank:'—'}</td>
       <td><span style="color:${VISIT_COLORS[Math.min(d.visits,5)]};font-weight:500">${d.visits}</span> <span style="color:var(--text3);font-size:11px">${VISIT_LABELS[Math.min(d.visits,5)]}</span></td>
       <td style="color:var(--text2);font-size:12px">${d.versatility}/5</td>
-      <td>${pips}<span style="font-size:11px;color:var(--text3);margin-left:3px">${d.compList.join(', ')}</span></td>
-    `;
+      <td>${pips}<span style="font-size:11px;color:var(--text3);margin-left:3px">${d.compList.join(', ')}</span></td>`;
     tbody.appendChild(tr);
   });
   document.querySelectorAll('th[id^="th-"]').forEach(th=>{
-    const col=th.id.replace('th-','');
-    th.classList.toggle('sorted',col===sortCol);
-    const sa=th.querySelector('.sa');
-    if(sa)sa.textContent=col===sortCol?(sortDir===-1?'↓':'↑'):'↕';
+    const col=th.id.replace('th-','');th.classList.toggle('sorted',col===sortCol);
+    const sa=th.querySelector('.sa');if(sa)sa.textContent=col===sortCol?(sortDir===-1?'↓':'↑'):'↕';
   });
 }
 
-// ── RENDER ────────────────────────────────────────────────────────────
-function renderCharts(){
-  drawChart1(allData);
-  drawChart2(allData);
-}
-function renderGlobal(){
-  applyGlobal();
-  renderQuadrant();
-  renderTable();
-}
-function renderAll(){
-  updateStats();
-  renderCharts();
-  renderGlobal();
-}
-
 // ── CONTROLS ──────────────────────────────────────────────────────────
-function setC1You(v){c1YouMin=parseInt(v);document.getElementById('c1YouVal').textContent=v;drawChart1(allData);}
-function setC1Laura(v){c1LauraMin=parseInt(v);document.getElementById('c1LauraVal').textContent=v;drawChart1(allData);}
-function toggleC1Unscored(){
-  c1ShowUnscored=!c1ShowUnscored;
-  document.getElementById('c1UnscoredBtn').classList.toggle('active',c1ShowUnscored);
-  drawChart1(allData);
-}
-function setC2Desire(v){c2DesireMin=parseInt(v);document.getElementById('c2DesireVal').textContent=v;drawChart2(allData);}
+function setC1You(v){c1YouMin=parseInt(v);document.getElementById('c1YouVal').textContent=v;drawChart1();}
+function setC1Laura(v){c1LauraMin=parseInt(v);document.getElementById('c1LauraVal').textContent=v;drawChart1();}
+function toggleC1Unscored(){c1ShowUnscored=!c1ShowUnscored;document.getElementById('c1UnscoredBtn').classList.toggle('active',c1ShowUnscored);drawChart1();}
+function setC2Desire(v){c2DesireMin=parseInt(v);document.getElementById('c2DesireVal').textContent=v;drawChart2();}
 function toggleC2Comp(ck){
   if(c2Comps.has(ck))c2Comps.delete(ck);else c2Comps.add(ck);
   const btn=document.getElementById('c2'+ck);
   btn.classList.toggle('active',c2Comps.has(ck));
   btn.textContent=(c2Comps.has(ck)?'✓ ':'')+COMP_NAMES[ck];
-  drawChart2(allData);
+  drawChart2();
 }
 function setGComp(v){
   gComp=v;
-  ['All','Solo','Friend','Family','Bekah','Laura'].forEach(s=>{
-    const el=document.getElementById('g'+s);if(el)el.classList.toggle('active',v===s.toLowerCase());
-  });
-  renderGlobal();
+  ['All','Solo','Friend','Family','Bekah','Laura'].forEach(s=>{const el=document.getElementById('g'+s);if(el)el.classList.toggle('active',v===s.toLowerCase());});
+  applyGlobal();renderQuadrant();renderTable();
 }
 function setGVisit(v){
   gVisit=v;
-  document.getElementById('gVAll').classList.toggle('active',v==='all');
-  document.getElementById('gVNew').classList.toggle('active',v==='new');
-  document.getElementById('gVFam').classList.toggle('active',v==='familiar');
-  renderGlobal();
+  ['All','New','Fam'].forEach(s=>document.getElementById('gV'+s).classList.toggle('active',{All:'all',New:'new',Fam:'familiar'}[s]===v));
+  applyGlobal();renderQuadrant();renderTable();
 }
-function setGDesire(v){gDesireMin=parseInt(v);document.getElementById('gDesireVal').textContent=v;renderGlobal();}
+function setGDesire(v){gDesireMin=parseInt(v);document.getElementById('gDesireVal').textContent=v;applyGlobal();renderQuadrant();renderTable();}
 function setQThresh(who,v){
   if(who==='you'){qYou=parseInt(v);document.getElementById('qYouVal').textContent=v;}
   else{qLaura=parseInt(v);document.getElementById('qLauraVal').textContent=v;}
   renderQuadrant();
 }
-function sortBy(col){
-  if(sortCol===col)sortDir*=-1;else{sortCol=col;sortDir=-1;}
-  renderTable();
-}
+function sortBy(col){if(sortCol===col)sortDir*=-1;else{sortCol=col;sortDir=-1;}renderTable();}
 function resetAll(){
   c1YouMin=7;c1LauraMin=2;c1ShowUnscored=false;
   c2DesireMin=7;c2Comps=new Set(['solo','friend','family','bekah','laura']);
@@ -775,15 +660,14 @@ function resetAll(){
   document.getElementById('c1UnscoredBtn').classList.remove('active');
   document.getElementById('c2DesireSlider').value=7;document.getElementById('c2DesireVal').textContent=7;
   ['solo','friend','family','bekah','laura'].forEach(ck=>{
-    c2Comps.add(ck);
-    const btn=document.getElementById('c2'+ck);
+    c2Comps.add(ck);const btn=document.getElementById('c2'+ck);
     btn.classList.add('active');btn.textContent='✓ '+COMP_NAMES[ck];
   });
   document.getElementById('gDesireSlider').value=1;document.getElementById('gDesireVal').textContent=1;
   document.getElementById('qYouSlider').value=8;document.getElementById('qYouVal').textContent=8;
   document.getElementById('qLauraSlider').value=8;document.getElementById('qLauraVal').textContent=8;
   setGComp('all');setGVisit('all');
-  renderAll();
+  drawChart1();drawChart2();
 }
 
 // ── LOAD ──────────────────────────────────────────────────────────────
@@ -795,14 +679,14 @@ function loadCSV(text){
     document.getElementById('dropTitle').textContent=allData.length+' destinations loaded';
     document.getElementById('dropSub').textContent='Drop a new file to reload';
     document.getElementById('dashboard').style.display='block';
-    setupC1Events();
-    setupC2Events();
-    renderAll();
-    window.addEventListener('resize',renderCharts);
+    updateStats();
+    drawChart1();drawChart2();
+    setupC1Events();setupC2Events();
+    applyGlobal();renderQuadrant();renderTable();
+    window.addEventListener('resize',()=>{drawChart1();drawChart2();});
   }
 }
-const dz=document.getElementById('dropZone');
-const fi=document.getElementById('fileInput');
+const dz=document.getElementById('dropZone'),fi=document.getElementById('fileInput');
 dz.addEventListener('click',()=>fi.click());
 fi.addEventListener('change',e=>{const f=e.target.files[0];if(f){const r=new FileReader();r.onload=ev=>loadCSV(ev.target.result);r.readAsText(f);}});
 dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('dragover');});
