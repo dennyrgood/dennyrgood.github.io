@@ -131,6 +131,14 @@ tr:hover td{background:var(--bg2);}
           <input type="range" min="1" max="10" value="7" step="1" id="c2DesireSlider" oninput="setC2Desire(this.value)">
         </div>
         <div class="filter-group">
+          <div class="filter-label">spread horizontal: <span id="c2JitterXVal" style="font-weight:500;color:var(--text)">0</span></div>
+          <input type="range" min="0" max="200" value="0" step="4" id="c2JitterXSlider" oninput="setC2JitterX(this.value)">
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">spread vertical: <span id="c2JitterYVal" style="font-weight:500;color:var(--text)">20</span></div>
+          <input type="range" min="0" max="200" value="20" step="4" id="c2JitterYSlider" oninput="setC2JitterY(this.value)">
+        </div>
+        <div class="filter-group">
           <div class="filter-label">show companion columns</div>
           <div class="filter-btns">
             <button class="tog active" id="c2solo"   onclick="toggleC2Comp('solo')">✓ solo</button>
@@ -223,7 +231,7 @@ const COMP_NAMES={solo:'solo',friend:'friend',family:'family',bekah:'Bekah',laur
 let allData=[], gFiltered=[];
 let c1YouMin=7, c1LauraMin=2, c1ShowUnscored=false, c1JitterX=80, c1JitterY=20;
 let c1Dots=[];
-let c2DesireMin=7, c2Comps=new Set(['solo','friend','family','bekah','laura']);
+let c2DesireMin=7, c2Comps=new Set(['solo','friend','family','bekah','laura']), c2JitterX=0, c2JitterY=20;
 let c2Dots=[];
 let gComp='all', gVisit='all', gDesireMin=1;
 let qYou=8, qLaura=8;
@@ -517,8 +525,11 @@ function drawChart2(){
 
   c2Dots=[];
   Object.values(groups).forEach(g=>{
-    const x=px(xPos[g.ck]);
-    const y=py(g.desire);
+    const seed=g.ck.split('').reduce((a,c)=>a+c.charCodeAt(0),0)+(g.desire*7);
+    const jx=(seededRand(seed)-0.5)*c2JitterX;
+    const jy=(seededRand(seed+1)-0.5)*c2JitterY;
+    const x=px(xPos[g.ck])+jx;
+    const y=py(g.desire)+jy;
     const maxV=Math.max(...g.items.map(d=>d.versatility));
     const r=Math.max(8,maxV*5+2+(g.items.length>1?3:0));
     const lead=g.items.slice().sort((a,b)=>b.desire-a.desire)[0];
@@ -636,6 +647,8 @@ function setC1JitterY(v){c1JitterY=parseInt(v);document.getElementById('c1Jitter
 function setC1You(v){c1YouMin=parseInt(v);document.getElementById('c1YouVal').textContent=v;drawChart1();}
 function setC1Laura(v){c1LauraMin=parseInt(v);document.getElementById('c1LauraVal').textContent=v;drawChart1();}
 function toggleC1Unscored(){c1ShowUnscored=!c1ShowUnscored;document.getElementById('c1UnscoredBtn').classList.toggle('active',c1ShowUnscored);drawChart1();}
+function setC2JitterX(v){c2JitterX=parseInt(v);document.getElementById('c2JitterXVal').textContent=v;drawChart2();}
+function setC2JitterY(v){c2JitterY=parseInt(v);document.getElementById('c2JitterYVal').textContent=v;drawChart2();}
 function setC2Desire(v){c2DesireMin=parseInt(v);document.getElementById('c2DesireVal').textContent=v;drawChart2();}
 function toggleC2Comp(ck){
   if(c2Comps.has(ck))c2Comps.delete(ck);else c2Comps.add(ck);
@@ -664,6 +677,8 @@ function sortBy(col){if(sortCol===col)sortDir*=-1;else{sortCol=col;sortDir=-1;}r
 function resetAll(){
   c1YouMin=7;c1LauraMin=2;c1ShowUnscored=false;
   c2DesireMin=7;c2Comps=new Set(['solo','friend','family','bekah','laura']);
+  c2JitterX=0;document.getElementById('c2JitterXSlider').value=0;document.getElementById('c2JitterXVal').textContent=0;
+  c2JitterY=20;document.getElementById('c2JitterYSlider').value=20;document.getElementById('c2JitterYVal').textContent=20;
   gComp='all';gVisit='all';gDesireMin=1;qYou=8;qLaura=8;
   document.getElementById('c1YouSlider').value=7;document.getElementById('c1YouVal').textContent=7;
   document.getElementById('c1LauraSlider').value=2;document.getElementById('c1LauraVal').textContent=2;
