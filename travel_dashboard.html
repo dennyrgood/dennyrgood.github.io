@@ -26,7 +26,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 h1{font-size:20px;font-weight:500;margin-bottom:2px;}
 .subtitle{font-size:13px;color:var(--text3);margin-bottom:18px;}
 
-.drop-zone{border:1.5px dashed var(--border2);border-radius:var(--radius-lg);padding:24px;text-align:center;background:var(--bg);cursor:pointer;transition:background 0.15s;margin-bottom:18px;}
+.drop-zone{border:1.5px dashed var(--border2);border-radius:var(--radius-lg);padding:20px;text-align:center;background:var(--bg);cursor:pointer;transition:background 0.15s;margin-bottom:18px;}
 .drop-zone.dragover{background:var(--bg2);}
 .drop-zone.loaded{border-style:solid;border-color:var(--green);}
 .drop-zone p{color:var(--text2);font-size:13px;margin-top:4px;}
@@ -41,30 +41,30 @@ input[type=file]{display:none;}
 
 .panel{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:14px;}
 .panel-title{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:12px;}
+.panel-controls{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-bottom:12px;}
 
-.filters{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start;}
 .filter-group{display:flex;flex-direction:column;gap:5px;}
 .filter-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.04em;}
 .filter-btns{display:flex;flex-wrap:wrap;gap:4px;}
 button.tog{font-size:12px;padding:3px 10px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text2);cursor:pointer;transition:background 0.1s;}
 button.tog.active{background:var(--bg3);color:var(--text);font-weight:500;}
 button.tog:hover{background:var(--bg2);}
+button.tog.check{padding:3px 10px 3px 6px;}
+button.tog.check.active{background:var(--bg3);}
 
-/* SCATTERPLOT */
-.scatter-wrap{position:relative;width:100%;height:500px;}
-#scatterCanvas{position:absolute;top:0;left:0;width:100%;height:100%;}
+.canvas-wrap{position:relative;width:100%;height:480px;}
+canvas{position:absolute;top:0;left:0;width:100%;height:100%;}
 
-/* QUADRANT */
-.quad-controls{display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-bottom:14px;}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--text2);padding:8px 0 0;}
+.ldot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:middle;}
+
 .quad-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.quad-card{border-radius:var(--radius-lg);padding:12px;min-height:80px;}
+.quad-card{border-radius:var(--radius-lg);padding:12px;}
 .quad-title{font-size:12px;font-weight:500;margin-bottom:2px;}
 .quad-sub{font-size:11px;opacity:0.7;margin-bottom:8px;}
 .quad-chips{display:flex;flex-wrap:wrap;gap:4px;}
-.chip{font-size:11px;padding:2px 7px;border-radius:10px;cursor:default;white-space:nowrap;border:1px solid transparent;}
-.chip:hover{opacity:0.75;}
+.chip{font-size:11px;padding:2px 7px;border-radius:10px;white-space:nowrap;border:1px solid transparent;}
 
-/* TABLE */
 table{width:100%;border-collapse:collapse;font-size:13px;}
 th{text-align:left;font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.04em;padding:6px 8px;border-bottom:0.5px solid var(--border2);cursor:pointer;white-space:nowrap;user-select:none;}
 th:hover{color:var(--text);}
@@ -76,119 +76,118 @@ tr:hover td{background:var(--bg2);}
 .pip{display:inline-block;width:7px;height:7px;border-radius:50%;margin:1px;}
 .row-count{font-size:12px;color:var(--text3);margin-bottom:8px;}
 
-/* TOOLTIP */
-.tooltip{position:fixed;pointer-events:none;background:var(--bg);border:0.5px solid var(--border2);border-radius:var(--radius);padding:10px 14px;font-size:12px;min-width:180px;z-index:200;display:none;}
+.tooltip{position:fixed;pointer-events:none;background:var(--bg);border:0.5px solid var(--border2);border-radius:var(--radius);padding:10px 14px;font-size:12px;min-width:180px;z-index:200;display:none;box-shadow:0 4px 12px rgba(0,0,0,0.15);}
 .tt-name{font-size:14px;font-weight:500;margin-bottom:6px;}
 .tt-row{display:flex;justify-content:space-between;gap:16px;padding:2px 0;border-bottom:0.5px solid var(--border);}
 .tt-row:last-child{border-bottom:none;}
 .tt-key{color:var(--text3);}
 .tt-val{font-weight:500;}
-
-.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--text2);padding:8px 0 0;}
-.ldot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:middle;}
+.tt-group-hdr{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px;}
+.tt-sep{border-top:0.5px solid var(--border);margin:6px 0;}
 </style>
 </head>
 <body>
 <div class="app">
   <h1>Travel Alignment Dashboard</h1>
-  <p class="subtitle">Your desire (x) vs Laura's desire (y)</p>
+  <p class="subtitle">Your desire vs Laura's desire</p>
 
   <div class="drop-zone" id="dropZone">
     <strong id="dropTitle">Drop your CSV here</strong>
-    <p id="dropSub">or click to browse — l_rank, my desire, place, num visits, solo, friend, family, bekah, laura</p>
+    <p id="dropSub">or click to browse — l_rank · my desire · place · num visits · solo · friend · family · bekah · laura</p>
     <input type="file" id="fileInput" accept=".csv">
   </div>
 
   <div id="dashboard" style="display:none">
+
     <div class="stats">
-      <div class="stat"><div class="stat-label">showing</div><div class="stat-val" id="statCount">—</div></div>
+      <div class="stat"><div class="stat-label">destinations</div><div class="stat-val" id="statTotal">—</div></div>
       <div class="stat"><div class="stat-label">your avg desire</div><div class="stat-val" id="statYou">—</div></div>
       <div class="stat"><div class="stat-label">laura's avg desire</div><div class="stat-val" id="statLaura">—</div></div>
       <div class="stat"><div class="stat-label">top alignment</div><div class="stat-val small" id="statTop">—</div></div>
     </div>
 
-    <!-- FILTERS -->
+    <!-- CHART 1: ALIGNMENT -->
     <div class="panel">
-      <div class="panel-title">filters</div>
-      <div class="filters">
+      <div class="panel-title">alignment — your desire (x) · laura's desire (y) · size = versatility · color = laura's score intensity</div>
+      <div class="panel-controls">
         <div class="filter-group">
-          <div class="filter-label">show trips valid for</div>
+          <div class="filter-label">your desire ≥ <span id="c1YouVal" style="font-weight:500;color:var(--text)">7</span></div>
+          <input type="range" min="1" max="10" value="7" step="1" id="c1YouSlider" oninput="setC1You(this.value)">
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">laura's desire ≥ <span id="c1LauraVal" style="font-weight:500;color:var(--text)">2</span></div>
+          <input type="range" min="1" max="10" value="2" step="1" id="c1LauraSlider" oninput="setC1Laura(this.value)">
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">unscored</div>
           <div class="filter-btns">
-            <button class="tog active" id="fAll"    onclick="setCompFilter('all')">all</button>
-            <button class="tog" id="fSolo"   onclick="setCompFilter('solo')">solo</button>
-            <button class="tog" id="fFriend" onclick="setCompFilter('friend')">friend</button>
-            <button class="tog" id="fFamily" onclick="setCompFilter('family')">family</button>
-            <button class="tog" id="fBekah"  onclick="setCompFilter('bekah')">Bekah</button>
-            <button class="tog" id="fLaura"  onclick="setCompFilter('laura')">Laura</button>
+            <button class="tog" id="c1UnscoredBtn" onclick="toggleC1Unscored()">show unscored</button>
+          </div>
+        </div>
+      </div>
+      <div class="canvas-wrap"><canvas id="c1Canvas"></canvas></div>
+    </div>
+
+    <!-- CHART 2: MY TRIPS -->
+    <div class="panel">
+      <div class="panel-title">my trips — companion columns (x) · your desire (y) · size = versatility</div>
+      <div class="panel-controls">
+        <div class="filter-group">
+          <div class="filter-label">your desire ≥ <span id="c2DesireVal" style="font-weight:500;color:var(--text)">7</span></div>
+          <input type="range" min="1" max="10" value="7" step="1" id="c2DesireSlider" oninput="setC2Desire(this.value)">
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">show companion columns</div>
+          <div class="filter-btns" id="c2CompBtns">
+            <button class="tog check active" id="c2solo"   onclick="toggleC2Comp('solo')">✓ solo</button>
+            <button class="tog check active" id="c2friend" onclick="toggleC2Comp('friend')">✓ friend</button>
+            <button class="tog check active" id="c2family" onclick="toggleC2Comp('family')">✓ family</button>
+            <button class="tog check active" id="c2bekah"  onclick="toggleC2Comp('bekah')">✓ Bekah</button>
+            <button class="tog check active" id="c2laura"  onclick="toggleC2Comp('laura')">✓ Laura</button>
+          </div>
+        </div>
+      </div>
+      <div class="canvas-wrap"><canvas id="c2Canvas"></canvas></div>
+      <div class="legend" id="c2Legend"></div>
+    </div>
+
+    <!-- GLOBAL FILTERS -->
+    <div class="panel">
+      <div class="panel-title">filters — apply to quadrant view and table below</div>
+      <div class="panel-controls">
+        <div class="filter-group">
+          <div class="filter-label">valid for</div>
+          <div class="filter-btns">
+            <button class="tog active" id="gAll"    onclick="setGComp('all')">all</button>
+            <button class="tog" id="gSolo"   onclick="setGComp('solo')">solo</button>
+            <button class="tog" id="gFriend" onclick="setGComp('friend')">friend</button>
+            <button class="tog" id="gFamily" onclick="setGComp('family')">family</button>
+            <button class="tog" id="gBekah"  onclick="setGComp('bekah')">Bekah</button>
+            <button class="tog" id="gLaura"  onclick="setGComp('laura')">Laura</button>
           </div>
         </div>
         <div class="filter-group">
           <div class="filter-label">visits</div>
           <div class="filter-btns">
-            <button class="tog active" id="fVAll" onclick="setVisitFilter('all')">all</button>
-            <button class="tog" id="fVNew"  onclick="setVisitFilter('new')">never been</button>
-            <button class="tog" id="fVFam"  onclick="setVisitFilter('familiar')">been before</button>
+            <button class="tog active" id="gVAll" onclick="setGVisit('all')">all</button>
+            <button class="tog" id="gVNew"  onclick="setGVisit('new')">never been</button>
+            <button class="tog" id="gVFam"  onclick="setGVisit('familiar')">been before</button>
           </div>
         </div>
         <div class="filter-group">
-          <div class="filter-label">your desire ≥ <span id="desireVal" style="font-weight:500;color:var(--text)">1</span></div>
-          <input type="range" min="1" max="10" value="1" step="1" id="desireSlider" oninput="setDesireMin(this.value)">
+          <div class="filter-label">your desire ≥ <span id="gDesireVal" style="font-weight:500;color:var(--text)">1</span></div>
+          <input type="range" min="1" max="10" value="1" step="1" id="gDesireSlider" oninput="setGDesire(this.value)">
         </div>
         <div class="filter-group" style="margin-left:auto;margin-top:auto;">
-          <button class="tog" onclick="resetFilters()" style="padding:5px 14px;">reset</button>
+          <button class="tog" onclick="resetAll()" style="padding:5px 14px;">reset all</button>
         </div>
       </div>
-    </div>
-
-    <!-- SCATTERPLOT -->
-    <div class="panel">
-      <div class="panel-title">alignment — your desire (x) · laura's desire (y) · size = versatility</div>
-      <div style="display:flex;gap:16px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
-        <div class="filter-group">
-          <div class="filter-label">show your desire ≥ <span id="scatterDesireVal" style="font-weight:500;color:var(--text)">7</span></div>
-          <input type="range" min="1" max="10" value="7" step="1" id="scatterDesireSlider" oninput="setScatterDesireMin(this.value)">
-        </div>
-        <div class="filter-group">
-          <div class="filter-label">show laura's desire ≥ <span id="scatterLauraVal" style="font-weight:500;color:var(--text)">2</span></div>
-          <input type="range" min="1" max="10" value="2" step="1" id="scatterLauraSlider" oninput="setScatterLauraMin(this.value)">
-        </div>
-      </div>
-      <div class="scatter-wrap">
-        <canvas id="scatterCanvas" role="img" aria-label="Scatterplot of destinations by your desire vs Laura's desire"></canvas>
-      </div>
-      <div class="legend" id="scatterLegend"></div>
-    </div>
-
-    <!-- MY TRIPS CHART -->
-    <div class="panel">
-      <div class="panel-title">my trips — companion (x) · your desire (y) · size = versatility</div>
-      <div style="display:flex;gap:16px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
-        <div class="filter-group">
-          <div class="filter-label">show desire ≥ <span id="myTripsDesireVal" style="font-weight:500;color:var(--text)">7</span></div>
-          <input type="range" min="1" max="10" value="7" step="1" id="myTripsDesireSlider" oninput="setMyTripsDesireMin(this.value)">
-        </div>
-        <div class="filter-group">
-          <div class="filter-label">companion</div>
-          <div class="filter-btns">
-            <button class="tog active" id="mtAll"    onclick="setMyTripsComp('all')">all</button>
-            <button class="tog" id="mtSolo"   onclick="setMyTripsComp('solo')">solo</button>
-            <button class="tog" id="mtFriend" onclick="setMyTripsComp('friend')">friend</button>
-            <button class="tog" id="mtFamily" onclick="setMyTripsComp('family')">family</button>
-            <button class="tog" id="mtBekah"  onclick="setMyTripsComp('bekah')">Bekah</button>
-            <button class="tog" id="mtLaura"  onclick="setMyTripsComp('laura')">Laura</button>
-          </div>
-        </div>
-      </div>
-      <div class="scatter-wrap">
-        <canvas id="myTripsCanvas" role="img" aria-label="My trips chart showing destinations by companion type and desire"></canvas>
-      </div>
-      <div class="legend" id="myTripsLegend"></div>
     </div>
 
     <!-- QUADRANT -->
     <div class="panel">
       <div class="panel-title">quadrant view</div>
-      <div class="quad-controls">
+      <div class="panel-controls">
         <div class="filter-group">
           <div class="filter-label">your desire threshold: <span id="qYouVal" style="font-weight:500;color:var(--text)">8</span></div>
           <input type="range" min="1" max="10" value="8" step="1" id="qYouSlider" oninput="setQThresh('you',this.value)">
@@ -198,55 +197,62 @@ tr:hover td{background:var(--bg2);}
           <input type="range" min="1" max="10" value="8" step="1" id="qLauraSlider" oninput="setQThresh('laura',this.value)">
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;" id="quadGrid"></div>
+      <div class="quad-grid" id="quadGrid"></div>
     </div>
 
     <!-- TABLE -->
     <div class="panel">
       <div class="row-count" id="rowCount"></div>
       <table>
-        <thead>
-          <tr>
-            <th onclick="sortBy('name')" id="th-name">destination <span class="sa">↕</span></th>
-            <th onclick="sortBy('desire')" id="th-desire">your desire <span class="sa">↕</span></th>
-            <th onclick="sortBy('lauraScore')" id="th-lauraScore">laura <span class="sa">↕</span></th>
-            <th onclick="sortBy('lrank')" id="th-lrank">l rank <span class="sa">↕</span></th>
-            <th onclick="sortBy('visits')" id="th-visits">visits <span class="sa">↕</span></th>
-            <th onclick="sortBy('versatility')" id="th-versatility">versatility <span class="sa">↕</span></th>
-            <th>companions</th>
-          </tr>
-        </thead>
+        <thead><tr>
+          <th onclick="sortBy('name')" id="th-name">destination <span class="sa">↕</span></th>
+          <th onclick="sortBy('desire')" id="th-desire">your desire <span class="sa">↕</span></th>
+          <th onclick="sortBy('lauraScore')" id="th-lauraScore">laura <span class="sa">↕</span></th>
+          <th onclick="sortBy('lrank')" id="th-lrank">l rank <span class="sa">↕</span></th>
+          <th onclick="sortBy('visits')" id="th-visits">visits <span class="sa">↕</span></th>
+          <th onclick="sortBy('versatility')" id="th-versatility">versatility <span class="sa">↕</span></th>
+          <th>companions</th>
+        </tr></thead>
         <tbody id="tableBody"></tbody>
       </table>
     </div>
-  </div>
-</div>
 
-<div class="tooltip" id="tooltip" style="max-height:420px;overflow-y:auto;">
-  <div id="ttBody"></div>
-</div>
+  </div><!-- end dashboard -->
+</div><!-- end app -->
+
+<div class="tooltip" id="tooltip"><div id="ttBody"></div></div>
 
 <script>
+// ── CONSTANTS ─────────────────────────────────────────────────────────
 const VISIT_COLORS=['#1D9E75','#378ADD','#BA7517','#D85A30','#E24B4A','#A32D2D'];
 const VISIT_LABELS=['never','once','twice','3×','4×','often'];
 const COMP_COLORS={laura:'#534AB7',bekah:'#D4537E',family:'#1D9E75',friend:'#378ADD',solo:'#888780'};
-const COMP_ORDER=['laura','bekah','family','friend','solo'];
+const COMP_NAMES={solo:'solo',friend:'friend',family:'family',bekah:'Bekah',laura:'Laura'};
+const COMP_X={solo:-4.5,friend:-2,family:0.5,bekah:2.8,laura:4.5};
 
-let allData=[], filteredCache=[];
-let compFilter='all', visitFilter='all', desireMin=1;
-let sortCol='desire', sortDir=-1;
+// ── STATE ─────────────────────────────────────────────────────────────
+let allData=[], gFiltered=[];
+
+// Chart 1
+let c1YouMin=7, c1LauraMin=2, c1ShowUnscored=false;
+let c1Dots=[];
+
+// Chart 2
+let c2DesireMin=7;
+let c2Comps=new Set(['solo','friend','family','bekah','laura']);
+let c2Dots=[];
+
+// Global
+let gComp='all', gVisit='all', gDesireMin=1;
 let qYou=8, qLaura=8;
+let sortCol='desire', sortDir=-1;
 
-// canvas state
-let dots=[], animFrame=null;
-let scatterDesireMin=7, scatterLauraMin=2;
-
+// ── CSV PARSING ───────────────────────────────────────────────────────
 function splitLine(line){
   const v=[];let c='',q=false;
   for(let ch of line){if(ch==='"'){q=!q;}else if(ch===','&&!q){v.push(c.trim());c='';}else c+=ch;}
   v.push(c.trim());return v;
 }
-
 function parseCSV(text){
   const lines=text.trim().split(/\r?\n/);
   if(lines.length<2)return[];
@@ -270,7 +276,6 @@ function parseCSV(text){
     return r;
   }).filter(r=>r.place&&r.desire);
 }
-
 function processRow(r){
   const lrank=r.l_rank!==''&&!isNaN(r.l_rank)?parseFloat(r.l_rank):null;
   const desire=parseFloat(r.desire)||0;
@@ -301,342 +306,256 @@ function processRow(r){
   return{name:r.place.trim(),lrank,desire,visits,solo,friend,family,bekah,laura:lval,lauraScore,versatility,compList,dominant};
 }
 
-function passesFilters(d){
-  if(d.desire<desireMin)return false;
-  if(visitFilter==='new'&&d.visits>0)return false;
-  if(visitFilter==='familiar'&&d.visits===0)return false;
-  if(compFilter==='solo'&&!d.solo)return false;
-  if(compFilter==='friend'&&!d.friend)return false;
-  if(compFilter==='family'&&!d.family)return false;
-  if(compFilter==='bekah'&&!d.bekah)return false;
-  if(compFilter==='laura'&&d.laura===false)return false;
-  return true;
-}
-
-// ── SCATTERPLOT (canvas) ──────────────────────────────────────────────
+// ── HELPERS ───────────────────────────────────────────────────────────
 function isDark(){return window.matchMedia('(prefers-color-scheme:dark)').matches;}
 
-function drawScatter(data){
-  const canvas=document.getElementById('scatterCanvas');
+function setupCanvas(id){
+  const canvas=document.getElementById(id);
   const wrap=canvas.parentElement;
   const dpr=window.devicePixelRatio||1;
-  const W=wrap.clientWidth, H=wrap.clientHeight;
-  canvas.width=W*dpr; canvas.height=H*dpr;
-  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  const W=wrap.clientWidth,H=wrap.clientHeight;
+  canvas.width=W*dpr;canvas.height=H*dpr;
+  canvas.style.width=W+'px';canvas.style.height=H+'px';
   const ctx=canvas.getContext('2d');
   ctx.scale(dpr,dpr);
+  return{ctx,W,H};
+}
 
-  const dark=isDark();
-  const PAD={l:48,r:24,t:24,b:44};
-  const plotW=W-PAD.l-PAD.r;
-  const plotH=H-PAD.t-PAD.b;
-
-  // local filter using scatter-specific sliders
-  const localData=data.filter(d=>{
-    if(d.desire<scatterDesireMin)return false;
-    // if laura min > 1, hide unscored entirely
-    if(scatterLauraMin>1&&d.lauraScore==null)return false;
-    if(d.lauraScore!=null&&d.lauraScore<scatterLauraMin)return false;
-    return true;
-  });
-
-  // dynamic axis ranges
-  const xMin=scatterDesireMin, xMax=10;
-  const yMin=scatterLauraMin>1?scatterLauraMin:0, yMax=10;
-  const xRange=xMax-xMin+1;
-  const yRange=yMax-yMin+1;
-
-  function px(x){return PAD.l+((x-xMin+0.3)/(xRange+0.6))*plotW;}
-  function py(y){return PAD.t+(1-((y-yMin+0.3)/(yRange+0.6)))*plotH;}
-
-  // background
-  ctx.fillStyle=dark?'#1e1e1c':'#ffffff';
+function drawBackground(ctx,W,H){
+  ctx.fillStyle=isDark()?'#1e1e1c':'#ffffff';
   ctx.fillRect(0,0,W,H);
+}
 
-  // grid lines
-  ctx.strokeStyle=dark?'rgba(255,255,255,0.07)':'rgba(0,0,0,0.07)';
-  ctx.lineWidth=0.5;
-  for(let i=xMin;i<=xMax;i++){
-    ctx.beginPath();ctx.moveTo(px(i),PAD.t);ctx.lineTo(px(i),PAD.t+plotH);ctx.stroke();
+function showTooltip(e,items,header){
+  const tt=document.getElementById('tooltip');
+  const body=document.getElementById('ttBody');
+  body.innerHTML='';
+  if(header){
+    const h=document.createElement('div');
+    h.className='tt-group-hdr';
+    h.textContent=header;
+    body.appendChild(h);
   }
-  for(let i=yMin>0?yMin:1;i<=yMax;i++){
-    ctx.beginPath();ctx.moveTo(PAD.l,py(i));ctx.lineTo(PAD.l+plotW,py(i));ctx.stroke();
-  }
-
-  // axes
-  ctx.strokeStyle=dark?'rgba(255,255,255,0.25)':'rgba(0,0,0,0.25)';
-  ctx.lineWidth=1;
-  ctx.beginPath();ctx.moveTo(PAD.l,PAD.t);ctx.lineTo(PAD.l,PAD.t+plotH);ctx.stroke();
-  ctx.beginPath();ctx.moveTo(PAD.l,PAD.t+plotH);ctx.lineTo(PAD.l+plotW,PAD.t+plotH);ctx.stroke();
-
-  // tick labels
-  ctx.fillStyle=dark?'#6b6a65':'#888780';
-  ctx.font='10px -apple-system,sans-serif';
-  ctx.textAlign='center';
-  for(let i=xMin;i<=xMax;i++){
-    ctx.fillText(i,px(i),PAD.t+plotH+14);
-  }
-  ctx.textAlign='right';
-  for(let i=yMin>0?yMin:1;i<=yMax;i++){
-    ctx.fillText(i,PAD.l-5,py(i)+3);
-  }
-
-  // axis labels
-  ctx.fillStyle=dark?'#6b6a65':'#888780';
-  ctx.font='11px -apple-system,sans-serif';
-  ctx.textAlign='center';
-  ctx.fillText('your desire →',PAD.l+plotW/2,H-6);
-  ctx.save();
-  ctx.translate(12,PAD.t+plotH/2);
-  ctx.rotate(-Math.PI/2);
-  ctx.fillText("laura's desire →",0,0);
-  ctx.restore();
-
-  // group by coordinate
-  const groups={};
-  localData.forEach(d=>{
-    const ky=d.lauraScore!=null?d.lauraScore:0;
-    const key=d.desire+'|'+ky;
-    if(!groups[key])groups[key]={items:[],desire:d.desire,lauraY:ky};
-    groups[key].items.push(d);
+  items.forEach((d,i)=>{
+    if(i>0){const sep=document.createElement('div');sep.className='tt-sep';body.appendChild(sep);}
+    const nm=document.createElement('div');nm.className='tt-name';nm.textContent=d.name;body.appendChild(nm);
+    const rows=[
+      ['your desire',d.desire],
+      ['laura',d.lauraScore!=null?d.lauraScore+(d.laura==='?'?' (tentative)':''):'—'],
+      ['visits',d.visits+' ('+VISIT_LABELS[Math.min(d.visits,5)]+')'],
+      ['companions',d.compList.join(', ')||'—'],
+      ['versatility',d.versatility+'/5'],
+    ];
+    rows.forEach(([k,v])=>{
+      const row=document.createElement('div');row.className='tt-row';
+      row.innerHTML=`<span class="tt-key">${k}</span><span class="tt-val">${v}</span>`;
+      body.appendChild(row);
+    });
   });
+  tt.style.left=(e.clientX+16)+'px';
+  tt.style.top=Math.max(8,e.clientY-60)+'px';
+  tt.style.display='block';
+}
+function hideTooltip(){document.getElementById('tooltip').style.display='none';}
 
-  dots=[];
-  Object.values(groups).forEach(g=>{
-    const x=px(g.desire);
-    const y=g.lauraY>0?py(g.lauraY):py(0.3);
-    const maxV=Math.max(...g.items.map(d=>d.versatility));
-    const r=Math.max(8,maxV*4+2+(g.items.length>1?4:0));
-    const noLaura=g.lauraY===0;
-    const lead=g.items.slice().sort((a,b)=>b.desire-a.desire)[0];
-    const col=noLaura?'#888780':COMP_COLORS[lead.dominant]||'#888780';
-    dots.push({x,y,r,col,noLaura,items:g.items,count:g.items.length});
-  });
+function drawStyledDot(ctx,x,y,r,fillColor,strokeColor,count,dark){
+  ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);
+  ctx.fillStyle=fillColor;ctx.fill();
+  ctx.strokeStyle=strokeColor;ctx.lineWidth=1.5;ctx.stroke();
+  if(count>1){
+    const br=8,bx=x+r*0.7,by=y-r*0.7;
+    ctx.beginPath();ctx.arc(bx,by,br,0,Math.PI*2);
+    ctx.fillStyle=dark?'#333331':'#ffffff';ctx.fill();
+    ctx.strokeStyle=strokeColor;ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle=strokeColor;
+    ctx.font='bold 9px -apple-system,sans-serif';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(count,bx,by);ctx.textBaseline='alphabetic';
+  }
+}
 
-  // draw dots
-  dots.slice().sort((a,b)=>b.r-a.r).forEach(dot=>{
-    ctx.beginPath();
-    ctx.arc(dot.x,dot.y,dot.r,0,Math.PI*2);
-    ctx.fillStyle=dot.col+(dot.noLaura?'33':'88');
-    ctx.fill();
-    ctx.strokeStyle=dot.col+(dot.noLaura?'77':'bb');
-    ctx.lineWidth=1.5;
-    ctx.stroke();
-    if(dot.count>1){
-      const br=8,bx=dot.x+dot.r*0.7,by=dot.y-dot.r*0.7;
-      ctx.beginPath();ctx.arc(bx,by,br,0,Math.PI*2);
-      ctx.fillStyle=dark?'#333331':'#ffffff';
-      ctx.fill();
-      ctx.strokeStyle=dot.col;ctx.lineWidth=1.5;ctx.stroke();
-      ctx.fillStyle=dot.col;
-      ctx.font='bold 9px -apple-system,sans-serif';
-      ctx.textAlign='center';ctx.textBaseline='middle';
-      ctx.fillText(dot.count,bx,by);
-      ctx.textBaseline='alphabetic';
-    }
-  });
-
-  // stacked labels
+function drawStackedLabels(ctx,dots,W,dark,textColor){
   ctx.font='bold 10px -apple-system,sans-serif';
   const drawn=[];
-  [...dots].sort((a,b)=>b.items[0].desire-a.items[0].desire).forEach(dot=>{
-    const names=dot.items.slice().sort((a,b)=>b.desire-a.desire).map(d=>d.name);
+  [...dots].sort((a,b)=>{
+    const ad=a.items?a.items[0].desire:a.desire||0;
+    const bd=b.items?b.items[0].desire:b.desire||0;
+    return bd-ad;
+  }).forEach(dot=>{
+    const names=(dot.items||[dot]).map(d=>d.name);
     const lineH=12,totalH=names.length*lineH;
+    ctx.font='bold 10px -apple-system,sans-serif';
     const maxW=Math.max(...names.map(n=>ctx.measureText(n).width));
     const lx=dot.x+dot.r+3,ly=dot.y-(totalH/2)+lineH;
     const box={x:lx-1,y:ly-lineH,w:maxW+2,h:totalH+2};
     const overlaps=drawn.some(b=>box.x<b.x+b.w&&box.x+box.w>b.x&&box.y<b.y+b.h&&box.y+box.h>b.y);
     if(!overlaps&&lx+maxW<W-4){
       ctx.textAlign='left';
-      ctx.fillStyle=dot.noLaura?(dark?'#6b6a65':'#aaa'):(dark?'#c8c7c0':'#333');
+      ctx.fillStyle=textColor||(dark?'#c8c7c0':'#333');
       names.forEach((name,i)=>ctx.fillText(name,lx,ly+i*lineH));
       drawn.push(box);
     }
   });
 }
 
-
-function hitTest(mx,my){
-  const HOVER=10;
-  const hits=[];
-  dots.forEach(dot=>{
-    const dx=mx-dot.x,dy=my-dot.y;
-    const dist=Math.sqrt(dx*dx+dy*dy);
-    if(dist<=dot.r+HOVER)hits.push({dot,dist});
-  });
-  hits.sort((a,b)=>a.dist-b.dist);
-  return hits.length?hits[0].dot:null;
+// ── CHART 1: ALIGNMENT ────────────────────────────────────────────────
+function lauraColor(score,alpha){
+  // gradient: low score = muted gray-purple, high = rich purple
+  const t=Math.max(0,Math.min(1,(score-1)/9));
+  const r=Math.round(80+t*(83-80));
+  const g=Math.round(80+t*(75-80));
+  const b=Math.round(120+t*(183-120));
+  return`rgba(${r},${g},${b},${alpha})`;
 }
 
-function setupScatterEvents(){
-  const canvas=document.getElementById('scatterCanvas');
-  canvas.addEventListener('mousemove',e=>{
-    const rect=canvas.getBoundingClientRect();
-    const mx=(e.clientX-rect.left);
-    const my=(e.clientY-rect.top);
-    const hit=hitTest(mx,my);
-    const tt=document.getElementById('tooltip');
-    if(hit){
-      const ttBody=document.getElementById('ttBody');
-      ttBody.innerHTML='';
-      // header: count if multiple
-      if(hit.count>1){
-        const hdr=document.createElement('div');
-        hdr.style.cssText='font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px;';
-        hdr.textContent=hit.count+' destinations at this spot';
-        ttBody.appendChild(hdr);
-      }
-      hit.items.forEach((d,i)=>{
-        if(i>0){
-          const div=document.createElement('div');
-          div.style.cssText='border-top:0.5px solid var(--border);margin-top:6px;padding-top:6px;';
-          ttBody.appendChild(div);
-        }
-        const nameEl=document.createElement('div');
-        nameEl.style.cssText='font-size:14px;font-weight:500;margin-bottom:4px;color:var(--text);';
-        nameEl.textContent=d.name;
-        ttBody.appendChild(nameEl);
-        const rows=[
-          ['your desire', d.desire],
-          ['laura', d.lauraScore!=null?d.lauraScore+(d.laura==='?'?' (tentative)':''):'—'],
-          ['visits', d.visits+' ('+VISIT_LABELS[Math.min(d.visits,5)]+')'],
-          ['companions', d.compList.join(', ')||'—'],
-          ['versatility', d.versatility+'/5'],
-        ];
-        rows.forEach(([k,v])=>{
-          const row=document.createElement('div');
-          row.style.cssText='display:flex;justify-content:space-between;gap:16px;padding:1px 0;font-size:12px;';
-          row.innerHTML=`<span style="color:var(--text3)">${k}</span><span style="font-weight:500">${v}</span>`;
-          ttBody.appendChild(row);
-        });
-      });
-      tt.style.left=(e.clientX+16)+'px';
-      tt.style.top=Math.max(8,e.clientY-40)+'px';
-      tt.style.display='block';
-      canvas.style.cursor='pointer';
-    }else{
-      tt.style.display='none';
-      canvas.style.cursor='default';
-    }
-  });
-  canvas.addEventListener('mouseleave',()=>{
-    document.getElementById('tooltip').style.display='none';
-  });
-}
-
-function buildScatterLegend(){
-  const el=document.getElementById('scatterLegend');
-  el.innerHTML='';
-  Object.entries(COMP_COLORS).forEach(([k,c])=>{
-    el.innerHTML+=`<span><span class="ldot" style="background:${c}"></span>${k}</span> `;
-  });
-  el.innerHTML+=`<span><span class="ldot" style="background:#88878044;border:1px solid #888780"></span>no laura score</span>`;
-}
-
-// ── MY TRIPS CHART ───────────────────────────────────────────────────
-const COMP_X = {solo:-4.5, friend:-2, family:0.5, bekah:2.8, laura:4.5};
-const COMP_NAMES = {solo:'solo', friend:'friend', family:'family', bekah:'Bekah', laura:'Laura'};
-let myTripsDots=[];
-let myTripsDesireMin=7, myTripsComp='all';
-
-function drawMyTrips(data){
-  const canvas=document.getElementById('myTripsCanvas');
-  const wrap=canvas.parentElement;
-  const dpr=window.devicePixelRatio||1;
-  const W=wrap.clientWidth, H=wrap.clientHeight;
-  canvas.width=W*dpr; canvas.height=H*dpr;
-  canvas.style.width=W+'px'; canvas.style.height=H+'px';
-  const ctx=canvas.getContext('2d');
-  ctx.scale(dpr,dpr);
-
+function drawChart1(data){
+  const{ctx,W,H}=setupCanvas('c1Canvas');
   const dark=isDark();
-  const PAD={l:48,r:160,t:24,b:52};
-  const plotW=W-PAD.l-PAD.r;
-  const plotH=H-PAD.t-PAD.b;
+  const PAD={l:48,r:30,t:24,b:44};
+  const plotW=W-PAD.l-PAD.r, plotH=H-PAD.t-PAD.b;
 
-  // filter by local controls
-  const localData=data.filter(d=>{
-    if(d.desire<myTripsDesireMin)return false;
-    if(myTripsComp==='solo'&&!d.solo)return false;
-    if(myTripsComp==='friend'&&!d.friend)return false;
-    if(myTripsComp==='family'&&!d.family)return false;
-    if(myTripsComp==='bekah'&&!d.bekah)return false;
-    if(myTripsComp==='laura'&&d.laura===false)return false;
+  // filter
+  const local=data.filter(d=>{
+    if(d.desire<c1YouMin)return false;
+    if(!c1ShowUnscored&&d.lauraScore==null)return false;
+    if(d.lauraScore!=null&&d.lauraScore<c1LauraMin)return false;
     return true;
   });
 
-  // dynamic Y range based on local desire filter
-  const yMin=Math.max(0, myTripsDesireMin-1);
-  const yMax=10;
-  const yRange=yMax-yMin;
+  const xMin=c1YouMin,xMax=10,yMin=c1ShowUnscored?0:c1LauraMin>1?c1LauraMin:0,yMax=10;
+  const xR=xMax-xMin+1,yR=yMax-yMin+1;
+  function px(x){return PAD.l+((x-xMin+0.3)/(xR+0.6))*plotW;}
+  function py(y){return PAD.t+(1-((y-yMin+0.3)/(yR+0.6)))*plotH;}
 
-  // x: -5 to +5 companion spectrum, y: dynamic desire range
-  function px(x){return PAD.l+((x+5)/10)*plotW;}
-  function py(y){return PAD.t+(1-((y-yMin)/yRange))*plotH;}
+  drawBackground(ctx,W,H);
 
-  // background
-  ctx.fillStyle=dark?'#1e1e1c':'#ffffff';
-  ctx.fillRect(0,0,W,H);
-
-
-
-  // grid lines - companion positions
+  // grid
   ctx.strokeStyle=dark?'rgba(255,255,255,0.07)':'rgba(0,0,0,0.07)';
   ctx.lineWidth=0.5;
-  Object.values(COMP_X).forEach(cx=>{
-    ctx.beginPath();ctx.moveTo(px(cx),PAD.t);ctx.lineTo(px(cx),PAD.t+plotH);ctx.stroke();
-  });
-  for(let i=yMin;i<=yMax;i++){
-    ctx.beginPath();ctx.moveTo(PAD.l,py(i));ctx.lineTo(PAD.l+plotW,py(i));ctx.stroke();
-  }
-
-
+  for(let i=xMin;i<=xMax;i++){ctx.beginPath();ctx.moveTo(px(i),PAD.t);ctx.lineTo(px(i),PAD.t+plotH);ctx.stroke();}
+  for(let i=Math.max(1,yMin);i<=yMax;i++){ctx.beginPath();ctx.moveTo(PAD.l,py(i));ctx.lineTo(PAD.l+plotW,py(i));ctx.stroke();}
 
   // axes
-  ctx.strokeStyle=dark?'rgba(255,255,255,0.25)':'rgba(0,0,0,0.25)';
-  ctx.lineWidth=1;
+  ctx.strokeStyle=dark?'rgba(255,255,255,0.25)':'rgba(0,0,0,0.25)';ctx.lineWidth=1;
   ctx.beginPath();ctx.moveTo(PAD.l,PAD.t);ctx.lineTo(PAD.l,PAD.t+plotH);ctx.stroke();
   ctx.beginPath();ctx.moveTo(PAD.l,PAD.t+plotH);ctx.lineTo(PAD.l+plotW,PAD.t+plotH);ctx.stroke();
 
-  // y tick labels (desire) — only show visible range
-  ctx.fillStyle=dark?'#6b6a65':'#888780';
-  ctx.font='10px -apple-system,sans-serif';
-  ctx.textAlign='right';
-  for(let i=yMin;i<=yMax;i++){
-    if(i<yMin)continue;
-    ctx.fillText(i,PAD.l-5,py(i)+3);
-  }
-
-  // x axis companion labels
+  // ticks
+  ctx.fillStyle=dark?'#6b6a65':'#888780';ctx.font='10px -apple-system,sans-serif';
   ctx.textAlign='center';
-  ctx.font='11px -apple-system,sans-serif';
-  Object.entries(COMP_X).forEach(([k,cx])=>{
-    const col=COMP_COLORS[k]||'#888780';
-    ctx.fillStyle=col;
-    ctx.fillText(COMP_NAMES[k],px(cx),PAD.t+plotH+16);
+  for(let i=xMin;i<=xMax;i++)ctx.fillText(i,px(i),PAD.t+plotH+14);
+  ctx.textAlign='right';
+  for(let i=Math.max(1,yMin);i<=yMax;i++)ctx.fillText(i,PAD.l-5,py(i)+3);
+
+  // axis labels
+  ctx.fillStyle=dark?'#6b6a65':'#888780';ctx.font='11px -apple-system,sans-serif';ctx.textAlign='center';
+  ctx.fillText('your desire →',PAD.l+plotW/2,H-6);
+  ctx.save();ctx.translate(12,PAD.t+plotH/2);ctx.rotate(-Math.PI/2);ctx.fillText("laura's desire →",0,0);ctx.restore();
+
+  // group by coordinate
+  const groups={};
+  local.forEach(d=>{
+    const ky=d.lauraScore!=null?d.lauraScore:0;
+    const key=d.desire+'|'+ky;
+    if(!groups[key])groups[key]={items:[],desire:d.desire,ly:ky};
+    groups[key].items.push(d);
   });
 
-  // axis title
-  ctx.fillStyle=dark?'#6b6a65':'#888780';
-  ctx.font='11px -apple-system,sans-serif';
-  ctx.textAlign='center';
-  ctx.fillText('← solo · companion type · laura →',PAD.l+plotW/2,PAD.t+plotH+32);
-  ctx.save();
-  ctx.translate(12,PAD.t+plotH/2);
-  ctx.rotate(-Math.PI/2);
-  ctx.fillText('your desire →',0,0);
-  ctx.restore();
+  c1Dots=[];
+  Object.values(groups).forEach(g=>{
+    const x=px(g.desire);
+    const y=g.ly>0?py(g.ly):py(c1ShowUnscored?0.3:yMin);
+    const maxV=Math.max(...g.items.map(d=>d.versatility));
+    const r=Math.max(8,maxV*5+2+(g.items.length>1?3:0));
+    const noLaura=g.ly===0;
+    // color by laura score intensity
+    const avgLaura=g.ly>0?g.ly:0;
+    const fill=noLaura?'rgba(136,135,128,0.2)':lauraColor(avgLaura,0.55);
+    const stroke=noLaura?'rgba(136,135,128,0.5)':lauraColor(avgLaura,0.9);
+    drawStyledDot(ctx,x,y,r,fill,stroke,g.items.length,dark);
+    c1Dots.push({x,y,r,items:g.items,noLaura});
+  });
 
-  // build dots — one per destination per valid companion
-  myTripsDots=[];
-  const compKeys= myTripsComp==='all'
-    ? ['solo','friend','family','bekah','laura']
-    : [myTripsComp];
+  drawStackedLabels(ctx,c1Dots,W,dark);
+}
 
-  // group by (compKey, desire) to handle stacking
+function setupC1Events(){
+  const canvas=document.getElementById('c1Canvas');
+  canvas.addEventListener('mousemove',e=>{
+    const rect=canvas.getBoundingClientRect();
+    const mx=e.clientX-rect.left,my=e.clientY-rect.top;
+    let best=null,bestD=Infinity;
+    c1Dots.forEach(dot=>{
+      const d=Math.sqrt((mx-dot.x)**2+(my-dot.y)**2);
+      if(d<=dot.r+10&&d<bestD){bestD=d;best=dot;}
+    });
+    if(best){
+      const hdr=best.items.length>1?best.items.length+' destinations at this spot':null;
+      showTooltip(e,best.items,hdr);
+      canvas.style.cursor='pointer';
+    }else{hideTooltip();canvas.style.cursor='default';}
+  });
+  canvas.addEventListener('mouseleave',hideTooltip);
+}
+
+// ── CHART 2: MY TRIPS ─────────────────────────────────────────────────
+function drawChart2(data){
+  const{ctx,W,H}=setupCanvas('c2Canvas');
+  const dark=isDark();
+  const PAD={l:48,r:160,t:24,b:52};
+  const plotW=W-PAD.l-PAD.r,plotH=H-PAD.t-PAD.b;
+
+  const activeComps=[...c2Comps];
+  if(activeComps.length===0){drawBackground(ctx,W,H);return;}
+
+  // filter data
+  const local=data.filter(d=>d.desire>=c2DesireMin);
+
+  const yMin=c2DesireMin>1?c2DesireMin:1,yMax=10,yR=yMax-yMin+1;
+
+  // x: only active companion columns, evenly spaced
+  const xPositions={};
+  const n=activeComps.length;
+  activeComps.forEach((ck,i)=>{xPositions[ck]=i/(Math.max(n-1,1));});
+
+  function px(t){return PAD.l+t*plotW;}
+  function py(y){return PAD.t+(1-((y-yMin+0.3)/(yR+0.6)))*plotH;}
+
+  drawBackground(ctx,W,H);
+
+  // grid
+  ctx.strokeStyle=dark?'rgba(255,255,255,0.07)':'rgba(0,0,0,0.07)';ctx.lineWidth=0.5;
+  activeComps.forEach(ck=>{
+    const x=px(xPositions[ck]);
+    ctx.beginPath();ctx.moveTo(x,PAD.t);ctx.lineTo(x,PAD.t+plotH);ctx.stroke();
+  });
+  for(let i=yMin;i<=yMax;i++){ctx.beginPath();ctx.moveTo(PAD.l,py(i));ctx.lineTo(PAD.l+plotW,py(i));ctx.stroke();}
+
+  // axes
+  ctx.strokeStyle=dark?'rgba(255,255,255,0.25)':'rgba(0,0,0,0.25)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(PAD.l,PAD.t);ctx.lineTo(PAD.l,PAD.t+plotH);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(PAD.l,PAD.t+plotH);ctx.lineTo(PAD.l+plotW,PAD.t+plotH);ctx.stroke();
+
+  // ticks y
+  ctx.fillStyle=dark?'#6b6a65':'#888780';ctx.font='10px -apple-system,sans-serif';ctx.textAlign='right';
+  for(let i=yMin;i<=yMax;i++)ctx.fillText(i,PAD.l-5,py(i)+3);
+
+  // x labels (companion names)
+  ctx.font='11px -apple-system,sans-serif';ctx.textAlign='center';
+  activeComps.forEach(ck=>{
+    ctx.fillStyle=COMP_COLORS[ck]||'#888780';
+    ctx.fillText(COMP_NAMES[ck],px(xPositions[ck]),PAD.t+plotH+16);
+  });
+
+  // axis label
+  ctx.fillStyle=dark?'#6b6a65':'#888780';ctx.font='11px -apple-system,sans-serif';ctx.textAlign='center';
+  ctx.fillText('companion →',PAD.l+plotW/2,PAD.t+plotH+34);
+  ctx.save();ctx.translate(12,PAD.t+plotH/2);ctx.rotate(-Math.PI/2);ctx.fillText('your desire →',0,0);ctx.restore();
+
+  // build groups per companion+desire
   const groups={};
-  localData.forEach(d=>{
-    compKeys.forEach(ck=>{
+  local.forEach(d=>{
+    activeComps.forEach(ck=>{
       if(ck==='solo'&&!d.solo)return;
       if(ck==='friend'&&!d.friend)return;
       if(ck==='family'&&!d.family)return;
@@ -648,226 +567,121 @@ function drawMyTrips(data){
     });
   });
 
-  // jitter seed per group key so it's deterministic
-  function seededJitter(seed, range){
-    const x=Math.sin(seed*9301+49297)*233280;
-    return ((x-Math.floor(x))-0.5)*range;
-  }
-
-  Object.entries(groups).forEach(([key,g])=>{
-    const seed=key.split('').reduce((a,c)=>a+c.charCodeAt(0),0);
-    const baseX=px(COMP_X[g.ck]);
-    // jitter x slightly within column so same-desire dots spread
-    const jitter=g.items.length>1?0:seededJitter(seed,20);
-    const x=baseX+jitter;
+  c2Dots=[];
+  Object.values(groups).forEach(g=>{
+    const t=xPositions[g.ck];
+    const x=px(t);
     const y=py(g.desire);
     const maxV=Math.max(...g.items.map(d=>d.versatility));
-    const r=Math.max(8,maxV*4+2+(g.items.length>1?4:0));
+    const r=Math.max(8,maxV*5+2+(g.items.length>1?3:0));
     const col=COMP_COLORS[g.ck]||'#888780';
-    myTripsDots.push({x,y,r,col,items:g.items,count:g.items.length,ck:g.ck});
+    drawStyledDot(ctx,x,y,r,col+'88',col+'cc',g.items.length,dark);
+    c2Dots.push({x,y,r,items:g.items,ck:g.ck});
   });
 
-  // draw dots
-  myTripsDots.slice().sort((a,b)=>b.r-a.r).forEach(dot=>{
-    ctx.beginPath();
-    ctx.arc(dot.x,dot.y,dot.r,0,Math.PI*2);
-    ctx.fillStyle=dot.col+'88';
-    ctx.fill();
-    ctx.strokeStyle=dot.col+'cc';
-    ctx.lineWidth=1.5;
-    ctx.stroke();
+  drawStackedLabels(ctx,c2Dots,W,dark);
 
-    // badge
-    if(dot.count>1){
-      const br=8;
-      const bx=dot.x+dot.r*0.7;
-      const by=dot.y-dot.r*0.7;
-      ctx.beginPath();ctx.arc(bx,by,br,0,Math.PI*2);
-      ctx.fillStyle=dark?'#333331':'#ffffff';
-      ctx.fill();
-      ctx.strokeStyle=dot.col;
-      ctx.lineWidth=1.5;
-      ctx.stroke();
-      ctx.fillStyle=dot.col;
-      ctx.font='bold 9px -apple-system,sans-serif';
-      ctx.textAlign='center';
-      ctx.textBaseline='middle';
-      ctx.fillText(dot.count,bx,by);
-      ctx.textBaseline='alphabetic';
-    }
-  });
-
-  // labels — stacked names
-  ctx.font='bold 10px -apple-system,sans-serif';
-  const drawn=[];
-  const sortedDots=[...myTripsDots].sort((a,b)=>b.items[0].desire-a.items[0].desire);
-  sortedDots.forEach(dot=>{
-    const names=dot.items.slice().sort((a,b)=>b.desire-a.desire).map(d=>d.name);
-    const lineH=12;
-    const totalH=names.length*lineH;
-    const maxW=Math.max(...names.map(n=>ctx.measureText(n).width));
-    const lx=dot.x+dot.r+3;
-    const ly=dot.y-(totalH/2)+lineH;
-    const box={x:lx-1,y:ly-lineH,w:maxW+2,h:totalH+2};
-    const overlaps=drawn.some(b=>box.x<b.x+b.w&&box.x+box.w>b.x&&box.y<b.y+b.h&&box.y+box.h>b.y);
-    if(!overlaps&&lx+maxW<W-4){
-      ctx.textAlign='left';
-      ctx.fillStyle=dark?'#c8c7c0':'#333';
-      names.forEach((name,i)=>ctx.fillText(name,lx,ly+i*lineH));
-      drawn.push(box);
-    }
+  // legend
+  const leg=document.getElementById('c2Legend');
+  leg.innerHTML='';
+  activeComps.forEach(ck=>{
+    leg.innerHTML+=`<span><span class="ldot" style="background:${COMP_COLORS[ck]}"></span>${COMP_NAMES[ck]}</span> `;
   });
 }
 
-function setupMyTripsEvents(){
-  const canvas=document.getElementById('myTripsCanvas');
+function setupC2Events(){
+  const canvas=document.getElementById('c2Canvas');
   canvas.addEventListener('mousemove',e=>{
     const rect=canvas.getBoundingClientRect();
-    const mx=e.clientX-rect.left;
-    const my=e.clientY-rect.top;
-    let best=null,bestDist=Infinity;
-    myTripsDots.forEach(dot=>{
-      const dx=mx-dot.x,dy=my-dot.y;
-      const dist=Math.sqrt(dx*dx+dy*dy);
-      if(dist<=dot.r+10&&dist<bestDist){bestDist=dist;best=dot;}
+    const mx=e.clientX-rect.left,my=e.clientY-rect.top;
+    let best=null,bestD=Infinity;
+    c2Dots.forEach(dot=>{
+      const d=Math.sqrt((mx-dot.x)**2+(my-dot.y)**2);
+      if(d<=dot.r+10&&d<bestD){bestD=d;best=dot;}
     });
-    const tt=document.getElementById('tooltip');
     if(best){
-      const ttBody=document.getElementById('ttBody');
-      ttBody.innerHTML='';
-      const hdr=document.createElement('div');
-      hdr.style.cssText='font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px;';
-      hdr.textContent=(best.count>1?best.count+' destinations · ':'')+COMP_NAMES[best.ck]+' trips';
-      ttBody.appendChild(hdr);
-      best.items.forEach((d,i)=>{
-        if(i>0){const div=document.createElement('div');div.style.cssText='border-top:0.5px solid var(--border);margin-top:6px;padding-top:6px;';ttBody.appendChild(div);}
-        const nameEl=document.createElement('div');
-        nameEl.style.cssText='font-size:14px;font-weight:500;margin-bottom:4px;color:var(--text);';
-        nameEl.textContent=d.name;
-        ttBody.appendChild(nameEl);
-        [['your desire',d.desire],['laura',d.lauraScore!=null?d.lauraScore+(d.laura==='?'?' (tentative)':''):'—'],['visits',d.visits+' ('+VISIT_LABELS[Math.min(d.visits,5)]+')'],['versatility',d.versatility+'/5']].forEach(([k,v])=>{
-          const row=document.createElement('div');
-          row.style.cssText='display:flex;justify-content:space-between;gap:16px;padding:1px 0;font-size:12px;';
-          row.innerHTML=`<span style="color:var(--text3)">${k}</span><span style="font-weight:500">${v}</span>`;
-          ttBody.appendChild(row);
-        });
-      });
-      tt.style.left=(e.clientX+16)+'px';
-      tt.style.top=Math.max(8,e.clientY-40)+'px';
-      tt.style.display='block';
+      const hdr=(best.items.length>1?best.items.length+' destinations · ':'')+COMP_NAMES[best.ck]+' trips';
+      showTooltip(e,best.items,hdr);
       canvas.style.cursor='pointer';
-    }else{
-      tt.style.display='none';
-      canvas.style.cursor='default';
-    }
+    }else{hideTooltip();canvas.style.cursor='default';}
   });
-  canvas.addEventListener('mouseleave',()=>{document.getElementById('tooltip').style.display='none';});
+  canvas.addEventListener('mouseleave',hideTooltip);
 }
 
-function buildMyTripsLegend(){
-  const el=document.getElementById('myTripsLegend');
-  el.innerHTML='';
-  Object.entries(COMP_COLORS).forEach(([k,c])=>{
-    el.innerHTML+=`<span><span class="ldot" style="background:${c}"></span>${COMP_NAMES[k]}</span> `;
+// ── GLOBAL FILTER ─────────────────────────────────────────────────────
+function applyGlobal(){
+  gFiltered=allData.filter(d=>{
+    if(d.desire<gDesireMin)return false;
+    if(gVisit==='new'&&d.visits>0)return false;
+    if(gVisit==='familiar'&&d.visits===0)return false;
+    if(gComp==='solo'&&!d.solo)return false;
+    if(gComp==='friend'&&!d.friend)return false;
+    if(gComp==='family'&&!d.family)return false;
+    if(gComp==='bekah'&&!d.bekah)return false;
+    if(gComp==='laura'&&d.laura===false)return false;
+    return true;
   });
 }
 
-function setScatterDesireMin(v){
-  scatterDesireMin=parseInt(v);
-  document.getElementById('scatterDesireVal').textContent=v;
-  drawScatter(filteredCache);
-  buildScatterLegend();
-}
-
-function setScatterLauraMin(v){
-  scatterLauraMin=parseInt(v);
-  document.getElementById('scatterLauraVal').textContent=v;
-  drawScatter(filteredCache);
-  buildScatterLegend();
-}
-
-function setMyTripsDesireMin(v){
-  myTripsDesireMin=parseInt(v);
-  document.getElementById('myTripsDesireVal').textContent=v;
-  drawMyTrips(filteredCache);
-  buildMyTripsLegend();
-}
-
-function setMyTripsComp(v){
-  myTripsComp=v;
-  ['All','Solo','Friend','Family','Bekah','Laura'].forEach(s=>{
-    const el=document.getElementById('mt'+s);
-    if(el)el.classList.toggle('active',v===s.toLowerCase());
-  });
-  drawMyTrips(filteredCache);
-  buildMyTripsLegend();
+// ── STATS ─────────────────────────────────────────────────────────────
+function updateStats(){
+  document.getElementById('statTotal').textContent=allData.length;
+  if(!allData.length)return;
+  document.getElementById('statYou').textContent=(allData.reduce((s,d)=>s+d.desire,0)/allData.length).toFixed(1);
+  const ld=allData.filter(d=>d.lauraScore!=null);
+  document.getElementById('statLaura').textContent=ld.length?(ld.reduce((s,d)=>s+d.lauraScore,0)/ld.length).toFixed(1):'—';
+  if(ld.length){
+    const top=[...ld].sort((a,b)=>(b.desire+b.lauraScore)-(a.desire+a.lauraScore))[0];
+    document.getElementById('statTop').textContent=top.name;
+  }
 }
 
 // ── QUADRANT ──────────────────────────────────────────────────────────
-function chipColor(d){
-  const base=COMP_COLORS[d.dominant]||'#888780';
-  return{bg:base+'22',border:base+'88',text:base};
-}
-function makeChip(d){
-  const c=chipColor(d);
-  const el=document.createElement('span');
-  el.className='chip';
-  el.textContent=d.name;
-  el.style.cssText=`background:${c.bg};border-color:${c.border};color:${c.text};`;
-  return el;
-}
-
-function renderQuadrant(data){
+function renderQuadrant(){
   const qg=document.getElementById('quadGrid');
   qg.innerHTML='';
   const defs=[
-    {label:'both want it',sub:`you ≥${qYou} · laura ≥${qLaura}`,
-     bg:'#EAF3DE',border:'#1D9E75',
+    {label:'both want it',sub:`you ≥${qYou} · laura ≥${qLaura}`,bg:'#EAF3DE',border:'#1D9E75',
      test:d=>d.desire>=qYou&&d.lauraScore!=null&&d.lauraScore>=qLaura},
-    {label:'laura more than you',sub:`you <${qYou} · laura ≥${qLaura}`,
-     bg:'#E6F1FB',border:'#378ADD',
+    {label:'laura more than you',sub:`you <${qYou} · laura ≥${qLaura}`,bg:'#E6F1FB',border:'#378ADD',
      test:d=>d.desire<qYou&&d.lauraScore!=null&&d.lauraScore>=qLaura},
-    {label:'you want it, she scored lower',sub:`you ≥${qYou} · laura scored but <${qLaura}`,
-     bg:'#FCEBEB',border:'#E24B4A',
+    {label:'you want it, she scored lower',sub:`you ≥${qYou} · laura scored <${qLaura}`,bg:'#FCEBEB',border:'#E24B4A',
      test:d=>d.desire>=qYou&&d.lauraScore!=null&&d.lauraScore<qLaura},
-    {label:'you want it, she hasn\'t scored',sub:`you ≥${qYou} · no laura score`,
-     bg:'#F5EEF8',border:'#8E44AD',
+    {label:"you want it, she hasn't scored",sub:`you ≥${qYou} · no laura score`,bg:'#F5EEF8',border:'#8E44AD',
      test:d=>d.desire>=qYou&&d.lauraScore==null},
-    {label:'neither priority',sub:`you <${qYou} · laura <${qLaura} or unscored`,
-     bg:'#FAEEDA',border:'#BA7517',
+    {label:'neither priority',sub:`you <${qYou} · laura <${qLaura} or unscored`,bg:'#FAEEDA',border:'#BA7517',
      test:d=>d.desire<qYou&&(d.lauraScore==null||d.lauraScore<qLaura)},
   ];
   defs.forEach(q=>{
-    const members=data.filter(q.test);
+    const members=gFiltered.filter(q.test);
     const card=document.createElement('div');
     card.className='quad-card';
     card.style.cssText=`background:${q.bg};border:1px solid ${q.border}44;border-radius:var(--radius-lg);padding:12px;`;
-    const title=document.createElement('div');
-    title.className='quad-title';
-    title.style.cssText=`color:${q.border};`;
-    title.textContent=q.label+' ('+members.length+')';
-    const sub=document.createElement('div');
-    sub.className='quad-sub';
-    sub.style.cssText=`color:${q.border};`;
-    sub.textContent=q.sub;
-    const chips=document.createElement('div');
-    chips.className='quad-chips';
-    members.forEach(d=>chips.appendChild(makeChip(d)));
+    const title=document.createElement('div');title.className='quad-title';
+    title.style.cssText=`color:${q.border};`;title.textContent=q.label+' ('+members.length+')';
+    const sub=document.createElement('div');sub.className='quad-sub';
+    sub.style.cssText=`color:${q.border};`;sub.textContent=q.sub;
+    const chips=document.createElement('div');chips.className='quad-chips';
+    members.forEach(d=>{
+      const c=document.createElement('span');c.className='chip';c.textContent=d.name;
+      const col=COMP_COLORS[d.dominant]||'#888780';
+      c.style.cssText=`background:${col}22;border-color:${col}88;color:${col};`;
+      chips.appendChild(c);
+    });
     card.appendChild(title);card.appendChild(sub);card.appendChild(chips);
     qg.appendChild(card);
   });
 }
 
 // ── TABLE ─────────────────────────────────────────────────────────────
-function renderTable(data){
-  const sorted=[...data].sort((a,b)=>{
+function renderTable(){
+  const sorted=[...gFiltered].sort((a,b)=>{
     const av=a[sortCol]??-Infinity,bv=b[sortCol]??-Infinity;
     if(typeof av==='string')return sortDir*av.localeCompare(bv);
     return sortDir*(av-bv);
   });
   document.getElementById('rowCount').textContent=sorted.length+' destination'+(sorted.length!==1?'s':'');
-  const tbody=document.getElementById('tableBody');
-  tbody.innerHTML='';
+  const tbody=document.getElementById('tableBody');tbody.innerHTML='';
   sorted.forEach(d=>{
     const tr=document.createElement('tr');
     const lDisp=d.lauraScore!=null?d.lauraScore+(d.laura==='?'?'?':''):'—';
@@ -895,85 +709,80 @@ function renderTable(data){
   });
 }
 
-// ── STATS ─────────────────────────────────────────────────────────────
-function updateStats(data){
-  document.getElementById('statCount').textContent=data.length;
-  if(!data.length)return;
-  document.getElementById('statYou').textContent=(data.reduce((s,d)=>s+d.desire,0)/data.length).toFixed(1);
-  const ld=data.filter(d=>d.lauraScore!=null);
-  document.getElementById('statLaura').textContent=ld.length?(ld.reduce((s,d)=>s+d.lauraScore,0)/ld.length).toFixed(1):'—';
-  if(ld.length){
-    const top=[...ld].sort((a,b)=>(b.desire+b.lauraScore)-(a.desire+a.lauraScore))[0];
-    document.getElementById('statTop').textContent=top.name;
-  }else document.getElementById('statTop').textContent='—';
+// ── RENDER ────────────────────────────────────────────────────────────
+function renderCharts(){
+  drawChart1(allData);
+  drawChart2(allData);
 }
-
-// ── MAIN RENDER ───────────────────────────────────────────────────────
-function render(){
-  filteredCache=allData.filter(passesFilters);
-  updateStats(filteredCache);
-  drawScatter(filteredCache);
-  buildScatterLegend();
-  drawMyTrips(filteredCache);
-  buildMyTripsLegend();
-  renderQuadrant(filteredCache);
-  renderTable(filteredCache);
+function renderGlobal(){
+  applyGlobal();
+  renderQuadrant();
+  renderTable();
+}
+function renderAll(){
+  updateStats();
+  renderCharts();
+  renderGlobal();
 }
 
 // ── CONTROLS ──────────────────────────────────────────────────────────
-function sortBy(col){
-  if(sortCol===col)sortDir*=-1;else{sortCol=col;sortDir=-1;}
-  renderTable(filteredCache);
+function setC1You(v){c1YouMin=parseInt(v);document.getElementById('c1YouVal').textContent=v;drawChart1(allData);}
+function setC1Laura(v){c1LauraMin=parseInt(v);document.getElementById('c1LauraVal').textContent=v;drawChart1(allData);}
+function toggleC1Unscored(){
+  c1ShowUnscored=!c1ShowUnscored;
+  document.getElementById('c1UnscoredBtn').classList.toggle('active',c1ShowUnscored);
+  drawChart1(allData);
 }
-function setCompFilter(v){
-  compFilter=v;
+function setC2Desire(v){c2DesireMin=parseInt(v);document.getElementById('c2DesireVal').textContent=v;drawChart2(allData);}
+function toggleC2Comp(ck){
+  if(c2Comps.has(ck))c2Comps.delete(ck);else c2Comps.add(ck);
+  const btn=document.getElementById('c2'+ck);
+  btn.classList.toggle('active',c2Comps.has(ck));
+  btn.textContent=(c2Comps.has(ck)?'✓ ':'')+COMP_NAMES[ck];
+  drawChart2(allData);
+}
+function setGComp(v){
+  gComp=v;
   ['All','Solo','Friend','Family','Bekah','Laura'].forEach(s=>{
-    const el=document.getElementById('f'+s);
-    if(el)el.classList.toggle('active',v===s.toLowerCase());
+    const el=document.getElementById('g'+s);if(el)el.classList.toggle('active',v===s.toLowerCase());
   });
-  render();
+  renderGlobal();
 }
-function setVisitFilter(v){
-  visitFilter=v;
-  document.getElementById('fVAll').classList.toggle('active',v==='all');
-  document.getElementById('fVNew').classList.toggle('active',v==='new');
-  document.getElementById('fVFam').classList.toggle('active',v==='familiar');
-  render();
+function setGVisit(v){
+  gVisit=v;
+  document.getElementById('gVAll').classList.toggle('active',v==='all');
+  document.getElementById('gVNew').classList.toggle('active',v==='new');
+  document.getElementById('gVFam').classList.toggle('active',v==='familiar');
+  renderGlobal();
 }
-function setDesireMin(v){
-  desireMin=parseInt(v);
-  document.getElementById('desireVal').textContent=v;
-  render();
-}
+function setGDesire(v){gDesireMin=parseInt(v);document.getElementById('gDesireVal').textContent=v;renderGlobal();}
 function setQThresh(who,v){
   if(who==='you'){qYou=parseInt(v);document.getElementById('qYouVal').textContent=v;}
   else{qLaura=parseInt(v);document.getElementById('qLauraVal').textContent=v;}
-  renderQuadrant(filteredCache);
+  renderQuadrant();
 }
-function resetFilters(){
-  compFilter='all';visitFilter='all';desireMin=1;
-  scatterDesireMin=7;scatterLauraMin=2;
-  myTripsDesireMin=7;myTripsComp='all';
-  ['All','Solo','Friend','Family','Bekah','Laura'].forEach(s=>{
-    const el=document.getElementById('f'+s);
-    if(el)el.classList.toggle('active',s==='All');
+function sortBy(col){
+  if(sortCol===col)sortDir*=-1;else{sortCol=col;sortDir=-1;}
+  renderTable();
+}
+function resetAll(){
+  c1YouMin=7;c1LauraMin=2;c1ShowUnscored=false;
+  c2DesireMin=7;c2Comps=new Set(['solo','friend','family','bekah','laura']);
+  gComp='all';gVisit='all';gDesireMin=1;qYou=8;qLaura=8;
+  document.getElementById('c1YouSlider').value=7;document.getElementById('c1YouVal').textContent=7;
+  document.getElementById('c1LauraSlider').value=2;document.getElementById('c1LauraVal').textContent=2;
+  document.getElementById('c1UnscoredBtn').classList.remove('active');
+  document.getElementById('c2DesireSlider').value=7;document.getElementById('c2DesireVal').textContent=7;
+  ['solo','friend','family','bekah','laura'].forEach(ck=>{
+    c2Comps.add(ck);
+    const btn=document.getElementById('c2'+ck);
+    btn.classList.add('active');btn.textContent='✓ '+COMP_NAMES[ck];
   });
-  document.getElementById('fVAll').classList.add('active');
-  document.getElementById('fVNew').classList.remove('active');
-  document.getElementById('fVFam').classList.remove('active');
-  document.getElementById('desireSlider').value=1;
-  document.getElementById('desireVal').textContent='1';
-  document.getElementById('scatterDesireSlider').value=7;
-  document.getElementById('scatterDesireVal').textContent='7';
-  document.getElementById('scatterLauraSlider').value=2;
-  document.getElementById('scatterLauraVal').textContent='2';
-  document.getElementById('myTripsDesireSlider').value=7;
-  document.getElementById('myTripsDesireVal').textContent='7';
-  ['All','Solo','Friend','Family','Bekah','Laura'].forEach(s=>{
-    const el=document.getElementById('mt'+s);
-    if(el)el.classList.toggle('active',s==='All');
-  });
-  render();
+  document.getElementById('gDesireSlider').value=1;document.getElementById('gDesireVal').textContent=1;
+  document.getElementById('qYouSlider').value=8;document.getElementById('qYouVal').textContent=8;
+  document.getElementById('qLauraSlider').value=8;document.getElementById('qLauraVal').textContent=8;
+  setGComp('all');setGVisit('all');
+  renderAll();
 }
 
 // ── LOAD ──────────────────────────────────────────────────────────────
@@ -985,13 +794,12 @@ function loadCSV(text){
     document.getElementById('dropTitle').textContent=allData.length+' destinations loaded';
     document.getElementById('dropSub').textContent='Drop a new file to reload';
     document.getElementById('dashboard').style.display='block';
-    setupScatterEvents();
-    setupMyTripsEvents();
-    render();
-    window.addEventListener('resize',()=>{drawScatter(filteredCache);drawMyTrips(filteredCache);});
+    setupC1Events();
+    setupC2Events();
+    renderAll();
+    window.addEventListener('resize',renderCharts);
   }
 }
-
 const dz=document.getElementById('dropZone');
 const fi=document.getElementById('fileInput');
 dz.addEventListener('click',()=>fi.click());
