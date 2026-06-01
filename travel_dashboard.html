@@ -110,6 +110,14 @@ tr:hover td{background:var(--bg2);}
           <div class="filter-label">unscored</div>
           <button class="tog" id="c1UnscoredBtn" onclick="toggleC1Unscored()">show unscored</button>
         </div>
+        <div class="filter-group">
+          <div class="filter-label">spread horizontal: <span id="c1JitterXVal" style="font-weight:500;color:var(--text)">80</span></div>
+          <input type="range" min="0" max="200" value="80" step="4" id="c1JitterXSlider" oninput="setC1JitterX(this.value)">
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">spread vertical: <span id="c1JitterYVal" style="font-weight:500;color:var(--text)">20</span></div>
+          <input type="range" min="0" max="200" value="20" step="4" id="c1JitterYSlider" oninput="setC1JitterY(this.value)">
+        </div>
       </div>
       <div class="canvas-wrap" id="c1Wrap"><canvas id="c1Canvas"></canvas></div>
     </div>
@@ -213,7 +221,7 @@ const COMP_COLORS={laura:'#534AB7',bekah:'#D4537E',family:'#1D9E75',friend:'#378
 const COMP_NAMES={solo:'solo',friend:'friend',family:'family',bekah:'Bekah',laura:'Laura'};
 
 let allData=[], gFiltered=[];
-let c1YouMin=7, c1LauraMin=2, c1ShowUnscored=false;
+let c1YouMin=7, c1LauraMin=2, c1ShowUnscored=false, c1JitterX=80, c1JitterY=20;
 let c1Dots=[];
 let c2DesireMin=7, c2Comps=new Set(['solo','friend','family','bekah','laura']);
 let c2Dots=[];
@@ -343,7 +351,7 @@ function drawDot(ctx,x,y,r,fill,stroke,count,dark){
   }
 }
 
-function drawLabels(ctx,dots,W,dark){
+function drawLabels(ctx,dots,W,dark,skipOverlapCheck){
   const drawn=[];
   [...dots].sort((a,b)=>{
     const ad=a.items?a.items[0].desire:0;
@@ -365,7 +373,7 @@ function drawLabels(ctx,dots,W,dark){
     if(lx+maxW>W-4) lx=dot.x-dot.r-3-maxW;
 
     const box={x:lx-1,y:ly-lineH,w:maxW+2,h:totalH+2};
-    const overlaps=drawn.some(b=>box.x<b.x+b.w&&box.x+box.w>b.x&&box.y<b.y+b.h&&box.y+box.h>b.y);
+    const overlaps=!skipOverlapCheck&&drawn.some(b=>box.x<b.x+b.w&&box.x+box.w>b.x&&box.y<b.y+b.h&&box.y+box.h>b.y);
     if(!overlaps){
       ctx.textAlign='left';ctx.fillStyle=col;
       names.forEach((n,i)=>ctx.fillText(n,lx,ly+i*lineH));
@@ -422,8 +430,8 @@ function drawChart1(){
     const baseY=d.lauraScore!=null?py(d.lauraScore):py(c1ShowUnscored?0.3:yMin);
     // deterministic jitter per destination
     const seed=d.name.split('').reduce((a,c)=>a+c.charCodeAt(0),0);
-    const jx=(seededRand(seed)-0.5)*18;
-    const jy=(seededRand(seed+1)-0.5)*18;
+    const jx=(seededRand(seed)-0.5)*c1JitterX;
+    const jy=(seededRand(seed+1)-0.5)*c1JitterY;
     const x=baseX+jx, y=baseY+jy;
     const r=12;
     const noLaura=d.lauraScore==null;
@@ -433,7 +441,7 @@ function drawChart1(){
     c1Dots.push({x,y,r,items:[d],noLaura});
   });
 
-  drawLabels(ctx,c1Dots,W,dark);
+  drawLabels(ctx,c1Dots,W,dark,true);
 }
 
 function setupC1Events(){
@@ -623,6 +631,8 @@ function renderTable(){
 }
 
 // ── CONTROLS ──────────────────────────────────────────────────────────
+function setC1JitterX(v){c1JitterX=parseInt(v);document.getElementById('c1JitterXVal').textContent=v;drawChart1();}
+function setC1JitterY(v){c1JitterY=parseInt(v);document.getElementById('c1JitterYVal').textContent=v;drawChart1();}
 function setC1You(v){c1YouMin=parseInt(v);document.getElementById('c1YouVal').textContent=v;drawChart1();}
 function setC1Laura(v){c1LauraMin=parseInt(v);document.getElementById('c1LauraVal').textContent=v;drawChart1();}
 function toggleC1Unscored(){c1ShowUnscored=!c1ShowUnscored;document.getElementById('c1UnscoredBtn').classList.toggle('active',c1ShowUnscored);drawChart1();}
@@ -658,6 +668,8 @@ function resetAll(){
   document.getElementById('c1YouSlider').value=7;document.getElementById('c1YouVal').textContent=7;
   document.getElementById('c1LauraSlider').value=2;document.getElementById('c1LauraVal').textContent=2;
   document.getElementById('c1UnscoredBtn').classList.remove('active');
+  c1JitterX=80;document.getElementById('c1JitterXSlider').value=80;document.getElementById('c1JitterXVal').textContent=80;
+  c1JitterY=20;document.getElementById('c1JitterYSlider').value=20;document.getElementById('c1JitterYVal').textContent=20;
   document.getElementById('c2DesireSlider').value=7;document.getElementById('c2DesireVal').textContent=7;
   ['solo','friend','family','bekah','laura'].forEach(ck=>{
     c2Comps.add(ck);const btn=document.getElementById('c2'+ck);
