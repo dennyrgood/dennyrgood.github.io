@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relationships Dashboard</title>
+<style>
+:root {
+  --bg:#ffffff; --bg2:#f5f4f0; --bg3:#eeede9;
+  --text:#1a1a18; --text2:#5f5e5a; --text3:#888780;
+  --border:rgba(0,0,0,0.1); --border2:rgba(0,0,0,0.2);
+  --radius:8px; --radius-lg:12px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:#1e1e1c; --bg2:#2a2a28; --bg3:#333331;
+    --text:#f0efeb; --text2:#a8a79f; --text3:#6b6a65;
+    --border:rgba(255,255,255,0.1); --border2:rgba(255,255,255,0.2);
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg3);color:var(--text);font-size:14px;min-height:100vh;}
+.app{max-width:100%;margin:0 auto;padding:24px 20px;}
+h1{font-size:20px;font-weight:500;margin-bottom:2px;}
+.subtitle{font-size:13px;color:var(--text3);margin-bottom:18px;}
+.constrained{max-width:1100px;margin:0 auto;}
+.drop-zone{border:1.5px dashed var(--border2);border-radius:var(--radius-lg);padding:20px;text-align:center;background:var(--bg);cursor:pointer;transition:background 0.15s;margin-bottom:18px;}
+.drop-zone.dragover{background:var(--bg2);}
+.drop-zone.loaded{border-style:solid;border-color:#1D9E75;}
+.drop-zone p{color:var(--text2);font-size:13px;margin-top:4px;}
+.drop-zone strong{font-size:15px;font-weight:500;}
+input[type=file]{display:none;}
+.stats{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px;}
+.stat{background:var(--bg2);border-radius:var(--radius);padding:10px 16px;min-width:110px;}
+.stat-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:2px;}
+.stat-val{font-size:22px;font-weight:500;}
+.stat-val.small{font-size:15px;padding-top:4px;}
+.panel{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:14px;}
+.panel-title{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:12px;}
+.panel-controls{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-bottom:12px;}
+.filter-group{display:flex;flex-direction:column;gap:5px;}
+.filter-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.04em;}
+.filter-btns{display:flex;flex-wrap:wrap;gap:4px;}
+select{font-size:12px;padding:4px 8px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);cursor:pointer;}
+button.tog{font-size:12px;padding:3px 10px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text2);cursor:pointer;transition:background 0.1s;}
+button.tog.active{background:var(--bg3);color:var(--text);font-weight:500;}
+button.tog:hover{background:var(--bg2);}
+.canvas-wrap{position:relative;width:100%;}
+canvas{display:block;width:100%;}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--text2);padding:8px 0 0;}
+.ldot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:middle;}
+.quad-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.quad-card{border-radius:var(--radius-lg);padding:12px;}
+.quad-title{font-size:12px;font-weight:500;margin-bottom:2px;}
+.quad-sub{font-size:11px;opacity:0.7;margin-bottom:8px;}
+.quad-chips{display:flex;flex-wrap:wrap;gap:4px;}
+.chip{font-size:11px;padding:2px 7px;border-radius:10px;white-space:nowrap;border:1px solid transparent;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{text-align:left;font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.04em;padding:6px 8px;border-bottom:0.5px solid var(--border2);cursor:pointer;white-space:nowrap;user-select:none;}
+th:hover{color:var(--text);}
+td{padding:6px 8px;border-bottom:0.5px solid var(--border);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--bg2);}
+.bar-wrap{display:flex;align-items:center;gap:5px;}
+.bar{height:5px;border-radius:3px;}
+.pip{display:inline-block;width:7px;height:7px;border-radius:50%;margin:1px;}
+.row-count{font-size:12px;color:var(--text3);margin-bottom:8px;}
+.tooltip{position:fixed;pointer-events:none;background:var(--bg);border:0.5px solid var(--border2);border-radius:var(--radius);padding:10px 14px;font-size:12px;min-width:180px;z-index:200;display:none;box-shadow:0 4px 12px rgba(0,0,0,0.15);}
+.tt-name{font-size:14px;font-weight:500;margin-bottom:6px;}
+.tt-row{display:flex;justify-content:space-between;gap:16px;padding:2px 0;border-bottom:0.5px solid var(--border);}
+.tt-row:last-child{border-bottom:none;}
+.tt-key{color:var(--text3);}
+.tt-val{font-weight:500;}
+.tt-sep{border-top:0.5px solid var(--border);margin:6px 0;}
+.tt-hdr{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px;}
+.c2-person-sel{display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+.c2-person-btn{font-size:12px;padding:4px 12px;border:1px solid var(--border2);border-radius:20px;background:var(--bg);color:var(--text2);cursor:pointer;transition:all 0.1s;}
+.c2-person-btn.active{font-weight:500;}
+.c2-person-btn:hover{background:var(--bg2);}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>Relationships Dashboard</h1>
+  <p class="subtitle">How the people in your life stack up across the traits that matter</p>
+
+  <div class="constrained">
+    <div class="drop-zone" id="dropZone">
+      <strong id="dropTitle">Drop your CSV here</strong>
+      <p id="dropSub">or click to browse · columns: Name, Category, [trait cols...], Notes</p>
+      <input type="file" id="fileInput" accept=".csv">
+    </div>
+  </div>
+
+  <div id="dashboard" style="display:none">
+    <div class="constrained">
+      <div class="stats" id="statsBar"></div>
+    </div>
+
+    <!-- CHART 1 -->
+    <div class="panel">
+      <div class="panel-title">everyone — x trait · y trait · color = category · size = third trait</div>
+      <div class="panel-controls">
+        <div class="filter-group">
+          <div class="filter-label">x axis</div>
+          <select id="c1X"></select>
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">y axis</div>
+          <select id="c1Y"></select>
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">size by</div>
+          <select id="c1Size"></select>
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">unscored</div>
+          <button class="tog" id="c1UnscoredBtn" onclick="toggleC1Unscored()">show unscored</button>
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">spread horizontal: <span id="c1JitterXVal" style="font-weight:500;color:var(--text)">80</span></div>
+          <input type="range" min="0" max="200" value="80" step="4" id="c1JitterXSlider" oninput="setC1JitterX(this.value)">
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">spread vertical: <span id="c1JitterYVal" style="font-weight:500;color:var(--text)">20</span></div>
+          <input type="range" min="0" max="200" value="20" step="4" id="c1JitterYSlider" oninput="setC1JitterY(this.value)">
+        </div>
+      </div>
+      <div class="canvas-wrap" id="c1Wrap"><canvas id="c1Canvas"></canvas></div>
+      <div class="legend" id="c1Legend"></div>
+    </div>
+
+    <!-- CHART 2 -->
+    <div class="panel">
+      <div class="panel-title">compare people — select 2 or 3 to overlay on radar</div>
+      <div class="panel-controls">
+        <div class="filter-group" style="flex:1">
+          <div class="filter-label">select people (pick 2–3)</div>
+          <div class="c2-person-sel" id="c2PersonSel"></div>
+        </div>
+      </div>
+      <div class="canvas-wrap" id="c2Wrap"><canvas id="c2Canvas"></canvas></div>
+    </div>
+
+    <!-- CHART 3 -->
+    <div class="panel">
+      <div class="panel-title">traits — trait columns (x) · score (y) · size = composite avg · color = category</div>
+      <div class="panel-controls">
+        <div class="filter-group">
+          <div class="filter-label">min score ≥ <span id="c3MinVal" style="font-weight:500;color:var(--text)">1</span></div>
+          <input type="range" min="1" max="10" value="1" step="1" id="c3MinSlider" oninput="setC3Min(this.value)">
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">spread horizontal: <span id="c3JitterXVal" style="font-weight:500;color:var(--text)">0</span></div>
+          <input type="range" min="0" max="200" value="0" step="4" id="c3JitterXSlider" oninput="setC3JitterX(this.value)">
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">spread vertical: <span id="c3JitterYVal" style="font-weight:500;color:var(--text)">20</span></div>
+          <input type="range" min="0" max="200" value="20" step="4" id="c3JitterYSlider" oninput="setC3JitterY(this.value)">
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">show traits</div>
+          <div class="filter-btns" id="c3TraitBtns"></div>
+        </div>
+      </div>
+      <div class="canvas-wrap" id="c3Wrap"><canvas id="c3Canvas"></canvas></div>
+    </div>
+
+    <div class="constrained">
+      <!-- GLOBAL FILTERS -->
+      <div class="panel">
+        <div class="panel-title">filters — apply to quadrant view and table below</div>
+        <div class="panel-controls">
+          <div class="filter-group">
+            <div class="filter-label">category</div>
+            <div class="filter-btns" id="gCatBtns"></div>
+          </div>
+          <div class="filter-group">
+            <div class="filter-label">min avg score ≥ <span id="gMinVal" style="font-weight:500;color:var(--text)">1</span></div>
+            <input type="range" min="1" max="10" value="1" step="1" id="gMinSlider" oninput="setGMin(this.value)">
+          </div>
+          <div class="filter-group">
+            <div class="filter-label">notes</div>
+            <button class="tog" id="gNotesBtn" onclick="toggleGNotes()">show with notes only</button>
+          </div>
+          <div class="filter-group" style="margin-left:auto;margin-top:auto;">
+            <button class="tog" onclick="resetAll()" style="padding:5px 14px;">reset all</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUADRANT -->
+      <div class="panel">
+        <div class="panel-title">quadrant view</div>
+        <div class="panel-controls">
+          <div class="filter-group">
+            <div class="filter-label">trait a</div>
+            <select id="qTraitA"></select>
+          </div>
+          <div class="filter-group">
+            <div class="filter-label">threshold a: <span id="qAVal" style="font-weight:500;color:var(--text)">7</span></div>
+            <input type="range" min="1" max="10" value="7" step="1" id="qASlider" oninput="setQThresh('a',this.value)">
+          </div>
+          <div class="filter-group">
+            <div class="filter-label">trait b</div>
+            <select id="qTraitB"></select>
+          </div>
+          <div class="filter-group">
+            <div class="filter-label">threshold b: <span id="qBVal" style="font-weight:500;color:var(--text)">7</span></div>
+            <input type="range" min="1" max="10" value="7" step="1" id="qBSlider" oninput="setQThresh('b',this.value)">
+          </div>
+        </div>
+        <div class="quad-grid" id="quadGrid"></div>
+      </div>
+
+      <!-- TABLE -->
+      <div class="panel">
+        <div class="row-count" id="rowCount"></div>
+        <div style="overflow-x:auto">
+          <table><thead><tr id="tableHead"></tr></thead><tbody id="tableBody"></tbody></table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="tooltip" id="tooltip"><div id="ttBody"></div></div>
+
+<script>
+// ── DYNAMIC STATE — populated from CSV ───────────────────────────────
+let TRAITS = [];        // ['loyalty','fun', ...]  lowercase keys
+let TRAIT_LABELS = [];  // display names (title-cased from header)
+let TRAIT_COLORS = [];  // assigned on load
+
+const COLOR_POOL = ['#1D9E75','#378ADD','#BA7517','#D85A30','#E24B4A','#534AB7','#D4537E','#888780',
+                    '#2BC0B4','#F0A500','#7B68EE','#20B2AA'];
+const CAT_PALETTE = ['#1D9E75','#378ADD','#BA7517','#D85A30','#E24B4A','#534AB7','#D4537E','#888780'];
+const RADAR_COLORS = ['#378ADD','#E24B4A','#1D9E75','#D4537E','#BA7517','#534AB7','#D85A30'];
+
+let allData = [], gFiltered = [];
+let catColors = {}, categories = [];
+
+// Chart 1
+let c1XTrait = '', c1YTrait = '', c1SizeTrait = null;
+let c1ShowUnscored = false, c1JitterX = 80, c1JitterY = 20;
+let c1Dots = [];
+
+// Chart 2
+let c2Selected = new Set();
+
+// Chart 3
+let c3MinScore = 1, c3JitterX = 0, c3JitterY = 20;
+let c3ActiveTraits = new Set();
+let c3Dots = [];
+
+// Global
+let gCat = 'all', gMinAvg = 1, gNotesOnly = false;
+
+// Quadrant
+let qTraitA = '', qTraitB = '', qThreshA = 7, qThreshB = 7;
+
+// Table
+let sortCol = 'composite', sortDir = -1;
+
+// ── CSV ───────────────────────────────────────────────────────────────
+function splitLine(line) {
+  const v = []; let c = '', q = false;
+  for (let ch of line) {
+    if (ch === '"') { q = !q; }
+    else if (ch === ',' && !q) { v.push(c.trim()); c = ''; }
+    else c += ch;
+  }
+  v.push(c.trim()); return v;
+}
+
+function titleCase(s) {
+  return s.replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+}
+
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/);
+  if (lines.length < 2) return { headers: [], rows: [] };
+
+  const rawHeaders = splitLine(lines[0]).map(h => h.replace(/^"|"$/g, '').trim());
+  // identify reserved columns
+  const reserved = new Set(['name','category','notes']);
+  const hm = {}; // key -> col index
+  rawHeaders.forEach((h, i) => hm[h.toLowerCase()] = i);
+
+  // trait columns = everything that is not name/category/notes
+  const traitHeaders = rawHeaders.filter(h => !reserved.has(h.toLowerCase()));
+
+  const rows = lines.slice(1).map(line => {
+    const v = splitLine(line);
+    const r = { name: '', category: '', notes: '', scores: {} };
+    if (hm['name'] !== undefined) r.name = (v[hm['name']] || '').trim();
+    if (hm['category'] !== undefined) r.category = (v[hm['category']] || '').trim().toLowerCase();
+    if (hm['notes'] !== undefined) r.notes = (v[hm['notes']] || '').trim();
+    traitHeaders.forEach(th => {
+      const key = th.toLowerCase();
+      const raw = (v[hm[th.toLowerCase()]] || '').trim();
+      r.scores[key] = (raw !== '' && !isNaN(raw)) ? parseFloat(raw) : null;
+    });
+    return r;
+  }).filter(r => r.name);
+
+  return { traitHeaders, rows };
+}
+
+function processRow(r) {
+  const scored = TRAITS.map(t => r.scores[t]).filter(v => v !== null);
+  const composite = scored.length > 0 ? scored.reduce((a, b) => a + b, 0) / scored.length : null;
+  return { ...r, composite, scoredCount: scored.length };
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────
+function isDark() { return window.matchMedia('(prefers-color-scheme:dark)').matches; }
+
+function seededRand(seed) {
+  const x = Math.sin(seed * 9301 + 49297) * 233280;
+  return x - Math.floor(x);
+}
+function nameHash(name) {
+  return name.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+}
+
+function traitLabel(key) {
+  const i = TRAITS.indexOf(key);
+  return i >= 0 ? TRAIT_LABELS[i] : key;
+}
+function traitColor(key) {
+  const i = TRAITS.indexOf(key);
+  return i >= 0 ? TRAIT_COLORS[i] : '#888780';
+}
+
+function setupCanvas(id) {
+  const canvas = document.getElementById(id);
+  const wrap = canvas.parentElement;
+  const availH = Math.max(320, window.innerHeight * 0.55);
+  wrap.style.height = availH + 'px';
+  canvas.style.height = availH + 'px';
+  const dpr = window.devicePixelRatio || 1;
+  const W = wrap.clientWidth;
+  canvas.width = W * dpr; canvas.height = availH * dpr;
+  canvas.style.width = W + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  return { ctx, W, H: availH };
+}
+
+function showTooltip(e, people, header) {
+  const tt = document.getElementById('tooltip');
+  const body = document.getElementById('ttBody');
+  body.innerHTML = '';
+  if (header) { const h = document.createElement('div'); h.className = 'tt-hdr'; h.textContent = header; body.appendChild(h); }
+  people.forEach((d, i) => {
+    if (i > 0) { const s = document.createElement('div'); s.className = 'tt-sep'; body.appendChild(s); }
+    const nm = document.createElement('div'); nm.className = 'tt-name';
+    nm.innerHTML = `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${catColors[d.category]||'#888'};margin-right:6px;vertical-align:middle"></span>${d.name}`;
+    body.appendChild(nm);
+    const catRow = document.createElement('div'); catRow.className = 'tt-row';
+    catRow.innerHTML = `<span class="tt-key">category</span><span class="tt-val">${d.category}</span>`;
+    body.appendChild(catRow);
+    TRAITS.forEach((t, ti) => {
+      const row = document.createElement('div'); row.className = 'tt-row';
+      row.innerHTML = `<span class="tt-key">${TRAIT_LABELS[ti]}</span><span class="tt-val">${d.scores[t] !== null ? d.scores[t] : '—'}</span>`;
+      body.appendChild(row);
+    });
+    const compRow = document.createElement('div'); compRow.className = 'tt-row';
+    compRow.innerHTML = `<span class="tt-key">avg</span><span class="tt-val">${d.composite !== null ? d.composite.toFixed(1) : '—'}</span>`;
+    body.appendChild(compRow);
+    if (d.notes) {
+      const nRow = document.createElement('div'); nRow.className = 'tt-row';
+      nRow.innerHTML = `<span class="tt-key">notes</span><span class="tt-val" style="font-size:11px;max-width:160px;text-align:right">${d.notes}</span>`;
+      body.appendChild(nRow);
+    }
+  });
+  tt.style.left = (e.clientX + 16) + 'px';
+  tt.style.top = Math.max(8, e.clientY - 60) + 'px';
+  tt.style.display = 'block';
+}
+function hideTooltip() { document.getElementById('tooltip').style.display = 'none'; }
+
+function drawDot(ctx, x, y, r, fill, stroke, count, dark) {
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fillStyle = fill; ctx.fill();
+  ctx.strokeStyle = stroke; ctx.lineWidth = 1.5; ctx.stroke();
+  if (count > 1) {
+    const br = 8, bx = x + r * 0.7, by = y - r * 0.7;
+    ctx.beginPath(); ctx.arc(bx, by, br, 0, Math.PI * 2);
+    ctx.fillStyle = dark ? '#333331' : '#ffffff'; ctx.fill();
+    ctx.strokeStyle = stroke; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = stroke; ctx.font = 'bold 9px -apple-system,sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(count, bx, by); ctx.textBaseline = 'alphabetic';
+  }
+}
+
+function drawLabels(ctx, dots, W, dark, skipOverlap) {
+  const drawn = [];
+  [...dots].sort((a, b) => {
+    const ac = a.items ? (a.items[0].composite || 0) : 0;
+    const bc = b.items ? (b.items[0].composite || 0) : 0;
+    return bc - ac;
+  }).forEach(dot => {
+    const names = (dot.items || [dot]).map(d => d.name);
+    const count = names.length;
+    const fs = count >= 6 ? 8 : count >= 4 ? 9 : 10;
+    const lineH = fs + 3;
+    const totalH = count * lineH;
+    ctx.font = `bold ${fs}px -apple-system,sans-serif`;
+    const maxW = Math.max(...names.map(n => ctx.measureText(n).width));
+    const col = dark ? '#c8c7c0' : '#333';
+    const ly = dot.y - (totalH / 2) + lineH;
+    let lx = dot.x + dot.r + 3;
+    if (lx + maxW > W - 4) lx = dot.x - dot.r - 3 - maxW;
+    const box = { x: lx - 1, y: ly - lineH, w: maxW + 2, h: totalH + 2 };
+    const overlaps = !skipOverlap && drawn.some(b => box.x < b.x + b.w && box.x + box.w > b.x && box.y < b.y + b.h && box.y + box.h > b.y);
+    if (!overlaps) {
+      ctx.textAlign = 'left'; ctx.fillStyle = col;
+      names.forEach((n, i) => ctx.fillText(n, lx, ly + i * lineH));
+      drawn.push(box);
+    }
+  });
+}
+
+function drawAxes(ctx, PAD, plotW, plotH, W, H, xMin, xMax, yMin, yMax, px, py, dark, xLabel, yLabel) {
+  ctx.strokeStyle = dark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'; ctx.lineWidth = 0.5;
+  for (let i = xMin; i <= xMax; i++) { ctx.beginPath(); ctx.moveTo(px(i), PAD.t); ctx.lineTo(px(i), PAD.t + plotH); ctx.stroke(); }
+  for (let i = Math.max(1, yMin); i <= yMax; i++) { ctx.beginPath(); ctx.moveTo(PAD.l, py(i)); ctx.lineTo(PAD.l + plotW, py(i)); ctx.stroke(); }
+  ctx.strokeStyle = dark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(PAD.l, PAD.t); ctx.lineTo(PAD.l, PAD.t + plotH); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(PAD.l, PAD.t + plotH); ctx.lineTo(PAD.l + plotW, PAD.t + plotH); ctx.stroke();
+  ctx.fillStyle = dark ? '#6b6a65' : '#888780'; ctx.font = '10px -apple-system,sans-serif';
+  ctx.textAlign = 'center';
+  for (let i = xMin; i <= xMax; i++) ctx.fillText(i, px(i), PAD.t + plotH + 14);
+  ctx.textAlign = 'right';
+  for (let i = Math.max(1, yMin); i <= yMax; i++) ctx.fillText(i, PAD.l - 5, py(i) + 3);
+  ctx.font = '11px -apple-system,sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText(xLabel, PAD.l + plotW / 2, H - 6);
+  ctx.save(); ctx.translate(12, PAD.t + plotH / 2); ctx.rotate(-Math.PI / 2); ctx.fillText(yLabel, 0, 0); ctx.restore();
+}
+
+// ── CHART 1 ───────────────────────────────────────────────────────────
+function drawChart1() {
+  const { ctx, W, H } = setupCanvas('c1Canvas');
+  const dark = isDark();
+  const PAD = { l: 48, r: 30, t: 24, b: 44 };
+  const plotW = W - PAD.l - PAD.r, plotH = H - PAD.t - PAD.b;
+
+  const xTrait = c1XTrait, yTrait = c1YTrait;
+
+  const local = allData.filter(d => {
+    if (!c1ShowUnscored && (d.scores[xTrait] === null || d.scores[yTrait] === null)) return false;
+    return true;
+  });
+
+  const xVals = local.map(d => d.scores[xTrait]).filter(v => v !== null);
+  const yVals = local.map(d => d.scores[yTrait]).filter(v => v !== null);
+  const xMin = xVals.length ? Math.min(...xVals) : 1, xMax = xVals.length ? Math.max(...xVals) : 10;
+  const yMin = yVals.length ? Math.min(...yVals) : 1, yMax = yVals.length ? Math.max(...yVals) : 10;
+  const xR = xMax - xMin + 1, yR = yMax - yMin + 1;
+
+  function px(x) { return PAD.l + ((x - xMin + 0.3) / (xR + 0.6)) * plotW; }
+  function py(y) { return PAD.t + (1 - ((y - yMin + 0.3) / (yR + 0.6))) * plotH; }
+
+  ctx.fillStyle = dark ? '#1e1e1c' : '#ffffff'; ctx.fillRect(0, 0, W, H);
+  drawAxes(ctx, PAD, plotW, plotH, W, H, xMin, xMax, yMin, yMax, px, py, dark,
+    traitLabel(xTrait) + ' →', traitLabel(yTrait) + ' →');
+
+  c1Dots = [];
+  local.forEach(d => {
+    const xv = d.scores[xTrait], yv = d.scores[yTrait];
+    const seed = nameHash(d.name);
+    const jx = (seededRand(seed) - 0.5) * c1JitterX;
+    const jy = (seededRand(seed + 1) - 0.5) * c1JitterY;
+    const baseX = xv !== null ? px(xv) : PAD.l + plotW / 2;
+    const baseY = yv !== null ? py(yv) : PAD.t + plotH * 0.8;
+    const x = baseX + jx, y = baseY + jy;
+    const sv = c1SizeTrait && d.scores[c1SizeTrait] !== null ? d.scores[c1SizeTrait] : 5;
+    const r = 6 + sv * 1.2;
+    const unscored = (xv === null || yv === null);
+    const col = unscored ? '#888780' : (catColors[d.category] || '#888780');
+    drawDot(ctx, x, y, r, col + '66', col + 'cc', 1, dark);
+    c1Dots.push({ x, y, r, items: [d] });
+  });
+  drawLabels(ctx, c1Dots, W, dark, true);
+
+  const leg = document.getElementById('c1Legend'); leg.innerHTML = '';
+  categories.forEach(cat => {
+    const col = catColors[cat] || '#888';
+    leg.innerHTML += `<span><span class="ldot" style="background:${col}"></span>${cat}</span> `;
+  });
+}
+
+function setupC1Events() {
+  const canvas = document.getElementById('c1Canvas');
+  canvas.addEventListener('mousemove', e => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    let best = null, bestD = Infinity;
+    c1Dots.forEach(dot => {
+      const d = Math.sqrt((mx - dot.x) ** 2 + (my - dot.y) ** 2);
+      if (d <= dot.r + 10 && d < bestD) { bestD = d; best = dot; }
+    });
+    if (best) { showTooltip(e, best.items, null); canvas.style.cursor = 'pointer'; }
+    else { hideTooltip(); canvas.style.cursor = 'default'; }
+  });
+  canvas.addEventListener('mouseleave', hideTooltip);
+}
+
+// ── CHART 2: RADAR ────────────────────────────────────────────────────
+function drawChart2() {
+  const { ctx, W, H } = setupCanvas('c2Canvas');
+  const dark = isDark();
+  ctx.fillStyle = dark ? '#1e1e1c' : '#ffffff'; ctx.fillRect(0, 0, W, H);
+
+  const selected = allData.filter(d => c2Selected.has(d.name));
+  if (selected.length === 0) {
+    ctx.fillStyle = dark ? '#6b6a65' : '#888780';
+    ctx.font = '13px -apple-system,sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('Select 2–3 people above to compare', W / 2, H / 2);
+    return;
+  }
+
+  const n = TRAITS.length;
+  const cx = W / 2, cy = H / 2;
+  const maxR = Math.min(W, H) * 0.36;
+  const levels = 5;
+
+  for (let lv = 1; lv <= levels; lv++) {
+    const r = maxR * (lv / levels);
+    ctx.beginPath();
+    for (let i = 0; i < n; i++) {
+      const angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+      const x = cx + r * Math.cos(angle), y = cy + r * Math.sin(angle);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)';
+    ctx.lineWidth = 0.5; ctx.stroke();
+    ctx.fillStyle = dark ? '#6b6a65' : '#aaa';
+    ctx.font = '9px -apple-system,sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText((lv * 2).toString(), cx + 3, cy - r + 3);
+  }
+
+  for (let i = 0; i < n; i++) {
+    const angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+    ctx.beginPath(); ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + maxR * Math.cos(angle), cy + maxR * Math.sin(angle));
+    ctx.strokeStyle = dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)';
+    ctx.lineWidth = 0.5; ctx.stroke();
+    const lx = cx + (maxR + 20) * Math.cos(angle);
+    const ly = cy + (maxR + 20) * Math.sin(angle);
+    ctx.fillStyle = dark ? '#a8a79f' : '#5f5e5a';
+    ctx.font = 'bold 10px -apple-system,sans-serif';
+    ctx.textAlign = Math.cos(angle) > 0.1 ? 'left' : Math.cos(angle) < -0.1 ? 'right' : 'center';
+    ctx.textBaseline = Math.sin(angle) > 0.1 ? 'top' : Math.sin(angle) < -0.1 ? 'bottom' : 'middle';
+    ctx.fillText(TRAIT_LABELS[i], lx, ly);
+    ctx.textBaseline = 'alphabetic';
+  }
+
+  selected.forEach((d, pi) => {
+    const col = RADAR_COLORS[pi % RADAR_COLORS.length];
+    const points = [];
+    for (let i = 0; i < n; i++) {
+      const angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+      const val = d.scores[TRAITS[i]];
+      const r = val !== null ? maxR * (val / 10) : 0;
+      points.push({ x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) });
+    }
+    ctx.beginPath();
+    points.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+    ctx.closePath();
+    ctx.fillStyle = col + '33'; ctx.fill();
+    ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.stroke();
+    points.forEach(p => {
+      ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+      ctx.fillStyle = col; ctx.fill();
+    });
+  });
+
+  // legend
+  const legendSpacing = 100;
+  const legendStartX = W / 2 - (legendSpacing * (selected.length - 1)) / 2;
+  const legendY = H - 16;
+  selected.forEach((d, pi) => {
+    const col = RADAR_COLORS[pi % RADAR_COLORS.length];
+    const lx = legendStartX + pi * legendSpacing;
+    ctx.beginPath(); ctx.arc(lx - 30, legendY - 4, 5, 0, Math.PI * 2);
+    ctx.fillStyle = col; ctx.fill();
+    ctx.fillStyle = col;
+    ctx.font = 'bold 12px -apple-system,sans-serif';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText(d.name, lx - 22, legendY - 4);
+    ctx.textBaseline = 'alphabetic';
+  });
+}
+
+// ── CHART 3 ───────────────────────────────────────────────────────────
+function drawChart3() {
+  const { ctx, W, H } = setupCanvas('c3Canvas');
+  const dark = isDark();
+  const PAD = { l: 48, r: 30, t: 24, b: 52 };
+  const plotW = W - PAD.l - PAD.r, plotH = H - PAD.t - PAD.b;
+
+  const activeTraits = TRAITS.filter(t => c3ActiveTraits.has(t));
+  if (!activeTraits.length) { ctx.fillStyle = dark ? '#1e1e1c' : '#ffffff'; ctx.fillRect(0, 0, W, H); return; }
+
+  const local = allData.filter(d => d.composite !== null && d.composite >= c3MinScore);
+  const yMin = c3MinScore > 1 ? c3MinScore : 1, yMax = 10, yR = yMax - yMin + 1;
+
+  const xPos = {};
+  activeTraits.forEach((t, i) => xPos[t] = i / Math.max(activeTraits.length - 1, 1));
+  function px(t) { return PAD.l + xPos[t] * plotW; }
+  function py(y) { return PAD.t + (1 - ((y - yMin + 0.3) / (yR + 0.6))) * plotH; }
+
+  ctx.fillStyle = dark ? '#1e1e1c' : '#ffffff'; ctx.fillRect(0, 0, W, H);
+
+  ctx.strokeStyle = dark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'; ctx.lineWidth = 0.5;
+  activeTraits.forEach(t => { ctx.beginPath(); ctx.moveTo(px(t), PAD.t); ctx.lineTo(px(t), PAD.t + plotH); ctx.stroke(); });
+  for (let i = yMin; i <= yMax; i++) { ctx.beginPath(); ctx.moveTo(PAD.l, py(i)); ctx.lineTo(PAD.l + plotW, py(i)); ctx.stroke(); }
+  ctx.strokeStyle = dark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(PAD.l, PAD.t); ctx.lineTo(PAD.l, PAD.t + plotH); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(PAD.l, PAD.t + plotH); ctx.lineTo(PAD.l + plotW, PAD.t + plotH); ctx.stroke();
+
+  ctx.fillStyle = dark ? '#6b6a65' : '#888780'; ctx.font = '10px -apple-system,sans-serif'; ctx.textAlign = 'right';
+  for (let i = yMin; i <= yMax; i++) ctx.fillText(i, PAD.l - 5, py(i) + 3);
+
+  ctx.font = '10px -apple-system,sans-serif'; ctx.textAlign = 'center';
+  activeTraits.forEach(t => {
+    ctx.fillStyle = traitColor(t);
+    ctx.fillText(traitLabel(t), px(t), PAD.t + plotH + 16);
+  });
+  ctx.fillStyle = dark ? '#6b6a65' : '#888780';
+  ctx.fillText('trait →', PAD.l + plotW / 2, PAD.t + plotH + 34);
+  ctx.save(); ctx.translate(12, PAD.t + plotH / 2); ctx.rotate(-Math.PI / 2); ctx.fillText('score →', 0, 0); ctx.restore();
+
+  const groups = {};
+  local.forEach(d => {
+    activeTraits.forEach(t => {
+      const sv = d.scores[t];
+      if (sv === null) return;
+      const key = t + '|' + sv;
+      if (!groups[key]) groups[key] = { items: [], trait: t, score: sv };
+      groups[key].items.push(d);
+    });
+  });
+
+  c3Dots = [];
+  Object.values(groups).forEach(g => {
+    const seed = nameHash(g.trait) + g.score * 7;
+    const jx = (seededRand(seed) - 0.5) * c3JitterX;
+    const jy = (seededRand(seed + 1) - 0.5) * c3JitterY;
+    const x = px(g.trait) + jx, y = py(g.score) + jy;
+    const lead = g.items.slice().sort((a, b) => (b.composite || 0) - (a.composite || 0))[0];
+    const r = Math.max(8, (lead.composite || 5) * 1.5 + (g.items.length > 1 ? 3 : 0));
+    const col = catColors[lead.category] || '#888780';
+    drawDot(ctx, x, y, r, col + '88', col + 'cc', g.items.length, dark);
+    c3Dots.push({ x, y, r, items: g.items, trait: g.trait });
+  });
+  drawLabels(ctx, c3Dots, W, dark);
+}
+
+function setupC3Events() {
+  const canvas = document.getElementById('c3Canvas');
+  canvas.addEventListener('mousemove', e => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    let best = null, bestD = Infinity;
+    c3Dots.forEach(dot => {
+      const d = Math.sqrt((mx - dot.x) ** 2 + (my - dot.y) ** 2);
+      if (d <= dot.r + 10 && d < bestD) { bestD = d; best = dot; }
+    });
+    if (best) {
+      const hdr = (best.items.length > 1 ? best.items.length + ' people · ' : '') + traitLabel(best.trait);
+      showTooltip(e, best.items, hdr); canvas.style.cursor = 'pointer';
+    } else { hideTooltip(); canvas.style.cursor = 'default'; }
+  });
+  canvas.addEventListener('mouseleave', hideTooltip);
+}
+
+// ── GLOBAL / QUADRANT / TABLE ─────────────────────────────────────────
+function applyGlobal() {
+  gFiltered = allData.filter(d => {
+    if (d.composite !== null && d.composite < gMinAvg) return false;
+    if (gCat !== 'all' && d.category !== gCat) return false;
+    if (gNotesOnly && !d.notes) return false;
+    return true;
+  });
+}
+
+function updateStats() {
+  const bar = document.getElementById('statsBar'); bar.innerHTML = '';
+  const addStat = (label, val) => {
+    bar.innerHTML += `<div class="stat"><div class="stat-label">${label}</div><div class="stat-val${val.length > 6 ? ' small' : ''}">${val}</div></div>`;
+  };
+  addStat('people', allData.length.toString());
+  const withComp = allData.filter(d => d.composite !== null);
+  if (withComp.length) {
+    const top = [...withComp].sort((a, b) => b.composite - a.composite)[0];
+    addStat('top overall', top.name);
+  }
+  TRAITS.slice(0, 4).forEach((t, i) => {
+    const vals = allData.map(d => d.scores[t]).filter(v => v !== null);
+    addStat('avg ' + TRAIT_LABELS[i].toLowerCase(), vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1) : '—');
+  });
+}
+
+function renderQuadrant() {
+  const tA = qTraitA, tB = qTraitB;
+  const labelA = traitLabel(tA), labelB = traitLabel(tB);
+  const qg = document.getElementById('quadGrid'); qg.innerHTML = '';
+  const defs = [
+    { label: 'strong on both', sub: `${labelA} ≥${qThreshA} · ${labelB} ≥${qThreshB}`, bg: '#EAF3DE', border: '#1D9E75', test: d => d.scores[tA] >= qThreshA && d.scores[tB] >= qThreshB },
+    { label: labelB + ' stronger', sub: `${labelA} <${qThreshA} · ${labelB} ≥${qThreshB}`, bg: '#E6F1FB', border: '#378ADD', test: d => (d.scores[tA] === null || d.scores[tA] < qThreshA) && d.scores[tB] >= qThreshB },
+    { label: labelA + ' stronger', sub: `${labelA} ≥${qThreshA} · ${labelB} <${qThreshB}`, bg: '#FCEBEB', border: '#E24B4A', test: d => d.scores[tA] >= qThreshA && (d.scores[tB] === null || d.scores[tB] < qThreshB) },
+    { label: labelA + ' high, ' + labelB + ' unscored', sub: `${labelA} ≥${qThreshA} · no ${labelB}`, bg: '#F5EEF8', border: '#8E44AD', test: d => d.scores[tA] >= qThreshA && d.scores[tB] === null },
+    { label: 'neither high', sub: 'both below threshold or unscored', bg: '#FAEEDA', border: '#BA7517', test: d => (d.scores[tA] === null || d.scores[tA] < qThreshA) && (d.scores[tB] === null || d.scores[tB] < qThreshB) },
+  ];
+  defs.forEach(q => {
+    const members = gFiltered.filter(q.test);
+    const card = document.createElement('div'); card.className = 'quad-card';
+    card.style.cssText = `background:${q.bg};border:1px solid ${q.border}44;border-radius:var(--radius-lg);padding:12px;`;
+    const title = document.createElement('div'); title.className = 'quad-title'; title.style.color = q.border; title.textContent = q.label + ' (' + members.length + ')';
+    const sub = document.createElement('div'); sub.className = 'quad-sub'; sub.style.color = q.border; sub.textContent = q.sub;
+    const chips = document.createElement('div'); chips.className = 'quad-chips';
+    members.forEach(d => {
+      const c = document.createElement('span'); c.className = 'chip'; c.textContent = d.name;
+      const col = catColors[d.category] || '#888780';
+      c.style.cssText = `background:${col}22;border-color:${col}88;color:${col};`;
+      chips.appendChild(c);
+    });
+    card.appendChild(title); card.appendChild(sub); card.appendChild(chips); qg.appendChild(card);
+  });
+}
+
+function renderTable() {
+  const thead = document.getElementById('tableHead'); thead.innerHTML = '';
+  const cols = [
+    { key: 'name', label: 'Name' },
+    { key: 'category', label: 'Cat.' },
+    ...TRAITS.map((t, i) => ({ key: t, label: TRAIT_LABELS[i] })),
+    { key: 'composite', label: 'Avg' },
+    { key: 'notes', label: 'Notes' }
+  ];
+  cols.forEach(col => {
+    const th = document.createElement('th');
+    const isSorted = sortCol === col.key;
+    th.innerHTML = col.label + ` <span class="sa">${isSorted ? (sortDir === -1 ? '↓' : '↑') : '↕'}</span>`;
+    th.onclick = () => sortBy(col.key);
+    thead.appendChild(th);
+  });
+
+  const sorted = [...gFiltered].sort((a, b) => {
+    let av, bv;
+    if (TRAITS.includes(sortCol)) { av = a.scores[sortCol] ?? -Infinity; bv = b.scores[sortCol] ?? -Infinity; }
+    else { av = a[sortCol] ?? -Infinity; bv = b[sortCol] ?? -Infinity; }
+    if (typeof av === 'string') return sortDir * av.localeCompare(bv);
+    return sortDir * (av - bv);
+  });
+
+  document.getElementById('rowCount').textContent = sorted.length + ' person' + (sorted.length !== 1 ? 's' : '');
+  const tbody = document.getElementById('tableBody'); tbody.innerHTML = '';
+  sorted.forEach(d => {
+    const tr = document.createElement('tr');
+    const col = catColors[d.category] || '#888';
+    let html = `<td style="font-weight:500">${d.name}</td>`;
+    html += `<td><span class="pip" style="background:${col}55;border:1px solid ${col}"></span><span style="font-size:11px;color:var(--text2)">${d.category}</span></td>`;
+    TRAITS.forEach((t, ti) => {
+      const v = d.scores[t];
+      const tc = TRAIT_COLORS[ti] || '#888';
+      html += v !== null
+        ? `<td><div class="bar-wrap"><div class="bar" style="width:${v * 12}px;background:${tc}88"></div><span style="font-size:12px">${v}</span></div></td>`
+        : `<td style="color:var(--text3)">—</td>`;
+    });
+    html += `<td style="font-weight:500">${d.composite !== null ? d.composite.toFixed(1) : '—'}</td>`;
+    html += `<td style="font-size:11px;color:var(--text2)">${d.notes || ''}</td>`;
+    tr.innerHTML = html;
+    tbody.appendChild(tr);
+  });
+}
+
+// ── CONTROLS ──────────────────────────────────────────────────────────
+function setC1JitterX(v) { c1JitterX = parseInt(v); document.getElementById('c1JitterXVal').textContent = v; drawChart1(); }
+function setC1JitterY(v) { c1JitterY = parseInt(v); document.getElementById('c1JitterYVal').textContent = v; drawChart1(); }
+function toggleC1Unscored() { c1ShowUnscored = !c1ShowUnscored; document.getElementById('c1UnscoredBtn').classList.toggle('active', c1ShowUnscored); drawChart1(); }
+function setC3Min(v) { c3MinScore = parseInt(v); document.getElementById('c3MinVal').textContent = v; drawChart3(); }
+function setC3JitterX(v) { c3JitterX = parseInt(v); document.getElementById('c3JitterXVal').textContent = v; drawChart3(); }
+function setC3JitterY(v) { c3JitterY = parseInt(v); document.getElementById('c3JitterYVal').textContent = v; drawChart3(); }
+function setGMin(v) { gMinAvg = parseInt(v); document.getElementById('gMinVal').textContent = v; applyGlobal(); renderQuadrant(); renderTable(); }
+function toggleGNotes() { gNotesOnly = !gNotesOnly; document.getElementById('gNotesBtn').classList.toggle('active', gNotesOnly); applyGlobal(); renderQuadrant(); renderTable(); }
+function setQThresh(who, v) {
+  if (who === 'a') { qThreshA = parseInt(v); document.getElementById('qAVal').textContent = v; }
+  else { qThreshB = parseInt(v); document.getElementById('qBVal').textContent = v; }
+  renderQuadrant();
+}
+function sortBy(col) { if (sortCol === col) sortDir *= -1; else { sortCol = col; sortDir = -1; } renderTable(); }
+
+function setGCat(v) {
+  gCat = v;
+  document.querySelectorAll('.gcat-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.val === v));
+  applyGlobal(); renderQuadrant(); renderTable();
+}
+
+function populateTraitSelect(id, selectedVal) {
+  const sel = document.getElementById(id); sel.innerHTML = '';
+  TRAITS.forEach((t, i) => {
+    const opt = document.createElement('option');
+    opt.value = t; opt.textContent = TRAIT_LABELS[i];
+    if (t === selectedVal) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function buildAllSelects() {
+  // Chart 1 dropdowns
+  populateTraitSelect('c1X', c1XTrait);
+  populateTraitSelect('c1Y', c1YTrait);
+
+  const sizeEl = document.getElementById('c1Size'); sizeEl.innerHTML = '';
+  const noneOpt = document.createElement('option'); noneOpt.value = ''; noneOpt.textContent = '(uniform)'; sizeEl.appendChild(noneOpt);
+  TRAITS.forEach((t, i) => {
+    const opt = document.createElement('option'); opt.value = t; opt.textContent = TRAIT_LABELS[i];
+    if (t === c1SizeTrait) opt.selected = true;
+    sizeEl.appendChild(opt);
+  });
+
+  document.getElementById('c1X').onchange = e => { c1XTrait = e.target.value; drawChart1(); };
+  document.getElementById('c1Y').onchange = e => { c1YTrait = e.target.value; drawChart1(); };
+  document.getElementById('c1Size').onchange = e => { c1SizeTrait = e.target.value || null; drawChart1(); };
+
+  // Quadrant dropdowns
+  populateTraitSelect('qTraitA', qTraitA);
+  populateTraitSelect('qTraitB', qTraitB);
+  document.getElementById('qTraitA').onchange = e => { qTraitA = e.target.value; renderQuadrant(); };
+  document.getElementById('qTraitB').onchange = e => { qTraitB = e.target.value; renderQuadrant(); };
+}
+
+function buildCatButtons() {
+  const wrap = document.getElementById('gCatBtns'); wrap.innerHTML = '';
+  const allBtn = document.createElement('button'); allBtn.className = 'tog gcat-btn active'; allBtn.dataset.val = 'all'; allBtn.textContent = 'all';
+  allBtn.onclick = () => setGCat('all'); wrap.appendChild(allBtn);
+  categories.forEach(cat => {
+    const btn = document.createElement('button'); btn.className = 'tog gcat-btn'; btn.dataset.val = cat; btn.textContent = cat;
+    btn.onclick = () => setGCat(cat); wrap.appendChild(btn);
+  });
+}
+
+function buildC2PersonButtons() {
+  const wrap = document.getElementById('c2PersonSel'); wrap.innerHTML = '';
+  allData.forEach(d => {
+    const btn = document.createElement('button');
+    btn.className = 'c2-person-btn' + (c2Selected.has(d.name) ? ' active' : '');
+    const col = catColors[d.category] || '#888';
+    if (c2Selected.has(d.name)) btn.style.cssText = `background:${col}22;border-color:${col};color:${col};`;
+    btn.textContent = d.name;
+    btn.onclick = () => {
+      if (c2Selected.has(d.name)) {
+        c2Selected.delete(d.name);
+        btn.classList.remove('active'); btn.style.cssText = '';
+      } else {
+        if (c2Selected.size >= 3) {
+          const first = [...c2Selected][0]; c2Selected.delete(first);
+          const firstBtn = [...wrap.querySelectorAll('.c2-person-btn')].find(b => b.textContent === first);
+          if (firstBtn) { firstBtn.classList.remove('active'); firstBtn.style.cssText = ''; }
+        }
+        c2Selected.add(d.name);
+        btn.classList.add('active');
+        btn.style.cssText = `background:${col}22;border-color:${col};color:${col};`;
+      }
+      drawChart2();
+    };
+    wrap.appendChild(btn);
+  });
+}
+
+function buildC3TraitButtons() {
+  const wrap = document.getElementById('c3TraitBtns'); wrap.innerHTML = '';
+  TRAITS.forEach((t, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'tog' + (c3ActiveTraits.has(t) ? ' active' : '');
+    btn.id = 'c3t_' + i;
+    btn.textContent = (c3ActiveTraits.has(t) ? '✓ ' : '') + TRAIT_LABELS[i];
+    btn.onclick = () => {
+      if (c3ActiveTraits.has(t)) c3ActiveTraits.delete(t); else c3ActiveTraits.add(t);
+      btn.classList.toggle('active', c3ActiveTraits.has(t));
+      btn.textContent = (c3ActiveTraits.has(t) ? '✓ ' : '') + TRAIT_LABELS[i];
+      drawChart3();
+    };
+    wrap.appendChild(btn);
+  });
+}
+
+function resetAll() {
+  c1XTrait = TRAITS[0]; c1YTrait = TRAITS[1]; c1SizeTrait = TRAITS[2] || null;
+  c1ShowUnscored = false; c1JitterX = 80; c1JitterY = 20;
+  document.getElementById('c1UnscoredBtn').classList.remove('active');
+  document.getElementById('c1JitterXSlider').value = 80; document.getElementById('c1JitterXVal').textContent = 80;
+  document.getElementById('c1JitterYSlider').value = 20; document.getElementById('c1JitterYVal').textContent = 20;
+  c3MinScore = 1; c3JitterX = 0; c3JitterY = 20; c3ActiveTraits = new Set(TRAITS);
+  document.getElementById('c3MinSlider').value = 1; document.getElementById('c3MinVal').textContent = 1;
+  document.getElementById('c3JitterXSlider').value = 0; document.getElementById('c3JitterXVal').textContent = 0;
+  document.getElementById('c3JitterYSlider').value = 20; document.getElementById('c3JitterYVal').textContent = 20;
+  gCat = 'all'; gMinAvg = 1; gNotesOnly = false;
+  document.getElementById('gMinSlider').value = 1; document.getElementById('gMinVal').textContent = 1;
+  document.getElementById('gNotesBtn').classList.remove('active');
+  qTraitA = TRAITS[0]; qTraitB = TRAITS[1]; qThreshA = 7; qThreshB = 7;
+  document.getElementById('qASlider').value = 7; document.getElementById('qAVal').textContent = 7;
+  document.getElementById('qBSlider').value = 7; document.getElementById('qBVal').textContent = 7;
+  buildAllSelects();
+  buildC3TraitButtons();
+  setGCat('all');
+  drawChart1(); drawChart2(); drawChart3();
+}
+
+// ── LOAD ──────────────────────────────────────────────────────────────
+function loadCSV(text) {
+  const { traitHeaders, rows } = parseCSV(text);
+  if (!rows.length) return;
+
+  // Set dynamic trait arrays
+  TRAITS = traitHeaders.map(h => h.toLowerCase());
+  TRAIT_LABELS = traitHeaders.map(h => titleCase(h));
+  TRAIT_COLORS = TRAITS.map((_, i) => COLOR_POOL[i % COLOR_POOL.length]);
+
+  allData = rows.map(processRow).filter(d => d.name);
+  if (!allData.length) return;
+
+  categories = [...new Set(allData.map(d => d.category))];
+  categories.forEach((cat, i) => catColors[cat] = CAT_PALETTE[i % CAT_PALETTE.length]);
+
+  // defaults: first two traits for axes, third for size
+  c1XTrait = TRAITS[0];
+  c1YTrait = TRAITS.length > 1 ? TRAITS[1] : TRAITS[0];
+  c1SizeTrait = TRAITS.length > 2 ? TRAITS[2] : null;
+  qTraitA = TRAITS[0];
+  qTraitB = TRAITS.length > 1 ? TRAITS[1] : TRAITS[0];
+  c3ActiveTraits = new Set(TRAITS);
+
+  // auto-select first 2 people for radar
+  c2Selected = new Set(allData.slice(0, Math.min(2, allData.length)).map(d => d.name));
+
+  document.getElementById('dropZone').classList.add('loaded');
+  document.getElementById('dropTitle').textContent = allData.length + ' people loaded';
+  document.getElementById('dropSub').textContent = 'Drop a new file to reload · traits: ' + TRAIT_LABELS.join(', ');
+  document.getElementById('dashboard').style.display = 'block';
+
+  buildAllSelects();
+  buildCatButtons();
+  buildC2PersonButtons();
+  buildC3TraitButtons();
+  updateStats();
+  drawChart1(); drawChart2(); drawChart3();
+  setupC1Events(); setupC3Events();
+  applyGlobal(); renderQuadrant(); renderTable();
+  window.addEventListener('resize', () => { drawChart1(); drawChart2(); drawChart3(); });
+}
+
+const dz = document.getElementById('dropZone'), fi = document.getElementById('fileInput');
+dz.addEventListener('click', () => fi.click());
+fi.addEventListener('change', e => { const f = e.target.files[0]; if (f) { const r = new FileReader(); r.onload = ev => loadCSV(ev.target.result); r.readAsText(f); } });
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('dragover'); const f = e.dataTransfer.files[0]; if (f) { const r = new FileReader(); r.onload = ev => loadCSV(ev.target.result); r.readAsText(f); } });
+</script>
+</body>
+</html>

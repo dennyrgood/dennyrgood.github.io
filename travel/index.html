@@ -291,7 +291,7 @@ function processRow(r){
   const lval=(r.laura||'').toLowerCase().trim()==='x';
   const lauraScore=lval&&lrank!=null?lrank:lval?5:null;
   const bval=(r.bekah||'').toLowerCase().trim()==='x';
-  const bekScore=bval&&brank!=null?brank:bval?5:null;
+  const bekScore=bval&&brank!=null?brank:null;
   const solo=(r.solo||'').toLowerCase().trim()==='x';
   const friend=(r.friend||'').toLowerCase().trim()==='x';
   const family=(r.family||'').toLowerCase().trim()==='x';
