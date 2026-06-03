@@ -95,22 +95,24 @@ tr:hover td{background:var(--bg2);}
       <div class="stat"><div class="stat-label">destinations</div><div class="stat-val" id="statTotal">—</div></div>
       <div class="stat"><div class="stat-label">your avg desire</div><div class="stat-val" id="statYou">—</div></div>
       <div class="stat"><div class="stat-label">laura's avg desire</div><div class="stat-val" id="statLaura">—</div></div>
+      <div class="stat"><div class="stat-label">bek's avg desire</div><div class="stat-val" id="statBek">—</div></div>
       <div class="stat"><div class="stat-label">top alignment</div><div class="stat-val small" id="statTop">—</div></div>
     </div>
 
     </div><!-- end constrained stats -->
     <!-- CHART 1 -->
     <div class="panel">
-      <div class="panel-title">alignment — your desire (x) · laura's desire (y) · color = laura's score intensity</div>
+      <div class="panel-title">alignment — your desire (x) · scorer's desire (y) · color = score intensity</div>
       <div class="panel-controls">
         <div class="filter-group">
           <div class="filter-label">your desire ≥ <span id="c1YouVal" style="font-weight:500;color:var(--text)">7</span></div>
           <input type="range" min="1" max="10" value="7" step="1" id="c1YouSlider" oninput="setC1You(this.value)">
         </div>
         <div class="filter-group">
-          <div class="filter-label">laura's desire ≥ <span id="c1LauraVal" style="font-weight:500;color:var(--text)">2</span></div>
+          <div class="filter-label">scorer's desire ≥ <span id="c1LauraVal" style="font-weight:500;color:var(--text)">2</span></div>
           <input type="range" min="1" max="10" value="2" step="1" id="c1LauraSlider" oninput="setC1Laura(this.value)">
         </div>
+
         <div class="filter-group">
           <div class="filter-label">unscored</div>
           <button class="tog" id="c1UnscoredBtn" onclick="toggleC1Unscored()">show unscored</button>
@@ -122,6 +124,13 @@ tr:hover td{background:var(--bg2);}
         <div class="filter-group">
           <div class="filter-label">spread vertical: <span id="c1JitterYVal" style="font-weight:500;color:var(--text)">20</span></div>
           <input type="range" min="0" max="200" value="20" step="4" id="c1JitterYSlider" oninput="setC1JitterY(this.value)">
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">scorer</div>
+          <div class="filter-btns">
+            <button class="tog active" id="c1Complaura"  onclick="setC1Comp('laura')">Laura</button>
+            <button class="tog" id="c1Compbekah"  onclick="setC1Comp('bekah')">Bekah</button>
+          </div>
         </div>
       </div>
       <div class="canvas-wrap" id="c1Wrap"><canvas id="c1Canvas"></canvas></div>
@@ -217,6 +226,8 @@ tr:hover td{background:var(--bg2);}
           <th onclick="sortBy('desire')" id="th-desire">your desire <span class="sa">↕</span></th>
           <th onclick="sortBy('lauraScore')" id="th-lauraScore">laura <span class="sa">↕</span></th>
           <th onclick="sortBy('lrank')" id="th-lrank">l rank <span class="sa">↕</span></th>
+          <th onclick="sortBy('bekScore')" id="th-bekScore">bek <span class="sa">↕</span></th>
+          <th onclick="sortBy('brank')" id="th-brank">b rank <span class="sa">↕</span></th>
           <th onclick="sortBy('visits')" id="th-visits">visits <span class="sa">↕</span></th>
           <th onclick="sortBy('versatility')" id="th-versatility">versatility <span class="sa">↕</span></th>
           <th>companions</th>
@@ -235,7 +246,7 @@ const COMP_COLORS={laura:'#534AB7',bekah:'#D4537E',family:'#1D9E75',friend:'#378
 const COMP_NAMES={solo:'solo',friend:'friend',family:'family',bekah:'Bekah',laura:'Laura'};
 
 let allData=[], gFiltered=[];
-let c1YouMin=7, c1LauraMin=2, c1ShowUnscored=false, c1JitterX=80, c1JitterY=20;
+let c1YouMin=7, c1LauraMin=2, c1ShowUnscored=false, c1JitterX=80, c1JitterY=20, c1Scorer='laura', c1Comp='laura';
 let c1Dots=[];
 let c2DesireMin=7, c2Comps=new Set(['solo','friend','family','bekah','laura']), c2JitterX=0, c2JitterY=20;
 let c2Dots=[];
@@ -256,6 +267,7 @@ function parseCSV(text){
   const hm={};
   raw.forEach((h,i)=>{
     if(h==='l rank')hm.l_rank=i;
+    else if(h==='b rank')hm.b_rank=i;
     else if(h==='my desire')hm.desire=i;
     else if(h==='place')hm.place=i;
     else if(h.startsWith('num visit'))hm.visits=i;
@@ -273,28 +285,25 @@ function parseCSV(text){
 }
 function processRow(r){
   const lrank=r.l_rank!==''&&!isNaN(r.l_rank)?parseFloat(r.l_rank):null;
+  const brank=r.b_rank!==''&&!isNaN(r.b_rank)?parseFloat(r.b_rank):null;
   const desire=parseFloat(r.desire)||0;
   const visits=parseInt(r.visits)||0;
-  const lraw=(r.laura||'').toLowerCase().trim();
-  const lval=lraw==='x'?'x':lraw==='?'?'?':false;
-  let lauraScore=null;
-  if(lval==='x'&&lrank!=null)lauraScore=lrank;
-  else if(lval==='?'&&lrank!=null)lauraScore=Math.round(lrank*0.5);
-  else if(lval==='x'&&lrank==null)lauraScore=5;
+  const lval=(r.laura||'').toLowerCase().trim()==='x';
+  const lauraScore=lval&&lrank!=null?lrank:lval?5:null;
+  const bval=(r.bekah||'').toLowerCase().trim()==='x';
+  const bekScore=bval&&brank!=null?brank:bval?5:null;
   const solo=(r.solo||'').toLowerCase().trim()==='x';
   const friend=(r.friend||'').toLowerCase().trim()==='x';
   const family=(r.family||'').toLowerCase().trim()==='x';
-  const bekah=(r.bekah||'').toLowerCase().trim()==='x';
-  const lcheck=lval!==false;
-  const versatility=[solo,friend,family,bekah,lcheck].filter(Boolean).length;
+  const versatility=[solo,friend,family,bval,lval].filter(Boolean).length;
   const compList=[];
   if(solo)compList.push('solo');if(friend)compList.push('friend');
-  if(family)compList.push('family');if(bekah)compList.push('Bekah');
-  if(lcheck)compList.push('Laura'+(lval==='?'?'?':''));
+  if(family)compList.push('family');if(bval)compList.push('Bekah');
+  if(lval)compList.push('Laura');
   let dominant='solo';
-  if(lcheck)dominant='laura';else if(bekah)dominant='bekah';
+  if(lval)dominant='laura';else if(bval)dominant='bekah';
   else if(family)dominant='family';else if(friend)dominant='friend';
-  return{name:r.place.trim(),lrank,desire,visits,solo,friend,family,bekah,laura:lval,lauraScore,versatility,compList,dominant};
+  return{name:r.place.trim(),lrank,brank,desire,visits,solo,friend,family,bekah:bval,laura:lval,lauraScore,bekScore,versatility,compList,dominant};
 }
 
 // ── HELPERS ───────────────────────────────────────────────────────────
@@ -341,7 +350,7 @@ function showTooltip(e,items,header){
   items.forEach((d,i)=>{
     if(i>0){const s=document.createElement('div');s.className='tt-sep';body.appendChild(s);}
     const nm=document.createElement('div');nm.className='tt-name';nm.textContent=d.name;body.appendChild(nm);
-    [['your desire',d.desire],['laura',d.lauraScore!=null?d.lauraScore+(d.laura==='?'?' (tentative)':''):'—'],
+    [['your desire',d.desire],['laura',d.lauraScore!=null?d.lauraScore:'—'],['bek',d.bekScore!=null?d.bekScore:'—'],
      ['visits',d.visits+' ('+VISIT_LABELS[Math.min(d.visits,5)]+')'],
      ['companions',d.compList.join(', ')||'—'],['versatility',d.versatility+'/5']
     ].forEach(([k,v])=>{
@@ -427,38 +436,43 @@ function drawChart1(){
   const PAD={l:48,r:30,t:24,b:44};
   const plotW=W-PAD.l-PAD.r,plotH=H-PAD.t-PAD.b;
 
+  const scorerKey=c1Scorer==='laura'?'lauraScore':'bekScore';
   const local=allData.filter(d=>{
     if(d.desire<c1YouMin)return false;
-    if(!c1ShowUnscored&&d.lauraScore==null)return false;
-    if(d.lauraScore!=null&&d.lauraScore<c1LauraMin)return false;
+    if(!c1ShowUnscored&&d[scorerKey]==null)return false;
+    if(d[scorerKey]!=null&&d[scorerKey]<c1LauraMin)return false;
+    if(c1Comp==='bekah'&&!d.bekah)return false;
+    if(c1Comp==='laura'&&!d.laura)return false;
     return true;
   });
 
   const xMin=c1YouMin,xMax=10;
   const yMin=c1ShowUnscored?0:(c1LauraMin>1?c1LauraMin:0),yMax=10;
+  // (scorerKey used below for dot placement)
   const xR=xMax-xMin+1,yR=yMax-yMin+1;
   function px(x){return PAD.l+((x-xMin+0.3)/(xR+0.6))*plotW;}
   function py(y){return PAD.t+(1-((y-yMin+0.3)/(yR+0.6)))*plotH;}
 
   ctx.fillStyle=dark?'#1e1e1c':'#ffffff';ctx.fillRect(0,0,W,H);
-  drawAxes(ctx,PAD,plotW,plotH,W,H,xMin,xMax,yMin,yMax,px,py,dark,'your desire →',"laura's desire →");
+  drawAxes(ctx,PAD,plotW,plotH,W,H,xMin,xMax,yMin,yMax,px,py,dark,'your desire →',(c1Scorer==='laura'?"laura's desire →":"bek's desire →"));
 
   // build dots with jitter — one dot per destination (no grouping in chart 1)
   c1Dots=[];
   local.forEach((d,idx)=>{
+    const score=d[scorerKey];
     const baseX=px(d.desire);
-    const baseY=d.lauraScore!=null?py(d.lauraScore):py(c1ShowUnscored?0.3:yMin);
+    const baseY=score!=null?py(score):py(c1ShowUnscored?0.3:yMin);
     // deterministic jitter per destination
     const seed=d.name.split('').reduce((a,c)=>a+c.charCodeAt(0),0);
     const jx=(seededRand(seed)-0.5)*c1JitterX;
     const jy=(seededRand(seed+1)-0.5)*c1JitterY;
     const x=baseX+jx, y=baseY+jy;
     const r=12;
-    const noLaura=d.lauraScore==null;
-    const fill=noLaura?'rgba(136,135,128,0.25)':lauraColor(d.lauraScore,0.6);
-    const stroke=noLaura?'rgba(136,135,128,0.6)':lauraColor(d.lauraScore,1);
+    const noScore=score==null;
+    const fill=noScore?'rgba(136,135,128,0.25)':lauraColor(score,0.6);
+    const stroke=noScore?'rgba(136,135,128,0.6)':lauraColor(score,1);
     drawDot(ctx,x,y,r,fill,stroke,1,dark);
-    c1Dots.push({x,y,r,items:[d],noLaura});
+    c1Dots.push({x,y,r,items:[d],noScore});
   });
 
   drawLabels(ctx,c1Dots,W,dark,true);
@@ -595,6 +609,8 @@ function updateStats(){
   document.getElementById('statYou').textContent=(allData.reduce((s,d)=>s+d.desire,0)/allData.length).toFixed(1);
   const ld=allData.filter(d=>d.lauraScore!=null);
   document.getElementById('statLaura').textContent=ld.length?(ld.reduce((s,d)=>s+d.lauraScore,0)/ld.length).toFixed(1):'—';
+  const bd=allData.filter(d=>d.bekScore!=null);
+  document.getElementById('statBek').textContent=bd.length?(bd.reduce((s,d)=>s+d.bekScore,0)/bd.length).toFixed(1):'—';
   if(ld.length){const top=[...ld].sort((a,b)=>(b.desire+b.lauraScore)-(a.desire+a.lauraScore))[0];document.getElementById('statTop').textContent=top.name;}
 }
 
@@ -634,13 +650,14 @@ function renderTable(){
   const tbody=document.getElementById('tableBody');tbody.innerHTML='';
   sorted.forEach(d=>{
     const tr=document.createElement('tr');
-    const lDisp=d.lauraScore!=null?d.lauraScore+(d.laura==='?'?'?':''):'—';
-    const pips=d.compList.map(c=>{const k=c.toLowerCase().replace('?','');const col=COMP_COLORS[k]||COMP_COLORS.solo;return`<span class="pip" style="background:${col}55;border:1px solid ${col}" title="${c}"></span>`;}).join('');
+    const pips=d.compList.map(c=>{const k=c.toLowerCase();const col=COMP_COLORS[k]||COMP_COLORS.solo;return`<span class="pip" style="background:${col}55;border:1px solid ${col}" title="${c}"></span>`;}).join('');
     tr.innerHTML=`
       <td style="font-weight:500">${d.name}</td>
       <td><div class="bar-wrap"><div class="bar" style="width:${d.desire*16}px;background:var(--green)"></div><span style="font-size:12px">${d.desire}</span></div></td>
-      <td>${d.lauraScore!=null?`<div class="bar-wrap"><div class="bar" style="width:${d.lauraScore*16}px;background:var(--purple)"></div><span style="font-size:12px">${lDisp}</span></div>`:`<span style="color:var(--text3)">—</span>`}</td>
+      <td>${d.lauraScore!=null?`<div class="bar-wrap"><div class="bar" style="width:${d.lauraScore*16}px;background:var(--purple)"></div><span style="font-size:12px">${d.lauraScore}</span></div>`:`<span style="color:var(--text3)">—</span>`}</td>
       <td style="color:var(--text2);font-size:12px">${d.lrank!=null?d.lrank:'—'}</td>
+      <td>${d.bekScore!=null?`<div class="bar-wrap"><div class="bar" style="width:${d.bekScore*16}px;background:var(--pink)"></div><span style="font-size:12px">${d.bekScore}</span></div>`:`<span style="color:var(--text3)">—</span>`}</td>
+      <td style="color:var(--text2);font-size:12px">${d.brank!=null?d.brank:'—'}</td>
       <td><span style="color:${VISIT_COLORS[Math.min(d.visits,5)]};font-weight:500">${d.visits}</span> <span style="color:var(--text3);font-size:11px">${VISIT_LABELS[Math.min(d.visits,5)]}</span></td>
       <td style="color:var(--text2);font-size:12px">${d.versatility}/5</td>
       <td>${pips}<span style="font-size:11px;color:var(--text3);margin-left:3px">${d.compList.join(', ')}</span></td>`;
@@ -657,6 +674,19 @@ function setC1JitterX(v){c1JitterX=parseInt(v);document.getElementById('c1Jitter
 function setC1JitterY(v){c1JitterY=parseInt(v);document.getElementById('c1JitterYVal').textContent=v;drawChart1();}
 function setC1You(v){c1YouMin=parseInt(v);document.getElementById('c1YouVal').textContent=v;drawChart1();}
 function setC1Laura(v){c1LauraMin=parseInt(v);document.getElementById('c1LauraVal').textContent=v;drawChart1();}
+function setC1Scorer(v){
+  c1Scorer=v;
+  drawChart1();
+}
+function setC1Comp(v){
+  c1Comp=v;
+  ['bekah','laura'].forEach(s=>{
+    const el=document.getElementById('c1Comp'+s);
+    if(el)el.classList.toggle('active',v===s);
+  });
+  if(v==='bekah')setC1Scorer('bek');
+  else setC1Scorer('laura');
+}
 function toggleC1Unscored(){c1ShowUnscored=!c1ShowUnscored;document.getElementById('c1UnscoredBtn').classList.toggle('active',c1ShowUnscored);drawChart1();}
 function setC2JitterX(v){c2JitterX=parseInt(v);document.getElementById('c2JitterXVal').textContent=v;drawChart2();}
 function setC2JitterY(v){c2JitterY=parseInt(v);document.getElementById('c2JitterYVal').textContent=v;drawChart2();}
@@ -705,6 +735,7 @@ function resetAll(){
   document.getElementById('qYouSlider').value=8;document.getElementById('qYouVal').textContent=8;
   document.getElementById('qLauraSlider').value=8;document.getElementById('qLauraVal').textContent=8;
   setGComp('all');setGVisit('all');
+  setC1Comp('laura');
   drawChart1();drawChart2();
 }
 
