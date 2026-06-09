@@ -168,45 +168,6 @@ tr:hover td{background:var(--bg2);}
     </div>
 
     <div class="constrained">
-    <!-- STATUS BUBBLE -->
-    <div class="panel" id="statusBubblePanel">
-      <div class="panel-title">destinations by status — size = desire · color = status · click to filter below</div>
-      <div class="panel-controls" style="margin-bottom:4px;">
-        <div class="filter-group">
-          <div class="filter-label">status</div>
-          <div class="filter-btns">
-            <button class="tog active" id="gSAll" onclick="setSbFilter('all')">all</button>
-            <button class="tog" id="gSdecided"       onclick="setSbFilter('decided')"       style="border-color:#1D9E7588">decided</button>
-            <button class="tog" id="gSwaiting-me"    onclick="setSbFilter('waiting-me')"    style="border-color:#BA751788">waiting-me</button>
-            <button class="tog" id="gSwaiting-other" onclick="setSbFilter('waiting-other')" style="border-color:#D85A3088">waiting-other</button>
-            <button class="tog" id="gSopportunistic" onclick="setSbFilter('opportunistic')" style="border-color:#88878088">opportunistic</button>
-            <button class="tog" id="gSaspirational"  onclick="setSbFilter('aspirational')"  style="border-color:#534AB788">aspirational</button>
-            <button class="tog" id="gSsomeday"       onclick="setSbFilter('someday')"       style="border-color:#aaaaaa88">someday</button>
-          </div>
-        </div>
-        <div class="filter-group">
-          <div class="filter-label">scorer</div>
-          <div class="filter-btns">
-            <button class="tog active" id="sbScoreLaura" onclick="setSbScorer('laura')">Laura</button>
-            <button class="tog" id="sbScoreBek" onclick="setSbScorer('bek')">Bek</button>
-            <button class="tog" id="sbScoreBoth" onclick="setSbScorer('both')">both</button>
-          </div>
-        </div>
-        <div class="filter-group">
-          <div class="filter-label">scorer x-nudge: <span id="sbJitterXVal" style="font-weight:500;color:var(--text)">160</span></div>
-          <input type="range" min="0" max="500" value="160" step="4" id="sbJitterXSlider" oninput="setSbJitterX(this.value)">
-        </div>
-        <div class="filter-group">
-          <div class="filter-label">scorer y-spread: <span id="sbJitterYVal" style="font-weight:500;color:var(--text)">300</span></div>
-          <input type="range" min="0" max="500" value="300" step="4" id="sbJitterYSlider" oninput="setSbJitterY(this.value)">
-        </div>
-        <div class="filter-group" style="margin-left:auto;margin-top:auto;">
-          <button class="tog" onclick="setSbFilter('all')" style="padding:4px 12px;">clear filter</button>
-        </div>
-      </div>
-      <div class="canvas-wrap" id="sbWrap"><canvas id="sbCanvas"></canvas></div>
-    </div>
-
     <!-- GLOBAL FILTERS -->
     <div class="panel">
       <div class="panel-title">filters — apply to quadrant view and table below</div>
@@ -238,7 +199,6 @@ tr:hover td{background:var(--bg2);}
           <button class="tog" onclick="resetAll()" style="padding:5px 14px;">reset all</button>
         </div>
       </div>
-
     </div>
 
     <!-- QUADRANT -->
@@ -270,49 +230,12 @@ tr:hover td{background:var(--bg2);}
           <th onclick="sortBy('brank')" id="th-brank">b rank <span class="sa">↕</span></th>
           <th onclick="sortBy('visits')" id="th-visits">visits <span class="sa">↕</span></th>
           <th onclick="sortBy('versatility')" id="th-versatility">versatility <span class="sa">↕</span></th>
-          <th onclick="sortBy('status')" id="th-status">status <span class="sa">↕</span></th>
           <th>companions</th>
-          <th>notes</th>
         </tr></thead>
         <tbody id="tableBody"></tbody>
       </table>
     </div>
   </div>
-
-    <!-- AI ANALYSIS -->
-    <div class="constrained">
-    <div class="panel" id="aiPanel">
-      <div class="panel-title">ai analysis — powered by local ollama · uses current filtered data</div>
-      <div class="panel-controls" style="flex-wrap:wrap;gap:10px;align-items:flex-end;">
-        <div class="filter-group">
-          <div class="filter-label">ollama host</div>
-          <select id="aiHost" onchange="fetchModels()" style="font-size:12px;padding:4px 8px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);">
-            <option value="http://chatworkhorse:11434">chatworkhorse (3060)</option>
-            <option value="http://imagebeast:11434">imagebeast (5090)</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <div class="filter-label">model</div>
-          <select id="aiModel" style="font-size:12px;padding:4px 8px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);">
-            <option value="">— select host first —</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <div class="filter-label">scope</div>
-          <div id="aiScope" style="font-size:12px;color:var(--text2);padding-top:2px;">— load csv first —</div>
-        </div>
-        <div class="filter-group" style="margin-left:auto;margin-top:auto;display:flex;gap:8px;">
-          <button class="tog" id="aiBtn" onclick="runAnalysis(false)" style="padding:5px 16px;font-size:13px;">analyse</button>
-          <button class="tog" id="aiQuickBtn" onclick="runAnalysis(true)" style="padding:5px 16px;font-size:13px;">top 20</button>
-          <button class="tog" id="aiStopBtn" onclick="stopAnalysis()" style="padding:5px 12px;display:none;">stop</button>
-          <button class="tog" onclick="clearAnalysis()" style="padding:5px 12px;">clear</button>
-        </div>
-      </div>
-      <div id="aiStatus" style="font-size:11px;color:var(--text3);margin:6px 0 0;display:none;"></div>
-      <div id="aiOutput" style="margin-top:12px;font-size:13px;line-height:1.7;color:var(--text);white-space:pre-wrap;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-height:600px;overflow-y:auto;border-top:0.5px solid var(--border);padding-top:12px;display:none;"></div>
-      <div style="font-size:11px;color:var(--text3);margin-top:8px;">requires <code style="font-size:11px">OLLAMA_ORIGINS=*</code> on the ollama host</div>
-    </div>
-    </div>
 </div>
 <div class="tooltip" id="tooltip"><div id="ttBody"></div></div>
 
@@ -321,15 +244,13 @@ const VISIT_COLORS=['#1D9E75','#378ADD','#BA7517','#D85A30','#E24B4A','#A32D2D']
 const VISIT_LABELS=['never','once','twice','3×','4×','often'];
 const COMP_COLORS={laura:'#534AB7',bekah:'#D4537E',family:'#1D9E75',friend:'#378ADD',solo:'#888780'};
 const COMP_NAMES={solo:'solo',friend:'friend',family:'family',bekah:'Bekah',laura:'Laura'};
-const STATUS_COLORS={'decided':'#1D9E75','waiting-me':'#BA7517','waiting-other':'#D85A30','opportunistic':'#888780','aspirational':'#534AB7','someday':'#aaaaaa'};
-const STATUS_ALL=['decided','waiting-me','waiting-other','opportunistic','aspirational','someday'];
 
 let allData=[], gFiltered=[];
 let c1YouMin=7, c1LauraMin=2, c1ShowUnscored=false, c1JitterX=80, c1JitterY=20, c1Scorer='laura', c1Comp='laura';
 let c1Dots=[];
 let c2DesireMin=7, c2Comps=new Set(['solo','friend','family','bekah','laura']), c2JitterX=0, c2JitterY=20;
 let c2Dots=[];
-let gComp='all', gVisit='all', gDesireMin=1, gStatus='all';
+let gComp='all', gVisit='all', gDesireMin=1;
 let qYou=8, qLaura=8;
 let sortCol='desire', sortDir=-1;
 
@@ -355,8 +276,6 @@ function parseCSV(text){
     else if(h==='family')hm.family=i;
     else if(h==='bekah')hm.bekah=i;
     else if(h==='laura')hm.laura=i;
-    else if(h==='notes')hm.notes=i;
-    else if(h==='status')hm.status=i;
   });
   return lines.slice(1).map(line=>{
     const v=splitLine(line);const r={};
@@ -365,14 +284,14 @@ function parseCSV(text){
   }).filter(r=>r.place&&r.desire);
 }
 function processRow(r){
-  const lrank=r.l_rank!==''&&!isNaN(r.l_rank)&&parseFloat(r.l_rank)>0?parseFloat(r.l_rank):null;
-  const brank=r.b_rank!==''&&!isNaN(r.b_rank)&&parseFloat(r.b_rank)>0?parseFloat(r.b_rank):null;
+  const lrank=r.l_rank!==''&&!isNaN(r.l_rank)?parseFloat(r.l_rank):null;
+  const brank=r.b_rank!==''&&!isNaN(r.b_rank)?parseFloat(r.b_rank):null;
   const desire=parseFloat(r.desire)||0;
   const visits=parseInt(r.visits)||0;
-  const lval=(r.laura||'').toLowerCase().trim()==='x'&&lrank!=null;
-  const lauraScore=lval?lrank:null;
-  const bval=(r.bekah||'').toLowerCase().trim()==='x'&&brank!=null;
-  const bekScore=bval?brank:null;
+  const lval=(r.laura||'').toLowerCase().trim()==='x';
+  const lauraScore=lval&&lrank!=null?lrank:lval?5:null;
+  const bval=(r.bekah||'').toLowerCase().trim()==='x';
+  const bekScore=bval&&brank!=null?brank:null;
   const solo=(r.solo||'').toLowerCase().trim()==='x';
   const friend=(r.friend||'').toLowerCase().trim()==='x';
   const family=(r.family||'').toLowerCase().trim()==='x';
@@ -384,7 +303,7 @@ function processRow(r){
   let dominant='solo';
   if(lval)dominant='laura';else if(bval)dominant='bekah';
   else if(family)dominant='family';else if(friend)dominant='friend';
-  return{name:r.place.trim(),lrank,brank,desire,visits,solo,friend,family,bekah:bval,laura:lval,lauraScore,bekScore,versatility,compList,dominant,status:(r.status||'').trim().toLowerCase(),notes:(r.notes||'').trim()};
+  return{name:r.place.trim(),lrank,brank,desire,visits,solo,friend,family,bekah:bval,laura:lval,lauraScore,bekScore,versatility,compList,dominant};
 }
 
 // ── HELPERS ───────────────────────────────────────────────────────────
@@ -433,9 +352,7 @@ function showTooltip(e,items,header){
     const nm=document.createElement('div');nm.className='tt-name';nm.textContent=d.name;body.appendChild(nm);
     [['your desire',d.desire],['laura',d.lauraScore!=null?d.lauraScore:'—'],['bek',d.bekScore!=null?d.bekScore:'—'],
      ['visits',d.visits+' ('+VISIT_LABELS[Math.min(d.visits,5)]+')'],
-     ['companions',d.compList.join(', ')||'—'],['versatility',d.versatility+'/5'],
-     ['status',d.status||'—'],
-     ...(d.notes?[['notes',d.notes]]:[])
+     ['companions',d.compList.join(', ')||'—'],['versatility',d.versatility+'/5']
     ].forEach(([k,v])=>{
       const row=document.createElement('div');row.className='tt-row';
       row.innerHTML=`<span class="tt-key">${k}</span><span class="tt-val">${v}</span>`;
@@ -673,7 +590,6 @@ function setupC2Events(){
 
 // ── GLOBAL / QUADRANT / TABLE ─────────────────────────────────────────
 function applyGlobal(){
-  setTimeout(updateAiScope,0);
   gFiltered=allData.filter(d=>{
     if(d.desire<gDesireMin)return false;
     if(gVisit==='new'&&d.visits>0)return false;
@@ -683,7 +599,6 @@ function applyGlobal(){
     if(gComp==='family'&&!d.family)return false;
     if(gComp==='bekah'&&!d.bekah)return false;
     if(gComp==='laura'&&d.laura===false)return false;
-    if(gStatus!=='all'&&d.status!==gStatus)return false;
     return true;
   });
 }
@@ -745,9 +660,7 @@ function renderTable(){
       <td style="color:var(--text2);font-size:12px">${d.brank!=null?d.brank:'—'}</td>
       <td><span style="color:${VISIT_COLORS[Math.min(d.visits,5)]};font-weight:500">${d.visits}</span> <span style="color:var(--text3);font-size:11px">${VISIT_LABELS[Math.min(d.visits,5)]}</span></td>
       <td style="color:var(--text2);font-size:12px">${d.versatility}/5</td>
-      <td>${d.status?`<span style="font-size:11px;padding:2px 7px;border-radius:10px;background:${STATUS_COLORS[d.status]||'#888'}22;color:${STATUS_COLORS[d.status]||'#888'};border:1px solid ${STATUS_COLORS[d.status]||'#888'}66">${d.status}</span>`:'<span style="color:var(--text3)">—</span>'}</td>
-      <td>${pips}<span style="font-size:11px;color:var(--text3);margin-left:3px">${d.compList.join(', ')}</span></td>
-      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:var(--text3)" title="${d.notes.replace(/"/g,'&quot;')}">${d.notes||'—'}</td>`;
+      <td>${pips}<span style="font-size:11px;color:var(--text3);margin-left:3px">${d.compList.join(', ')}</span></td>`;
     tbody.appendChild(tr);
   });
   document.querySelectorAll('th[id^="th-"]').forEach(th=>{
@@ -755,7 +668,6 @@ function renderTable(){
     const sa=th.querySelector('.sa');if(sa)sa.textContent=col===sortCol?(sortDir===-1?'↓':'↑'):'↕';
   });
 }
-
 
 // ── CONTROLS ──────────────────────────────────────────────────────────
 function setC1JitterX(v){c1JitterX=parseInt(v);document.getElementById('c1JitterXVal').textContent=v;drawChart1();}
@@ -786,178 +698,6 @@ function toggleC2Comp(ck){
   btn.textContent=(c2Comps.has(ck)?'✓ ':'')+COMP_NAMES[ck];
   drawChart2();
 }
-function setGStatus(v){
-  gStatus=v;
-  applyGlobal();renderQuadrant();renderTable();
-}
-let sbFilter='all';
-let sbScorer='laura';
-let sbDots=[];
-let sbJitterX=160,sbJitterY=300;
-
-function setSbScorer(v){
-  sbScorer=v;
-  ['laura','bek','both'].forEach(s=>{const el=document.getElementById('sbScore'+s.charAt(0).toUpperCase()+s.slice(1));if(el)el.classList.toggle('active',v===s);});
-  drawStatusBubble();
-}
-function setSbJitterX(v){sbJitterX=parseInt(v);document.getElementById('sbJitterXVal').textContent=v;drawStatusBubble();}
-function setSbJitterY(v){sbJitterY=parseInt(v);document.getElementById('sbJitterYVal').textContent=v;drawStatusBubble();}
-function setSbFilter(v){
-  sbFilter=v;
-  const lbl=document.getElementById('sbActiveFilter');
-  if(lbl)lbl.textContent=v==='all'?'all destinations':v;
-  gStatus=v==='all'?'all':v;
-  const gsa=document.getElementById('gSAll');if(gsa)gsa.classList.toggle('active',v==='all');
-  STATUS_ALL.forEach(s=>{const el=document.getElementById('gS'+s);if(el)el.classList.toggle('active',v===s);});
-  applyGlobal();renderQuadrant();renderTable();
-  drawStatusBubble();
-}
-
-function drawStatusBubble(){
-  if(!allData.length)return;
-  const wrap=document.getElementById('sbWrap');
-  const canvas=document.getElementById('sbCanvas');
-  if(!wrap||!canvas)return;
-  const dark=isDark();
-  const dpr=window.devicePixelRatio||1;
-  const W=wrap.clientWidth;
-  const BUCKET_H=140;
-  const H=STATUS_ALL.length*BUCKET_H+60;
-  wrap.style.height=H+'px';canvas.style.height=H+'px';
-  canvas.width=W*dpr;canvas.height=H*dpr;
-  canvas.style.width=W+'px';
-  const ctx=canvas.getContext('2d');
-  ctx.scale(dpr,dpr);
-  ctx.fillStyle=dark?'#1e1e1c':'#ffffff';
-  ctx.fillRect(0,0,W,H);
-
-  const LABEL_W=130;
-  const PAD_R=24;
-  const plotW=W-LABEL_W-PAD_R;
-  const plotH=H-60; // usable vertical space for dots
-
-  // dynamic x range from actual data
-  const allDesires=allData.map(d=>d.desire);
-  const xMin=Math.min(...allDesires);
-  const xMax=Math.max(...allDesires);
-  const xRange=xMax-xMin||1;
-  function px(desire){return LABEL_W+((desire-xMin)/xRange)*plotW;}
-
-  // group data by status
-  const groups={};
-  STATUS_ALL.forEach(s=>groups[s]=[]);
-  allData.forEach(d=>{if(groups[d.status])groups[d.status].push(d);});
-
-  sbDots=[];
-
-  // draw lane labels and separators first (always in fixed positions)
-  STATUS_ALL.forEach((s,si)=>{
-    const cy=si*BUCKET_H+BUCKET_H/2+30;
-    const col=STATUS_COLORS[s]||'#888';
-    const items=groups[s]||[];
-    const isActive=sbFilter==='all'||sbFilter===s;
-    const scoredItems=items.filter(d=>sbScorer==='laura'?d.lauraScore!=null:sbScorer==='bek'?d.bekScore!=null:(d.lauraScore!=null||d.bekScore!=null));
-    ctx.fillStyle=isActive?col:(dark?'#333':'#ddd');
-    ctx.font='500 12px -apple-system,sans-serif';
-    ctx.textAlign='right';
-    ctx.fillText(s+' ('+scoredItems.length+'/'+items.length+')',LABEL_W-10,cy+4);
-    ctx.strokeStyle=dark?'rgba(255,255,255,0.04)':'rgba(0,0,0,0.04)';
-    ctx.lineWidth=0.5;
-    ctx.beginPath();ctx.moveTo(LABEL_W,si*BUCKET_H+30);ctx.lineTo(W-PAD_R,si*BUCKET_H+30);ctx.stroke();
-  });
-
-  // draw dimmed dots first (inactive), then active dots on top
-  // X nudge: Laura score (0-10) normalized to -0.5..+0.5, scaled by sbJitterX
-  // Y position: Laura score drives vertical within lane/canvas, scaled by sbJitterY
-  const drawGroup=(s,dimmed)=>{
-    const col=STATUS_COLORS[s]||'#888';
-    const items=groups[s]||[];
-    const si=STATUS_ALL.indexOf(s);
-    const laneCy=si*BUCKET_H+BUCKET_H/2+30;
-    const spreadY=dimmed?BUCKET_H*0.6:(sbFilter==='all'?BUCKET_H*0.6:plotH*0.85);
-    const centerY=dimmed?laneCy:(sbFilter==='all'?laneCy:plotH/2+30);
-    const fillAlpha=dimmed?0.03:0.6;
-    const strokeAlpha=dimmed?0.06:0.95;
-    const placeDot=(d,push)=>{
-      const score=sbScorer==='laura'?d.lauraScore:sbScorer==='bek'?d.bekScore:(d.lauraScore??d.bekScore);
-      if(score==null)return;
-      const factor=(score/10)-0.5;
-      const xNudge=factor*(sbJitterX*0.8);
-      const yRange=sbJitterY===0?0:spreadY*(sbJitterY/500);
-      const yNudge=((1-(score/10))-0.5)*yRange;
-      const x=Math.min(W-PAD_R-6,Math.max(LABEL_W+6,px(d.desire)+xNudge));
-      const y=Math.min(H-30,Math.max(30,centerY+yNudge));
-      const r=Math.max(4,d.desire*1.0);
-      ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);
-      ctx.fillStyle=col+(Math.round(fillAlpha*255).toString(16).padStart(2,'0'));
-      ctx.fill();
-      ctx.strokeStyle=col+(Math.round(strokeAlpha*255).toString(16).padStart(2,'0'));
-      ctx.lineWidth=1.5;ctx.stroke();
-      if(push)sbDots.push({x,y,r,d,s});
-    };
-    items.forEach(d=>placeDot(d,!dimmed));
-    if(dimmed)items.forEach(d=>{
-      const score=sbScorer==='laura'?d.lauraScore:sbScorer==='bek'?d.bekScore:(d.lauraScore??d.bekScore);
-      if(score==null)return;
-      const xNudge=((score/10)-0.5)*(sbJitterX*0.8);
-      sbDots.push({x:Math.min(W-PAD_R-6,Math.max(LABEL_W+6,px(d.desire)+xNudge)),y:laneCy,r:Math.max(4,d.desire*1.0),d,s});
-    });
-  };
-
-  // draw inactive first, active on top
-  STATUS_ALL.forEach(s=>{
-    if(sbFilter!=='all'&&sbFilter!==s)drawGroup(s,true);
-  });
-  STATUS_ALL.forEach(s=>{
-    if(sbFilter==='all'||sbFilter===s)drawGroup(s,false);
-  });
-
-  // x-axis labels at top
-  ctx.fillStyle=dark?'#6b6a65':'#888780';
-  ctx.font='10px -apple-system,sans-serif';
-  ctx.textAlign='center';
-  for(let i=Math.ceil(xMin);i<=xMax;i++) ctx.fillText(i,px(i),20);
-  ctx.fillText('desire →',LABEL_W+plotW/2,H-8);
-}
-
-function setupSbEvents(){
-  const canvas=document.getElementById('sbCanvas');
-  if(!canvas)return;
-  canvas.addEventListener('mousemove',e=>{
-    const rect=canvas.getBoundingClientRect();
-    const mx=e.clientX-rect.left,my=e.clientY-rect.top;
-    let best=null,bestD=Infinity;
-    sbDots.forEach(dot=>{
-      const d=Math.sqrt((mx-dot.x)**2+(my-dot.y)**2);
-      if(d<=dot.r+8&&d<bestD){bestD=d;best=dot;}
-    });
-    if(best){showTooltip(e,[best.d],null);canvas.style.cursor='pointer';}
-    else{hideTooltip();canvas.style.cursor='default';}
-  });
-  canvas.addEventListener('mouseleave',hideTooltip);
-  canvas.addEventListener('click',e=>{
-    const rect=canvas.getBoundingClientRect();
-    const mx=e.clientX-rect.left,my=e.clientY-rect.top;
-    // check dot first
-    let best=null,bestD=Infinity;
-    sbDots.forEach(dot=>{
-      const d=Math.sqrt((mx-dot.x)**2+(my-dot.y)**2);
-      if(d<=dot.r+8&&d<bestD){bestD=d;best=dot;}
-    });
-    if(best){setSbFilter(best.s);return;}
-    // check bucket lane click
-    const BUCKET_H=140;
-    const laneY=my-30;
-    if(laneY>=0){
-      const si=Math.floor(laneY/BUCKET_H);
-      if(si>=0&&si<STATUS_ALL.length){
-        const s=STATUS_ALL[si];
-        setSbFilter(sbFilter===s?'all':s);
-      }
-    }
-  });
-}
-
 function setGComp(v){
   gComp=v;
   ['All','Solo','Friend','Family','Bekah','Laura'].forEach(s=>{const el=document.getElementById('g'+s);if(el)el.classList.toggle('active',v===s.toLowerCase());});
@@ -980,14 +720,11 @@ function resetAll(){
   c2DesireMin=7;c2Comps=new Set(['solo','friend','family','bekah','laura']);
   c2JitterX=0;document.getElementById('c2JitterXSlider').value=0;document.getElementById('c2JitterXVal').textContent=0;
   c2JitterY=20;document.getElementById('c2JitterYSlider').value=20;document.getElementById('c2JitterYVal').textContent=20;
-  gComp='all';gVisit='all';gDesireMin=1;gStatus='all';qYou=8;qLaura=8;
+  gComp='all';gVisit='all';gDesireMin=1;qYou=8;qLaura=8;
   document.getElementById('c1YouSlider').value=7;document.getElementById('c1YouVal').textContent=7;
   document.getElementById('c1LauraSlider').value=2;document.getElementById('c1LauraVal').textContent=2;
   document.getElementById('c1UnscoredBtn').classList.remove('active');
   c1JitterX=80;document.getElementById('c1JitterXSlider').value=80;document.getElementById('c1JitterXVal').textContent=80;
-  sbJitterX=160;document.getElementById('sbJitterXSlider').value=160;document.getElementById('sbJitterXVal').textContent=160;
-  sbJitterY=300;document.getElementById('sbJitterYSlider').value=300;document.getElementById('sbJitterYVal').textContent=300;
-  setSbFilter('all');
   c1JitterY=20;document.getElementById('c1JitterYSlider').value=20;document.getElementById('c1JitterYVal').textContent=20;
   document.getElementById('c2DesireSlider').value=7;document.getElementById('c2DesireVal').textContent=7;
   ['solo','friend','family','bekah','laura'].forEach(ck=>{
@@ -997,163 +734,9 @@ function resetAll(){
   document.getElementById('gDesireSlider').value=1;document.getElementById('gDesireVal').textContent=1;
   document.getElementById('qYouSlider').value=8;document.getElementById('qYouVal').textContent=8;
   document.getElementById('qLauraSlider').value=8;document.getElementById('qLauraVal').textContent=8;
-  setGComp('all');setGVisit('all');setGStatus('all');
+  setGComp('all');setGVisit('all');
   setC1Comp('laura');
   drawChart1();drawChart2();
-}
-
-// ── AI ANALYSIS ───────────────────────────────────────────────────────
-let aiAbortController=null;
-
-const AI_SYSTEM_PROMPT=`You are a personal travel planning analyst with access to my complete travel destination database. I am going to give you a CSV file. Your job is not to summarize the data back to me — I already know what's in it. Your job is to reason about it, challenge it, and give me clear, honest, actionable advice.
-
-Here is the data structure so you can interpret it correctly:
-
-B Rank = Bekah's desire score for this destination (blank = not yet scored; null = no interest)
-L Rank = Laura's desire score (null = no interest)
-My Desire = my personal desire score (1-10)
-num visits = how many times I've been (0 = never, 5 = often)
-solo/friend/family/Bekah/Laura columns = x means this person/type is a suitable companion for this trip
-Notes = context, nuance, specific people, conditions
-Status = my honest assessment:
-  decided — committed, will happen
-  waiting-me — desire is real but blocked on something I need to resolve
-  waiting-other — desire is real but blocked on someone else (Notes says who)
-  opportunistic — would go if right circumstances arose, not actively pursuing
-  aspirational — genuine want but may realistically never happen
-  someday — unlikely to happen, keeping for completeness
-
-I live between Amsterdam and Gran Canaria. These are home bases, not destinations. European trips carry lower logistical friction than long-haul.
-My two primary travel companions are Laura and Bekah. They are separate people with separate scores and travel styles. Do not conflate them.
-Some destinations are "US cluster" trips — they only happen as part of a broader US visit. Treat these as logistically linked, not standalone.
-
-FORMAT RULES:
-- TL;DR section first — maximum 5 bullets — most important things to know or act on right now
-- Each section gets a 1-2 sentence intro followed by bullets
-- Each bullet: direct, specific, one clear point
-- No walls of text. No long paragraphs. Bullets throughout.
-- Short, punchy, direct. Challenge me where data warrants it
-- End with TOP 20 ACTIONS in priority order, numbered, one sentence each
-
-SECTIONS:
----
-TL;DR
----
-SECTION 1: WHAT IS ACTUALLY HAPPENING
----
-SECTION 2: WHAT IS BLOCKED AND BY WHOM
----
-SECTION 3: QUICK WINS
----
-SECTION 4: GET OFF THE FENCE
----
-SECTION 5: OPPORTUNISTIC ONES WORTH WATCHING
----
-SECTION 6: HONEST ACKNOWLEDGMENT
----
-SECTION 7: OVERALL PATTERNS
----
-TOP 20 ACTIONS
----`;
-
-function filteredToCSV(){
-  const headers=['Place','My Desire','L Rank','B Rank','num visits','solo','friend','family','Bekah','Laura','Status','Notes'];
-  const rows=gFiltered.map(d=>[
-    d.name,d.desire,
-    d.lrank!=null?d.lrank:'',d.brank!=null?d.brank:'',
-    d.visits,
-    d.solo?'x':'',d.friend?'x':'',d.family?'x':'',d.bekah?'x':'',d.laura?'x':'',
-    d.status,d.notes
-  ].map(v=>String(v).includes(',')?`"${v}"`:v).join(','));
-  return[headers.join(','),...rows].join('\n');
-}
-
-function updateAiScope(){
-  const el=document.getElementById('aiScope');
-  if(!el)return;
-  if(!allData.length){el.textContent='— load csv first —';return;}
-  el.textContent=gFiltered.length+' destinations (current filter)';
-}
-
-async function fetchModels(){
-  const host=document.getElementById('aiHost').value.trim().replace(/\/$/,'');
-  const sel=document.getElementById('aiModel');
-  sel.innerHTML='<option value="">loading…</option>';
-  try{
-    const res=await fetch(host+'/api/tags',{signal:AbortSignal.timeout(5000)});
-    if(!res.ok)throw new Error(res.status);
-    const data=await res.json();
-    const models=(data.models||[]).map(m=>m.name).sort();
-    sel.innerHTML=models.length
-      ?models.map(m=>`<option value="${m}">${m}</option>`).join('')
-      :'<option value="">no models found</option>';
-  }catch(e){
-    sel.innerHTML='<option value="">error: '+e.message+'</option>';
-  }
-}
-
-async function runAnalysis(quickMode=false){
-  if(!gFiltered.length){alert('No data loaded or filtered.');return;}
-  const host=document.getElementById('aiHost').value.trim().replace(/\/$/,'');
-  const model=document.getElementById('aiModel').value;
-  const csv=filteredToCSV();
-  const today=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
-  const userMsg=quickMode
-    ?'Today is '+today+'.\n\nHere is my travel data:\n\n'+csv+'\n\nGive me the 20 most important actions I should take, in priority order. One sentence each explaining why. Numbered list. No other sections, no preamble.'
-    :'Today is '+today+'.\n\nHere is my travel data:\n\n'+csv+'\n\nPlease analyse it.';
-  const out=document.getElementById('aiOutput');
-  const status=document.getElementById('aiStatus');
-  const btn=document.getElementById('aiBtn');
-  const stopBtn=document.getElementById('aiStopBtn');
-  out.style.display='block';out.textContent='';
-  status.style.display='block';
-  status.textContent='connecting to '+host+' · model: '+model+' · '+gFiltered.length+' destinations';
-  btn.disabled=true;document.getElementById('aiQuickBtn').disabled=true;stopBtn.style.display='inline-block';
-  aiAbortController=new AbortController();
-  try{
-    const res=await fetch(host+'/api/chat',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      signal:aiAbortController.signal,
-      body:JSON.stringify({model,stream:true,messages:[
-        {role:'system',content:AI_SYSTEM_PROMPT},
-        {role:'user',content:userMsg}
-      ]})
-    });
-    if(!res.ok){status.textContent='error: '+res.status+' '+res.statusText;btn.disabled=false;stopBtn.style.display='none';return;}
-    status.textContent='streaming from '+model+'…';
-    const reader=res.body.getReader();
-    const dec=new TextDecoder();
-    let buf='';
-    while(true){
-      const{done,value}=await reader.read();
-      if(done)break;
-      buf+=dec.decode(value,{stream:true});
-      const lines=buf.split('\n');buf=lines.pop();
-      for(const line of lines){
-        if(!line.trim())continue;
-        try{
-          const j=JSON.parse(line);
-          const token=j?.message?.content||'';
-          out.textContent+=token;
-          out.scrollTop=out.scrollHeight;
-          if(j.done){status.textContent='done · '+model;break;}
-        }catch(e){}
-      }
-    }
-    status.textContent='done · '+model+' · '+gFiltered.length+' destinations';
-  }catch(e){
-    if(e.name==='AbortError')status.textContent='stopped';
-    else status.textContent='error: '+e.message;
-  }finally{
-    btn.disabled=false;document.getElementById('aiQuickBtn').disabled=false;stopBtn.style.display='none';aiAbortController=null;
-  }
-}
-function stopAnalysis(){if(aiAbortController)aiAbortController.abort();}
-function clearAnalysis(){
-  const out=document.getElementById('aiOutput'),status=document.getElementById('aiStatus');
-  out.textContent='';out.style.display='none';
-  status.textContent='';status.style.display='none';
 }
 
 // ── LOAD ──────────────────────────────────────────────────────────────
@@ -1168,11 +751,10 @@ function loadCSV(text){
     updateStats();
     drawChart1();drawChart2();
     setupC1Events();setupC2Events();
-    applyGlobal();renderQuadrant();renderTable();drawStatusBubble();setupSbEvents();updateAiScope();
-    window.addEventListener('resize',()=>{drawChart1();drawChart2();drawStatusBubble();});
+    applyGlobal();renderQuadrant();renderTable();
+    window.addEventListener('resize',()=>{drawChart1();drawChart2();});
   }
 }
-fetchModels();
 const dz=document.getElementById('dropZone'),fi=document.getElementById('fileInput');
 dz.addEventListener('click',()=>fi.click());
 fi.addEventListener('change',e=>{const f=e.target.files[0];if(f){const r=new FileReader();r.onload=ev=>loadCSV(ev.target.result);r.readAsText(f);}});
