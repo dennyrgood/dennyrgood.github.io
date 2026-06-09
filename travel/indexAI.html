@@ -278,6 +278,43 @@ tr:hover td{background:var(--bg2);}
       </table>
     </div>
   </div>
+
+    <!-- AI ANALYSIS -->
+    <div class="constrained">
+    <div class="panel" id="aiPanel">
+      <div class="panel-title">ai analysis — powered by local ollama · uses current filtered data</div>
+      <div class="panel-controls" style="flex-wrap:wrap;gap:10px;align-items:flex-end;">
+        <div class="filter-group">
+          <div class="filter-label">ollama host</div>
+          <select id="aiHost" onchange="fetchModels()" style="font-size:12px;padding:4px 8px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);">
+            <option value="https://chatworkhorse.tailb73767.ts.net">chatworkhorse (3060) — https</option>
+            <option value="http://chatworkhorse:11434">chatworkhorse (3060) — local</option>
+            <option value="https://imagebeast.tailb73767.ts.net">imagebeast (5090) — https</option>
+            <option value="http://imagebeast:11434">imagebeast (5090) — local</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">model</div>
+          <select id="aiModel" style="font-size:12px;padding:4px 8px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);">
+            <option value="">— select host first —</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">scope</div>
+          <div id="aiScope" style="font-size:12px;color:var(--text2);padding-top:2px;">— load csv first —</div>
+        </div>
+        <div class="filter-group" style="margin-left:auto;margin-top:auto;display:flex;gap:8px;">
+          <button class="tog" id="aiBtn" onclick="runAnalysis(false)" style="padding:5px 16px;font-size:13px;">analyse</button>
+          <button class="tog" id="aiQuickBtn" onclick="runAnalysis(true)" style="padding:5px 16px;font-size:13px;">top 20</button>
+          <button class="tog" id="aiStopBtn" onclick="stopAnalysis()" style="padding:5px 12px;display:none;">stop</button>
+          <button class="tog" onclick="clearAnalysis()" style="padding:5px 12px;">clear</button>
+        </div>
+      </div>
+      <div id="aiStatus" style="font-size:11px;color:var(--text3);margin:6px 0 0;display:none;"></div>
+      <div id="aiOutput" style="margin-top:12px;font-size:13px;line-height:1.7;color:var(--text);white-space:pre-wrap;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-height:600px;overflow-y:auto;border-top:0.5px solid var(--border);padding-top:12px;display:none;"></div>
+      <div style="font-size:11px;color:var(--text3);margin-top:8px;">requires <code style="font-size:11px">OLLAMA_ORIGINS=*</code> on the ollama host</div>
+    </div>
+    </div>
 </div>
 <div class="tooltip" id="tooltip"><div id="ttBody"></div></div>
 
@@ -638,6 +675,7 @@ function setupC2Events(){
 
 // ── GLOBAL / QUADRANT / TABLE ─────────────────────────────────────────
 function applyGlobal(){
+  setTimeout(updateAiScope,0);
   gFiltered=allData.filter(d=>{
     if(d.desire<gDesireMin)return false;
     if(gVisit==='new'&&d.visits>0)return false;
@@ -966,6 +1004,160 @@ function resetAll(){
   drawChart1();drawChart2();
 }
 
+// ── AI ANALYSIS ───────────────────────────────────────────────────────
+let aiAbortController=null;
+
+const AI_SYSTEM_PROMPT=`You are a personal travel planning analyst with access to my complete travel destination database. I am going to give you a CSV file. Your job is not to summarize the data back to me — I already know what's in it. Your job is to reason about it, challenge it, and give me clear, honest, actionable advice.
+
+Here is the data structure so you can interpret it correctly:
+
+B Rank = Bekah's desire score for this destination (blank = not yet scored; null = no interest)
+L Rank = Laura's desire score (null = no interest)
+My Desire = my personal desire score (1-10)
+num visits = how many times I've been (0 = never, 5 = often)
+solo/friend/family/Bekah/Laura columns = x means this person/type is a suitable companion for this trip
+Notes = context, nuance, specific people, conditions
+Status = my honest assessment:
+  decided — committed, will happen
+  waiting-me — desire is real but blocked on something I need to resolve
+  waiting-other — desire is real but blocked on someone else (Notes says who)
+  opportunistic — would go if right circumstances arose, not actively pursuing
+  aspirational — genuine want but may realistically never happen
+  someday — unlikely to happen, keeping for completeness
+
+I live between Amsterdam and Gran Canaria. These are home bases, not destinations. European trips carry lower logistical friction than long-haul.
+My two primary travel companions are Laura and Bekah. They are separate people with separate scores and travel styles. Do not conflate them.
+Some destinations are "US cluster" trips — they only happen as part of a broader US visit. Treat these as logistically linked, not standalone.
+
+FORMAT RULES:
+- TL;DR section first — maximum 5 bullets — most important things to know or act on right now
+- Each section gets a 1-2 sentence intro followed by bullets
+- Each bullet: direct, specific, one clear point
+- No walls of text. No long paragraphs. Bullets throughout.
+- Short, punchy, direct. Challenge me where data warrants it
+- End with TOP 20 ACTIONS in priority order, numbered, one sentence each
+
+SECTIONS:
+---
+TL;DR
+---
+SECTION 1: WHAT IS ACTUALLY HAPPENING
+---
+SECTION 2: WHAT IS BLOCKED AND BY WHOM
+---
+SECTION 3: QUICK WINS
+---
+SECTION 4: GET OFF THE FENCE
+---
+SECTION 5: OPPORTUNISTIC ONES WORTH WATCHING
+---
+SECTION 6: HONEST ACKNOWLEDGMENT
+---
+SECTION 7: OVERALL PATTERNS
+---
+TOP 20 ACTIONS
+---`;
+
+function filteredToCSV(){
+  const headers=['Place','My Desire','L Rank','B Rank','num visits','solo','friend','family','Bekah','Laura','Status','Notes'];
+  const rows=gFiltered.map(d=>[
+    d.name,d.desire,
+    d.lrank!=null?d.lrank:'',d.brank!=null?d.brank:'',
+    d.visits,
+    d.solo?'x':'',d.friend?'x':'',d.family?'x':'',d.bekah?'x':'',d.laura?'x':'',
+    d.status,d.notes
+  ].map(v=>String(v).includes(',')?`"${v}"`:v).join(','));
+  return[headers.join(','),...rows].join('\n');
+}
+
+function updateAiScope(){
+  const el=document.getElementById('aiScope');
+  if(!el)return;
+  if(!allData.length){el.textContent='— load csv first —';return;}
+  el.textContent=gFiltered.length+' destinations (current filter)';
+}
+
+async function fetchModels(){
+  const host=document.getElementById('aiHost').value.trim().replace(/\/$/,'');
+  const sel=document.getElementById('aiModel');
+  sel.innerHTML='<option value="">loading…</option>';
+  try{
+    const res=await fetch(host+'/api/tags',{signal:AbortSignal.timeout(5000)});
+    if(!res.ok)throw new Error(res.status);
+    const data=await res.json();
+    const models=(data.models||[]).map(m=>m.name).sort();
+    sel.innerHTML=models.length
+      ?models.map(m=>`<option value="${m}">${m}</option>`).join('')
+      :'<option value="">no models found</option>';
+  }catch(e){
+    sel.innerHTML='<option value="">error: '+e.message+'</option>';
+  }
+}
+
+async function runAnalysis(quickMode=false){
+  if(!gFiltered.length){alert('No data loaded or filtered.');return;}
+  const host=document.getElementById('aiHost').value.trim().replace(/\/$/,'');
+  const model=document.getElementById('aiModel').value;
+  const csv=filteredToCSV();
+  const today=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+  const userMsg=quickMode
+    ?'Today is '+today+'.\n\nHere is my travel data:\n\n'+csv+'\n\nGive me the 20 most important actions I should take, in priority order. One sentence each explaining why. Numbered list. No other sections, no preamble.'
+    :'Today is '+today+'.\n\nHere is my travel data:\n\n'+csv+'\n\nPlease analyse it.';
+  const out=document.getElementById('aiOutput');
+  const status=document.getElementById('aiStatus');
+  const btn=document.getElementById('aiBtn');
+  const stopBtn=document.getElementById('aiStopBtn');
+  out.style.display='block';out.textContent='';
+  status.style.display='block';
+  status.textContent='connecting to '+host+' · model: '+model+' · '+gFiltered.length+' destinations';
+  btn.disabled=true;document.getElementById('aiQuickBtn').disabled=true;stopBtn.style.display='inline-block';
+  aiAbortController=new AbortController();
+  try{
+    const res=await fetch(host+'/api/chat',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      signal:aiAbortController.signal,
+      body:JSON.stringify({model,stream:true,messages:[
+        {role:'system',content:AI_SYSTEM_PROMPT},
+        {role:'user',content:userMsg}
+      ]})
+    });
+    if(!res.ok){status.textContent='error: '+res.status+' '+res.statusText;btn.disabled=false;stopBtn.style.display='none';return;}
+    status.textContent='streaming from '+model+'…';
+    const reader=res.body.getReader();
+    const dec=new TextDecoder();
+    let buf='';
+    while(true){
+      const{done,value}=await reader.read();
+      if(done)break;
+      buf+=dec.decode(value,{stream:true});
+      const lines=buf.split('\n');buf=lines.pop();
+      for(const line of lines){
+        if(!line.trim())continue;
+        try{
+          const j=JSON.parse(line);
+          const token=j?.message?.content||'';
+          out.textContent+=token;
+          out.scrollTop=out.scrollHeight;
+          if(j.done){status.textContent='done · '+model;break;}
+        }catch(e){}
+      }
+    }
+    status.textContent='done · '+model+' · '+gFiltered.length+' destinations';
+  }catch(e){
+    if(e.name==='AbortError')status.textContent='stopped';
+    else status.textContent='error: '+e.message;
+  }finally{
+    btn.disabled=false;document.getElementById('aiQuickBtn').disabled=false;stopBtn.style.display='none';aiAbortController=null;
+  }
+}
+function stopAnalysis(){if(aiAbortController)aiAbortController.abort();}
+function clearAnalysis(){
+  const out=document.getElementById('aiOutput'),status=document.getElementById('aiStatus');
+  out.textContent='';out.style.display='none';
+  status.textContent='';status.style.display='none';
+}
+
 // ── LOAD ──────────────────────────────────────────────────────────────
 function loadCSV(text){
   const rows=parseCSV(text);
@@ -978,10 +1170,11 @@ function loadCSV(text){
     updateStats();
     drawChart1();drawChart2();
     setupC1Events();setupC2Events();
-    applyGlobal();renderQuadrant();renderTable();drawStatusBubble();setupSbEvents();
+    applyGlobal();renderQuadrant();renderTable();drawStatusBubble();setupSbEvents();updateAiScope();
     window.addEventListener('resize',()=>{drawChart1();drawChart2();drawStatusBubble();});
   }
 }
+fetchModels();
 const dz=document.getElementById('dropZone'),fi=document.getElementById('fileInput');
 dz.addEventListener('click',()=>fi.click());
 fi.addEventListener('change',e=>{const f=e.target.files[0];if(f){const r=new FileReader();r.onload=ev=>loadCSV(ev.target.result);r.readAsText(f);}});
