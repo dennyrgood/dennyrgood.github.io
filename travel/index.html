@@ -302,6 +302,16 @@ tr:hover td{background:var(--bg2);}
           </select>
         </div>
         <div class="filter-group">
+          <div class="filter-label">context window</div>
+          <select id="aiCtx" style="font-size:12px;padding:4px 8px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);">
+            <option value="0">default</option>
+            <option value="32768">32K</option>
+            <option value="65536">64K</option>
+            <option value="131072" selected>128K</option>
+            <option value="262144">256K</option>
+          </select>
+        </div>
+        <div class="filter-group">
           <div class="filter-label">scope</div>
           <div id="aiScope" style="font-size:12px;color:var(--text2);padding-top:2px;">— load csv first —</div>
         </div>
@@ -1279,7 +1289,8 @@ async function runAnalysis(quickMode=false){
       method:'POST',
       headers:{'Content-Type':'application/json'},
       signal:aiAbortController.signal,
-      body:JSON.stringify({model,stream:true,messages:[
+      const ctxVal=parseInt(document.getElementById('aiCtx').value);
+      body:JSON.stringify({model,stream:true,...(ctxVal>0?{options:{num_ctx:ctxVal}}:{}),messages:[
         {role:'system',content:AI_SYSTEM_PROMPT},
         {role:'user',content:userMsg}
       ]})
