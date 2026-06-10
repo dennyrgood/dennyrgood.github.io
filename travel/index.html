@@ -272,6 +272,7 @@ tr:hover td{background:var(--bg2);}
           <th onclick="sortBy('visits')" id="th-visits">visits <span class="sa">↕</span></th>
           <th onclick="sortBy('versatility')" id="th-versatility">versatility <span class="sa">↕</span></th>
           <th onclick="sortBy('status')" id="th-status">status <span class="sa">↕</span></th>
+          <th onclick="sortBy('cluster')" id="th-cluster">cluster <span class="sa">↕</span></th>
           <th>companions</th>
           <th>notes</th>
         </tr></thead>
@@ -360,6 +361,7 @@ function parseCSV(text){
     else if(h==='laura')hm.laura=i;
     else if(h==='notes')hm.notes=i;
     else if(h==='status')hm.status=i;
+    else if(h==='cluster')hm.cluster=i;
   });
   return lines.slice(1).map(line=>{
     const v=splitLine(line);const r={};
@@ -387,7 +389,7 @@ function processRow(r){
   let dominant='solo';
   if(lval)dominant='laura';else if(bval)dominant='bekah';
   else if(family)dominant='family';else if(friend)dominant='friend';
-  return{name:r.place.trim(),lrank,brank,desire,visits,solo,friend,family,bekah:bval,laura:lval,lauraScore,bekScore,versatility,compList,dominant,status:(r.status||'').trim().toLowerCase(),notes:(r.notes||'').trim()};
+  return{name:r.place.trim(),lrank,brank,desire,visits,solo,friend,family,bekah:bval,laura:lval,lauraScore,bekScore,versatility,compList,dominant,status:(r.status||'').trim().toLowerCase(),notes:(r.notes||'').trim(),cluster:(r.cluster||'').trim()};
 }
 
 // ── HELPERS ───────────────────────────────────────────────────────────
@@ -438,6 +440,7 @@ function showTooltip(e,items,header){
      ['visits',d.visits+' ('+VISIT_LABELS[Math.min(d.visits,5)]+')'],
      ['companions',d.compList.join(', ')||'—'],['versatility',d.versatility+'/5'],
      ['status',d.status||'—'],
+     ...(d.cluster?[['cluster',d.cluster]]:[]),
      ...(d.notes?[['notes',d.notes]]:[])
     ].forEach(([k,v])=>{
       const row=document.createElement('div');row.className='tt-row';
@@ -749,6 +752,7 @@ function renderTable(){
       <td><span style="color:${VISIT_COLORS[Math.min(d.visits,5)]};font-weight:500">${d.visits}</span> <span style="color:var(--text3);font-size:11px">${VISIT_LABELS[Math.min(d.visits,5)]}</span></td>
       <td style="color:var(--text2);font-size:12px">${d.versatility}/5</td>
       <td>${d.status?`<span style="font-size:11px;padding:2px 7px;border-radius:10px;background:${STATUS_COLORS[d.status]||'#888'}22;color:${STATUS_COLORS[d.status]||'#888'};border:1px solid ${STATUS_COLORS[d.status]||'#888'}66">${d.status}</span>`:'<span style="color:var(--text3)">—</span>'}</td>
+      <td style="font-size:11px;color:var(--text3)">${d.cluster||'—'}</td>
       <td>${pips}<span style="font-size:11px;color:var(--text3);margin-left:3px">${d.compList.join(', ')}</span></td>
       <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:var(--text3)" title="${d.notes.replace(/"/g,'&quot;')}">${d.notes||'—'}</td>`;
     tbody.appendChild(tr);
@@ -1029,12 +1033,16 @@ function setupSbEvents(){
     const rect=canvas.getBoundingClientRect();
     const mx=e.clientX-rect.left,my=e.clientY-rect.top;
     let best=null,bestD=Infinity;
+    const nearby=[];
     sbDots.forEach(dot=>{
       const d=Math.sqrt((mx-dot.x)**2+(my-dot.y)**2);
-      if(d<=dot.r+8&&d<bestD){bestD=d;best=dot;}
+      if(d<=dot.r+8){nearby.push(dot);if(d<bestD){bestD=d;best=dot;}}
     });
-    if(best){showTooltip(e,[best.d],null);canvas.style.cursor='pointer';}
-    else{hideTooltip();canvas.style.cursor='default';}
+    if(nearby.length){
+      const seen=new Set();
+      const items=nearby.filter(dot=>{if(seen.has(dot.d.name))return false;seen.add(dot.d.name);return true;}).map(dot=>dot.d);
+      showTooltip(e,items,null);canvas.style.cursor='pointer';
+    } else{hideTooltip();canvas.style.cursor='default';}
   });
   canvas.addEventListener('mouseleave',hideTooltip);
   canvas.addEventListener('click',e=>{
@@ -1115,19 +1123,59 @@ B Rank = Bekah's desire score for this destination (blank = not yet scored; null
 L Rank = Laura's desire score (null = no interest)
 My Desire = my personal desire score (1-10)
 num visits = how many times I've been (0 = never, 5 = often)
-solo/friend/family/Bekah/Laura columns = x means this person/type is a suitable companion for this trip
-Notes = context, nuance, specific people, conditions
-Status = my honest assessment:
-  decided — committed, will happen
-  waiting-me — desire is real but blocked on something I need to resolve
-  waiting-other — desire is real but blocked on someone else (Notes says who)
-  opportunistic — would go if right circumstances arose, not actively pursuing
-  aspirational — genuine want but may realistically never happen
-  someday — unlikely to happen, keeping for completeness
+COMPANION COMPATIBILITY LOGIC:
+- Checkmarks (x) in solo/friend/family/Bekah/Laura columns indicate COMPATIBILITY, not a combined attendance requirement.
+- If a row has x for both solo and Laura, it means the trip is valid as a solo execution OR as a trip with Laura. It does NOT mean Laura is joining a solo trip.
+- Treat each trip as an individual instance utilizing any valid subset of compatible companions.
+- A trip with 5 companion columns checked is not a group trip — it is a flexible trip that works with any one or combination of those companions.
+Notes = context, nuance, specific people, conditions, booking status, frequency intent. Companion names listed in Notes are possible travel companions for that trip — any one of them is sufficient, not all required simultaneously.
+STATUS TAXONOMY & INTENT DIRECTIVE:
+- "decided": Committed, will happen. (Mental model: "Effectively already booked in my mind.") Examples: GranCanaria, Paris, Philly.
+- "waiting-me": Actively want to make it happen, actively pursuing. (Mental model: "Am I looking for the opportunity to do this?") Examples: Japan, CLAW, Malaga. Never interpret this status as avoidance, hesitation, or procrastination.
+- "waiting-other": Genuine desire, but strictly blocked on someone else's decision or availability. (Mental model: "Is someone else's decision preventing this?") Examples: UK-Cruise (Bekah), RI (Laura).
+- "opportunistic": Would go if circumstances arose, but not actively pursuing. (Mental model: "Would I say yes if someone brought this to me?") Examples: Florence, Nice, Barcelona. Do not suggest moving opportunistic items to decided unless a clear external trigger exists.
+- "aspirational": Genuinely want it, but might realistically never happen due to external constraints. (Mental model: "Do I truly want this but doubt it will ever happen?") Examples: Sicily, GrandCanyon, Croatia.
+- "someday": Unlikely, not ready to delete. (Mental model: "Am I keeping this just because I can't let go?") Examples: Bangkok, Africa, Istanbul.
+aspirational and someday are different psychological states — do not conflate them or suggest moving one to the other.
+
+NOTES DECODER — these shorthand codes appear in Notes:
+  s/s/b/j/e/r = shorthand identifying who the family companion checkbox means for this trip: the standard family group (Steph, Sarah, Billy, Joe, Eli, Relila). When the family group differs from this default, specific names are listed instead. This is NOT a blocker or score — it clarifies who family refers to.
+  A separate Cluster column groups destinations that only make sense as part of a multi-city trip. Cluster codes indicate that the rows are ALREADY a single, bound itinerary. Do not instruct to "combine," "group," or "trigger them as a single trip" — they are already combined by design. Instead, treat the cluster as a single pre-existing project: identify its primary anchor, reason about what timeline triggers it, or flag internal status mismatches within that same cluster code. Cluster codes are self-describing (e.g. US-FL = Florida, EU-IT = Italy, US-WC = West Coast). Blank cluster = standalone destination.
+  Laura's Trip = this is primarily Laura's desire, not mine — I would go to support her
+  Cruise Only = this destination is only viable as part of a cruise, not a standalone trip
+  funded:dad = the entire trip is conditional on father funding it
+  Bekah-funded-by:X = Bekah's participation is conditional on X funding it (e.g. Bekah-funded-by:me means I am paying for Bekah) — the trip itself is not blocked, only whether Bekah joins. When X is "me", Bekah is NOT the blocker — I am the decision-maker. Do not list Bekah as blocking these trips.
+  booked:MM/YYYY = this trip is confirmed and scheduled for that month/year
+  target:MM/YYYY = intended timeframe, not a confirmed booking. Targets can be years in the future — a distant target is a genuine committed plan. Never suggest moving, archiving, downgrading, or removing a destination based on a far-future target date. Never describe a far-future target as unrealistic, dead weight, a placeholder, or a dream.
+  fetish event = this is a specific leather/fetish event trip (IML, CLAW, MAL, MIR)
+  freq:cadence = recurring trip frequency (e.g. freq:2xYr = twice a year, freq:1xYr = annual, freq:0.5xYr = every other year)
+  Name:score = confirmed companion with their score e.g. Jeff:7, Creighton:10, Graeme:8
+  Name?:score = tentative companion with their score e.g. Jeff?:7, Graeme?:7, Creighton?:7
+
+FREQUENCY AND CADENCE:
+  freq:cadence = observed travel frequency — how often this destination tends to happen when circumstances align. It does not mean the trip is guaranteed or automatic. A destination with freq: still needs an active decision each cycle.
+  High-frequency destinations (GranCanaria, Paris, Ship, Lancaster, Philly, Trans-Cruise) tend to recur but are not guaranteed. Note their recurring nature when relevant but do not exempt them from analysis entirely.
+
+GUARDRAILS FOR CRITIQUE & ANALYSIS:
+- Do not psychologize, judge, or extrapolate motivations behind destination choices, companion selections, or financial arrangements.
+- Do not offer life-coaching advice on travel balance, budget management, or interpersonal relationships.
+- Focus entirely on structural alignment, scheduling overlaps, routing efficiency, and data omissions based on the rules provided.
+- "fetish event" in Notes is factual context only — do not editorialize around it.
+
+DAYTRIP RULE:
+  Destinations with "daytrip" in Notes require no overnight logistics and no complex planning.
+  If a daytrip is marked waiting-other, the dependency is social scheduling only — not a real blocker.
+  Do not treat daytrips the same as multi-day trips. They can be done anytime with minimal friction.
+
+DATA CONSISTENCY RULES — flag these in your analysis:
+  If a destination is "decided" but has no booked: date and no target: date, flag it as potentially needing a booking. freq: alone does not satisfy this — freq: indicates observed cadence only, not a confirmed booking.
+  If My Desire >= 8 but Status is aspirational or someday, flag it as a contradiction worth calling out.
+  If two rows refer to the same trip (e.g. Notes say "same as X"), treat them as one trip, not two.
+  Name:score means confirmed companion; Name?:score means tentative — treat these differently in your reasoning.
 
 I live between Amsterdam and Gran Canaria. These are home bases, not destinations. European trips carry lower logistical friction than long-haul.
 My two primary travel companions are Laura and Bekah. They are separate people with separate scores and travel styles. Do not conflate them.
-Some destinations are "US cluster" trips — they only happen as part of a broader US visit. Treat these as logistically linked, not standalone.
+Clustered destinations (any non-blank Cluster code) are already bound as one logical trip — never suggest combining them. Reason about the cluster as a whole unit.
 
 FORMAT RULES:
 - TL;DR section first — maximum 5 bullets — most important things to know or act on right now
@@ -1135,7 +1183,7 @@ FORMAT RULES:
 - Each bullet: direct, specific, one clear point
 - No walls of text. No long paragraphs. Bullets throughout.
 - Short, punchy, direct. Challenge me where data warrants it
-- End with TOP 20 ACTIONS in priority order, numbered, one sentence each
+- End with STRATEGIC ACTION ITEMS in priority order, numbered, one sentence each
 
 SECTIONS:
 ---
@@ -1151,21 +1199,35 @@ SECTION 4: GET OFF THE FENCE
 ---
 SECTION 5: OPPORTUNISTIC ONES WORTH WATCHING
 ---
-SECTION 6: HONEST ACKNOWLEDGMENT
+SECTION 6: HONEST ACKNOWLEDGMENT — data contradictions only
+Flag only genuine contradictions in the data itself: status vs desire score mismatches, duplicate trips, decided destinations with no booked: or target: date, high desire in someday/aspirational. Do NOT editorialize about motivations, financial decisions, or infer procrastination from waiting-me status.
 ---
 SECTION 7: OVERALL PATTERNS
 ---
-TOP 20 ACTIONS
+STRATEGIC ACTION ITEMS
+---
+FINAL RULES:
+- No tables
+- No prose paragraphs
+- Bullets throughout
+- Be direct, honest, and specific
+- Show me the scores when they support your reasoning
+- This is a briefing, not a report
+- Do not suggest actions that are already handled by the data (e.g. do not say "verify funding" when Bekah-funded-by:me means I am already the funder, do not say "check logistics" for a decided trip with a target date)
+- Every action item must be actionable, distinct, and directly related to a data gap, an immediate target window, or an unresolved waiting-me status for a high-desire (8+) destination
+- Do not generate filler actions for daytrips or stable waiting-other rows that are waiting on an external person
+- CRITICAL QUANTITY RULE: Only generate an action item if it passes every single filter above. If you only find 8 genuine data updates or strategic internal decisions that match the rules, output EXACTLY 8 action items and stop. Never generate filler items to hit a quota.
+- Never suggest confirming, verifying, or checking details for any destination that already has a booked: tag in Notes
 ---`;
 
 function filteredToCSV(){
-  const headers=['Place','My Desire','L Rank','B Rank','num visits','solo','friend','family','Bekah','Laura','Status','Notes'];
+  const headers=['Place','My Desire','L Rank','B Rank','num visits','solo','friend','family','Bekah','Laura','Cluster','Status','Notes'];
   const rows=gFiltered.map(d=>[
     d.name,d.desire,
     d.lrank!=null?d.lrank:'',d.brank!=null?d.brank:'',
     d.visits,
     d.solo?'x':'',d.friend?'x':'',d.family?'x':'',d.bekah?'x':'',d.laura?'x':'',
-    d.status,d.notes
+    d.cluster,d.status,d.notes
   ].map(v=>String(v).includes(',')?`"${v}"`:v).join(','));
   return[headers.join(','),...rows].join('\n');
 }
@@ -1201,7 +1263,7 @@ async function runAnalysis(quickMode=false){
   const csv=filteredToCSV();
   const today=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
   const userMsg=quickMode
-    ?'Today is '+today+'.\n\nHere is my travel data:\n\n'+csv+'\n\nGive me the 20 most important actions I should take, in priority order. One sentence each explaining why. Numbered list. No other sections, no preamble.'
+    ?'Today is '+today+'.\n\nHere is my travel data:\n\n'+csv+'\n\nReturn ONLY a numbered list of strategic action items in priority order. One sentence each explaining why. Only include genuine high-value actions — if fewer than 20 exist, stop early. No sections, no headers, no preamble, no summary, no analysis. Just the numbered list. Nothing else.'
     :'Today is '+today+'.\n\nHere is my travel data:\n\n'+csv+'\n\nPlease analyse it.';
   const out=document.getElementById('aiOutput');
   const status=document.getElementById('aiStatus');
