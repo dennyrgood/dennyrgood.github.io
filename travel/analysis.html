@@ -1,0 +1,1687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Travel Alignment Dashboard</title>
+<style>
+:root {
+  --bg:#ffffff; --bg2:#f5f4f0; --bg3:#eeede9;
+  --text:#1a1a18; --text2:#5f5e5a; --text3:#888780;
+  --border:rgba(0,0,0,0.1); --border2:rgba(0,0,0,0.2);
+  --radius:8px; --radius-lg:12px;
+  --green:#1D9E75; --blue:#378ADD; --amber:#BA7517;
+  --orange:#D85A30; --red:#E24B4A; --purple:#534AB7; --pink:#D4537E; --gray:#888780;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:#1e1e1c; --bg2:#2a2a28; --bg3:#333331;
+    --text:#f0efeb; --text2:#a8a79f; --text3:#6b6a65;
+    --border:rgba(255,255,255,0.1); --border2:rgba(255,255,255,0.2);
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg3);color:var(--text);font-size:14px;min-height:100vh;}
+.app{max-width:100%;margin:0 auto;padding:24px 20px;}
+h1{font-size:20px;font-weight:500;margin-bottom:2px;}
+.subtitle{font-size:13px;color:var(--text3);margin-bottom:18px;}
+.constrained{max-width:1100px;margin:0 auto;}
+.drop-zone{border:1.5px dashed var(--border2);border-radius:var(--radius-lg);padding:20px;text-align:center;background:var(--bg);cursor:pointer;transition:background 0.15s;margin-bottom:18px;}
+.drop-zone.dragover{background:var(--bg2);}
+.drop-zone.loaded{border-style:solid;border-color:var(--green);}
+.drop-zone p{color:var(--text2);font-size:13px;margin-top:4px;}
+.drop-zone strong{font-size:15px;font-weight:500;}
+input[type=file]{display:none;}
+.stats{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px;}
+.stat{background:var(--bg2);border-radius:var(--radius);padding:10px 16px;min-width:110px;}
+.stat-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:2px;}
+.stat-val{font-size:22px;font-weight:500;}
+.stat-val.small{font-size:15px;padding-top:4px;}
+.panel{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:14px;}
+.panel-title{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:12px;}
+.panel-controls{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-bottom:12px;}
+.filter-group{display:flex;flex-direction:column;gap:5px;}
+.filter-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.04em;}
+.filter-btns{display:flex;flex-wrap:wrap;gap:4px;}
+button.tog{font-size:12px;padding:3px 10px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text2);cursor:pointer;transition:background 0.1s;}
+button.tog.active{background:var(--bg3);color:var(--text);font-weight:500;}
+button.tog:hover{background:var(--bg2);}
+.canvas-wrap{position:relative;width:100%;}
+canvas{display:block;width:100%;}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--text2);padding:8px 0 0;}
+.ldot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:middle;}
+.quad-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.quad-card{border-radius:var(--radius-lg);padding:12px;}
+.quad-title{font-size:12px;font-weight:500;margin-bottom:2px;}
+.quad-sub{font-size:11px;opacity:0.7;margin-bottom:8px;}
+.quad-chips{display:flex;flex-wrap:wrap;gap:4px;}
+.chip{font-size:11px;padding:2px 7px;border-radius:10px;white-space:nowrap;border:1px solid transparent;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{text-align:left;font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.04em;padding:6px 8px;border-bottom:0.5px solid var(--border2);cursor:pointer;white-space:nowrap;user-select:none;}
+th:hover{color:var(--text);}
+td{padding:6px 8px;border-bottom:0.5px solid var(--border);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--bg2);}
+.bar-wrap{display:flex;align-items:center;gap:5px;}
+.bar{height:5px;border-radius:3px;}
+.pip{display:inline-block;width:7px;height:7px;border-radius:50%;margin:1px;}
+.row-count{font-size:12px;color:var(--text3);margin-bottom:8px;}
+.tooltip{position:fixed;pointer-events:none;background:var(--bg);border:0.5px solid var(--border2);border-radius:var(--radius);padding:10px 14px;font-size:12px;min-width:180px;z-index:200;display:none;box-shadow:0 4px 12px rgba(0,0,0,0.15);}
+.tt-name{font-size:14px;font-weight:500;margin-bottom:6px;}
+.tt-row{display:flex;justify-content:space-between;gap:16px;padding:2px 0;border-bottom:0.5px solid var(--border);}
+.tt-row:last-child{border-bottom:none;}
+.tt-key{color:var(--text3);}
+.tt-val{font-weight:500;}
+.tt-sep{border-top:0.5px solid var(--border);margin:6px 0;}
+.tt-hdr{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>Travel Alignment Dashboard</h1>
+  <p class="subtitle">Your desire vs Laura's desire</p>
+
+  <div class="constrained">
+  <div class="drop-zone" id="dropZone">
+    <strong id="dropTitle">Drop your CSV here</strong>
+    <p id="dropSub">or click to browse</p>
+    <input type="file" id="fileInput" accept=".csv">
+  </div>
+  </div><!-- end constrained -->
+
+  <div id="dashboard" style="display:none">
+    <div class="constrained">
+    <div class="stats">
+      <div class="stat"><div class="stat-label">destinations</div><div class="stat-val" id="statTotal">—</div></div>
+      <div class="stat"><div class="stat-label">your avg desire</div><div class="stat-val" id="statYou">—</div></div>
+      <div class="stat"><div class="stat-label">laura's avg desire</div><div class="stat-val" id="statLaura">—</div></div>
+      <div class="stat"><div class="stat-label">bek's avg desire</div><div class="stat-val" id="statBek">—</div></div>
+      <div class="stat"><div class="stat-label">top alignment</div><div class="stat-val small" id="statTop">—</div></div>
+    </div>
+
+    </div><!-- end constrained stats -->
+    <!-- CHART 1 -->
+    <div class="panel">
+      <div class="panel-title">alignment — your desire (x) · scorer's desire (y) · color = score intensity</div>
+      <div class="panel-controls">
+        <div class="filter-group">
+          <div class="filter-label">your desire ≥ <span id="c1YouVal" style="font-weight:500;color:var(--text)">7</span></div>
+          <input type="range" min="1" max="10" value="7" step="1" id="c1YouSlider" oninput="setC1You(this.value)">
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">scorer's desire ≥ <span id="c1LauraVal" style="font-weight:500;color:var(--text)">2</span></div>
+          <input type="range" min="1" max="10" value="2" step="1" id="c1LauraSlider" oninput="setC1Laura(this.value)">
+        </div>
+
+        <div class="filter-group">
+          <div class="filter-label">unscored</div>
+          <button class="tog" id="c1UnscoredBtn" onclick="toggleC1Unscored()">show unscored</button>
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">spread horizontal: <span id="c1JitterXVal" style="font-weight:500;color:var(--text)">80</span></div>
+          <input type="range" min="0" max="200" value="80" step="4" id="c1JitterXSlider" oninput="setC1JitterX(this.value)">
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">spread vertical: <span id="c1JitterYVal" style="font-weight:500;color:var(--text)">20</span></div>
+          <input type="range" min="0" max="200" value="20" step="4" id="c1JitterYSlider" oninput="setC1JitterY(this.value)">
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">scorer</div>
+          <div class="filter-btns">
+            <button class="tog active" id="c1Complaura"  onclick="setC1Comp('laura')">Laura</button>
+            <button class="tog" id="c1Compbekah"  onclick="setC1Comp('bekah')">Bekah</button>
+          </div>
+        </div>
+      </div>
+      <div class="canvas-wrap" id="c1Wrap"><canvas id="c1Canvas"></canvas></div>
+    </div>
+
+    <!-- CHART 2 -->
+    <div class="panel">
+      <div class="panel-title">my trips — companion columns (x) · your desire (y) · size = versatility · color = visits</div>
+      <div class="panel-controls">
+        <div class="filter-group">
+          <div class="filter-label">your desire ≥ <span id="c2DesireVal" style="font-weight:500;color:var(--text)">7</span></div>
+          <input type="range" min="1" max="10" value="7" step="1" id="c2DesireSlider" oninput="setC2Desire(this.value)">
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">spread horizontal: <span id="c2JitterXVal" style="font-weight:500;color:var(--text)">0</span></div>
+          <input type="range" min="0" max="200" value="0" step="4" id="c2JitterXSlider" oninput="setC2JitterX(this.value)">
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">spread vertical: <span id="c2JitterYVal" style="font-weight:500;color:var(--text)">20</span></div>
+          <input type="range" min="0" max="200" value="20" step="4" id="c2JitterYSlider" oninput="setC2JitterY(this.value)">
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">show companion columns</div>
+          <div class="filter-btns">
+            <button class="tog active" id="c2solo"   onclick="toggleC2Comp('solo')">✓ solo</button>
+            <button class="tog active" id="c2friend" onclick="toggleC2Comp('friend')">✓ friend</button>
+            <button class="tog active" id="c2family" onclick="toggleC2Comp('family')">✓ family</button>
+            <button class="tog active" id="c2bekah"  onclick="toggleC2Comp('bekah')">✓ Bekah</button>
+            <button class="tog active" id="c2laura"  onclick="toggleC2Comp('laura')">✓ Laura</button>
+          </div>
+        </div>
+      </div>
+      <div class="canvas-wrap" id="c2Wrap"><canvas id="c2Canvas"></canvas></div>
+      <div class="legend" id="c2Legend"></div>
+    </div>
+
+    <div class="constrained">
+    <!-- STATUS BUBBLE -->
+    <div class="panel" id="statusBubblePanel">
+      <div class="panel-title">destinations by status — size = desire · color = status · click to filter below</div>
+      <div class="panel-controls" style="margin-bottom:4px;">
+        <div class="filter-group">
+          <div class="filter-label">status</div>
+          <div class="filter-btns">
+            <button class="tog active" id="gSAll" onclick="setSbFilter('all')">all</button>
+            <button class="tog" id="gSdecided"       onclick="setSbFilter('decided')"       style="border-color:#1D9E7588">decided</button>
+            <button class="tog" id="gSwaiting-me"    onclick="setSbFilter('waiting-me')"    style="border-color:#BA751788">waiting-me</button>
+            <button class="tog" id="gSwaiting-other" onclick="setSbFilter('waiting-other')" style="border-color:#D85A3088">waiting-other</button>
+            <button class="tog" id="gSopportunistic" onclick="setSbFilter('opportunistic')" style="border-color:#88878088">opportunistic</button>
+            <button class="tog" id="gSaspirational"  onclick="setSbFilter('aspirational')"  style="border-color:#534AB788">aspirational</button>
+            <button class="tog" id="gSsomeday"       onclick="setSbFilter('someday')"       style="border-color:#aaaaaa88">someday</button>
+          </div>
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">scorer</div>
+          <div class="filter-btns">
+            <button class="tog active" id="sbScoreLaura" onclick="setSbScorer('laura')">Laura</button>
+            <button class="tog" id="sbScoreBek" onclick="setSbScorer('bek')">Bek</button>
+            <button class="tog" id="sbScoreBoth" onclick="setSbScorer('both')">both</button>
+            <button class="tog" id="sbScoreNeither" onclick="setSbScorer('neither')">neither</button>
+          </div>
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">scorer x-nudge: <span id="sbJitterXVal" style="font-weight:500;color:var(--text)">160</span></div>
+          <input type="range" min="0" max="500" value="160" step="4" id="sbJitterXSlider" oninput="setSbJitterX(this.value)">
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">scorer y-spread: <span id="sbJitterYVal" style="font-weight:500;color:var(--text)">300</span></div>
+          <input type="range" min="0" max="500" value="300" step="4" id="sbJitterYSlider" oninput="setSbJitterY(this.value)">
+        </div>
+        <div class="filter-group" style="margin-left:auto;margin-top:auto;">
+          <button class="tog" onclick="setSbFilter('all')" style="padding:4px 12px;">clear filter</button>
+        </div>
+      </div>
+      <div class="canvas-wrap" id="sbWrap"><canvas id="sbCanvas"></canvas></div>
+    </div>
+
+    <!-- GLOBAL FILTERS -->
+    <div class="panel">
+      <div class="panel-title">filters — apply to quadrant view and table below</div>
+      <div class="panel-controls">
+        <div class="filter-group">
+          <div class="filter-label">valid for</div>
+          <div class="filter-btns">
+            <button class="tog active" id="gAll"    onclick="setGComp('all')">all</button>
+            <button class="tog" id="gSolo"   onclick="setGComp('solo')">solo</button>
+            <button class="tog" id="gFriend" onclick="setGComp('friend')">friend</button>
+            <button class="tog" id="gFamily" onclick="setGComp('family')">family</button>
+            <button class="tog" id="gBekah"  onclick="setGComp('bekah')">Bekah</button>
+            <button class="tog" id="gLaura"  onclick="setGComp('laura')">Laura</button>
+          </div>
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">visits</div>
+          <div class="filter-btns">
+            <button class="tog active" id="gVAll" onclick="setGVisit('all')">all</button>
+            <button class="tog" id="gVNew"  onclick="setGVisit('new')">never been</button>
+            <button class="tog" id="gVFam"  onclick="setGVisit('familiar')">been before</button>
+          </div>
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">your desire ≥ <span id="gDesireVal" style="font-weight:500;color:var(--text)">1</span></div>
+          <input type="range" min="1" max="10" value="1" step="1" id="gDesireSlider" oninput="setGDesire(this.value)">
+        </div>
+        <div class="filter-group" style="margin-left:auto;margin-top:auto;">
+          <button class="tog" onclick="resetAll()" style="padding:5px 14px;">reset all</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- QUADRANT -->
+    <div class="panel">
+      <div class="panel-title">quadrant view</div>
+      <div class="panel-controls">
+        <div class="filter-group">
+          <div class="filter-label">your desire threshold: <span id="qYouVal" style="font-weight:500;color:var(--text)">8</span></div>
+          <input type="range" min="1" max="10" value="8" step="1" id="qYouSlider" oninput="setQThresh('you',this.value)">
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">laura's desire threshold: <span id="qLauraVal" style="font-weight:500;color:var(--text)">8</span></div>
+          <input type="range" min="1" max="10" value="8" step="1" id="qLauraSlider" oninput="setQThresh('laura',this.value)">
+        </div>
+      </div>
+      <div class="quad-grid" id="quadGrid"></div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="panel">
+      <div class="row-count" id="rowCount"></div>
+      <table>
+        <thead><tr>
+          <th onclick="sortBy('name')" id="th-name">destination <span class="sa">↕</span></th>
+          <th onclick="sortBy('desire')" id="th-desire">your desire <span class="sa">↕</span></th>
+          <th onclick="sortBy('lauraScore')" id="th-lauraScore">laura <span class="sa">↕</span></th>
+          <th onclick="sortBy('bekScore')" id="th-bekScore">bek <span class="sa">↕</span></th>
+          <th onclick="sortBy('visits')" id="th-visits">visits <span class="sa">↕</span></th>
+          <th onclick="sortBy('versatility')" id="th-versatility">versatility <span class="sa">↕</span></th>
+          <th onclick="sortBy('status')" id="th-status">status <span class="sa">↕</span></th>
+          <th onclick="sortBy('cluster')" id="th-cluster">cluster <span class="sa">↕</span></th>
+          <th onclick="sortBy('freq')" id="th-freq">freq <span class="sa">↕</span></th>
+          <th onclick="sortBy('target')" id="th-target">target <span class="sa">↕</span></th>
+          <th onclick="sortBy('booked')" id="th-booked">booked <span class="sa">↕</span></th>
+          <th>companions</th>
+          <th>notes</th>
+        </tr></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+    <!-- AI ANALYSIS -->
+    <div class="constrained">
+    <div class="panel" id="aiPanel">
+      <div class="panel-title">ai analysis — powered by local ollama · uses current filtered data</div>
+      <div class="panel-controls" style="flex-wrap:wrap;gap:10px;align-items:flex-end;">
+        <div class="filter-group">
+          <div class="filter-label">ollama host</div>
+          <select id="aiHost" onchange="fetchModels()" style="font-size:12px;padding:4px 8px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);">
+            <option value="https://chatworkhorse.tailb73767.ts.net">chatworkhorse (3060) — https</option>
+            <option value="http://chatworkhorse:11434">chatworkhorse (3060) — local</option>
+            <option value="https://imagebeast.tailb73767.ts.net">imagebeast (5090) — https</option>
+            <option value="http://imagebeast:11434">imagebeast (5090) — local</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">model</div>
+          <select id="aiModel" style="font-size:12px;padding:4px 8px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);">
+            <option value="">— select host first —</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">context window</div>
+          <select id="aiCtx" style="font-size:12px;padding:4px 8px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);">
+            <option value="0">default</option>
+            <option value="32768">32K</option>
+            <option value="65536">64K</option>
+            <option value="131072" selected>128K</option>
+            <option value="262144">256K</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">temperature</div>
+          <select id="aiTemp" style="font-size:12px;padding:4px 8px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);">
+            <option value="0.0">0.0 — deterministic</option>
+            <option value="0.1" selected>0.1 — focused</option>
+            <option value="0.2">0.2</option>
+            <option value="0.3">0.3</option>
+            <option value="0.5">0.5</option>
+            <option value="0.7">0.7 — default</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">scope</div>
+          <div id="aiScope" style="font-size:12px;color:var(--text2);padding-top:2px;">— load csv first —</div>
+        </div>
+        <div class="filter-group" style="margin-left:auto;margin-top:auto;display:flex;gap:8px;">
+          <button class="tog" id="aiBtn" onclick="runAnalysis(false)" style="padding:5px 16px;font-size:13px;">full</button>
+          <button class="tog" onclick="copyPrompt('full')" title="Copy full prompt + data to clipboard" style="padding:5px 10px;font-size:12px;">copy</button>
+          <button class="tog" id="aiBriefBtn" onclick="runBrief()" style="padding:5px 16px;font-size:13px;">brief</button>
+          <button class="tog" onclick="copyPrompt('brief')" title="Copy brief prompt + data to clipboard" style="padding:5px 10px;font-size:12px;">copy</button>
+          <button class="tog" id="aiQuickBtn" onclick="runAnalysis(true)" style="padding:5px 16px;font-size:13px;">top 20</button>
+          <button class="tog" onclick="copyPrompt('quick')" title="Copy top-20 prompt + data to clipboard" style="padding:5px 10px;font-size:12px;">copy</button>
+          <button class="tog" id="ai3x3Btn" onclick="run3x3()" style="padding:5px 16px;font-size:13px;">top 3×3</button>
+          <button class="tog" onclick="copyPrompt('quick')" title="Copy single-run prompt + data to clipboard" style="padding:5px 10px;font-size:12px;">copy</button>
+          <button class="tog" id="aiItinBtn" onclick="runItinerary()" style="padding:5px 16px;font-size:13px;">Deep Analysis</button>
+          <button class="tog" onclick="copyPrompt('itinerary')" title="Copy Deep Analysis prompt + data to clipboard" style="padding:5px 10px;font-size:12px;">Copy</button>
+          <button class="tog" id="aiStopBtn" onclick="stopAnalysis()" style="padding:5px 12px;display:none;">stop</button>
+          <button class="tog" onclick="clearAnalysis()" style="padding:5px 12px;">clear</button>
+        </div>
+      </div>
+      <div id="aiStatus" style="font-size:11px;color:var(--text3);margin:6px 0 0;display:none;"></div>
+      <div id="aiOutput" style="margin-top:12px;font-size:13px;line-height:1.7;color:var(--text);white-space:pre-wrap;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-height:600px;overflow-y:auto;border-top:0.5px solid var(--border);padding-top:12px;display:none;"></div>
+      <div style="font-size:11px;color:var(--text3);margin-top:8px;">requires <code style="font-size:11px">OLLAMA_ORIGINS=*</code> on the ollama host</div>
+    </div>
+    </div>
+</div>
+<div class="tooltip" id="tooltip"><div id="ttBody"></div></div>
+
+<script>
+const VISIT_COLORS=['#1D9E75','#378ADD','#BA7517','#D85A30','#E24B4A','#A32D2D'];
+const VISIT_LABELS=['never','once','twice','3×','4×','often'];
+const COMP_COLORS={laura:'#534AB7',bekah:'#D4537E',family:'#1D9E75',friend:'#378ADD',solo:'#888780'};
+const COMP_NAMES={solo:'solo',friend:'friend',family:'family',bekah:'Bekah',laura:'Laura'};
+const STATUS_COLORS={'decided':'#1D9E75','waiting-me':'#BA7517','waiting-other':'#D85A30','opportunistic':'#888780','aspirational':'#534AB7','someday':'#aaaaaa'};
+const STATUS_ALL=['decided','waiting-me','waiting-other','opportunistic','aspirational','someday'];
+
+let allData=[], gFiltered=[];
+let c1YouMin=7, c1LauraMin=2, c1ShowUnscored=false, c1JitterX=80, c1JitterY=20, c1Scorer='laura', c1Comp='laura';
+let c1Dots=[];
+let c2DesireMin=7, c2Comps=new Set(['solo','friend','family','bekah','laura']), c2JitterX=0, c2JitterY=20;
+let c2Dots=[];
+let gComp='all', gVisit='all', gDesireMin=1, gStatus='all';
+let qYou=8, qLaura=8;
+let sortCol='desire', sortDir=-1;
+
+// ── CSV ───────────────────────────────────────────────────────────────
+function splitLine(line){
+  const v=[];let c='',q=false;
+  for(let ch of line){if(ch==='"'){q=!q;}else if(ch===','&&!q){v.push(c.trim());c='';}else c+=ch;}
+  v.push(c.trim());return v;
+}
+function parseCSV(text){
+  const lines=text.trim().split(/\r?\n/);
+  if(lines.length<2)return[];
+  const raw=splitLine(lines[0]).map(h=>h.replace(/^"|"$/g,'').trim().toLowerCase());
+  const hm={};
+  raw.forEach((h,i)=>{
+    if(h==='l rank')hm.l_rank=i;
+    else if(h==='b rank')hm.b_rank=i;
+    else if(h==='my desire')hm.desire=i;
+    else if(h==='place')hm.place=i;
+    else if(h.startsWith('num visit'))hm.visits=i;
+    else if(h==='solo')hm.solo=i;
+    else if(h==='friend')hm.friend=i;
+    else if(h==='family')hm.family=i;
+    else if(h==='notes')hm.notes=i;
+    else if(h==='status')hm.status=i;
+    else if(h==='cluster')hm.cluster=i;
+    else if(h==='freq')hm.freq=i;
+    else if(h==='target')hm.target=i;
+    else if(h==='booked')hm.booked=i;
+  });
+  return lines.slice(1).map(line=>{
+    const v=splitLine(line);const r={};
+    Object.entries(hm).forEach(([k,i])=>r[k]=v[i]||'');
+    return r;
+  }).filter(r=>r.place&&r.desire);
+}
+function processRow(r){
+  const lrank=r.l_rank!==''&&!isNaN(r.l_rank)&&parseFloat(r.l_rank)>0?parseFloat(r.l_rank):null;
+  const brank=r.b_rank!==''&&!isNaN(r.b_rank)&&parseFloat(r.b_rank)>0?parseFloat(r.b_rank):null;
+  const desire=parseFloat(r.desire)||0;
+  const visits=parseInt(r.visits)||0;
+  const lval=lrank!=null;
+  const lauraScore=lrank;
+  const bval=brank!=null;
+  const bekScore=brank;
+  const solo=(r.solo||'').toLowerCase().trim()==='x';
+  const friend=(r.friend||'').trim()!=='';
+  const family=(r.family||'').trim()!=='';
+  const friendRaw=(r.friend||'').trim();
+  const familyRaw=(r.family||'').trim();
+  const versatility=[solo,friend,family,bval,lval].filter(Boolean).length;
+  const compList=[];
+  if(solo)compList.push('solo');if(friend)compList.push('friend');
+  if(family)compList.push('family');if(bval)compList.push('Bekah');
+  if(lval)compList.push('Laura');
+  let dominant='solo';
+  if(lval)dominant='laura';else if(bval)dominant='bekah';
+  else if(family)dominant='family';else if(friend)dominant='friend';
+  return{name:r.place.trim(),lrank,brank,desire,visits,solo,friend,family,bekah:bval,laura:lval,lauraScore,bekScore,versatility,compList,dominant,status:(r.status||'').trim().toLowerCase(),notes:(r.notes||'').trim(),cluster:(r.cluster||'').trim(),freq:(r.freq||'').trim(),target:(r.target||'').trim(),booked:(r.booked||'').trim(),friendRaw,familyRaw};
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────
+function isDark(){return window.matchMedia('(prefers-color-scheme:dark)').matches;}
+
+function setupCanvas(id,fixedH){
+  const canvas=document.getElementById(id);
+  const wrap=canvas.parentElement;
+  // dynamic: fill remaining viewport height after panel controls
+  const panel=wrap.closest('.panel');
+  const panelTop=panel?panel.getBoundingClientRect().top+window.scrollY:0;
+  const controlsHeight=wrap.previousElementSibling?wrap.previousElementSibling.getBoundingClientRect().bottom-panel.getBoundingClientRect().top:80;
+  const availH=Math.max(300, window.innerHeight - controlsHeight - 80);
+  const H=fixedH||availH;
+  wrap.style.height=H+'px';
+  canvas.style.height=H+'px';
+  const dpr=window.devicePixelRatio||1;
+  const W=wrap.clientWidth;
+  canvas.width=W*dpr;canvas.height=H*dpr;
+  canvas.style.width=W+'px';
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  return{ctx,W,H};
+}
+
+function lauraColor(score,alpha){
+  const t=Math.max(0,Math.min(1,(score-1)/9));
+  const r=Math.round(60+t*(83-60));
+  const g=Math.round(55+t*(55-55));
+  const b=Math.round(140+t*(183-140));
+  return`rgba(${r},${g},${b},${alpha})`;
+}
+
+function seededRand(seed){
+  const x=Math.sin(seed*9301+49297)*233280;
+  return x-Math.floor(x);
+}
+
+function showTooltip(e,items,header){
+  const tt=document.getElementById('tooltip');
+  const body=document.getElementById('ttBody');
+  body.innerHTML='';
+  if(header){const h=document.createElement('div');h.className='tt-hdr';h.textContent=header;body.appendChild(h);}
+  items.forEach((d,i)=>{
+    if(i>0){const s=document.createElement('div');s.className='tt-sep';body.appendChild(s);}
+    const nm=document.createElement('div');nm.className='tt-name';nm.textContent=d.name;body.appendChild(nm);
+    [['your desire',d.desire],['laura',d.lauraScore!=null?d.lauraScore:'—'],['bek',d.bekScore!=null?d.bekScore:'—'],
+     ['visits',d.visits+' ('+VISIT_LABELS[Math.min(d.visits,5)]+')'],
+     ['companions',d.compList.join(', ')||'—'],['versatility',d.versatility+'/5'],
+     ['status',d.status||'—'],
+     ...(d.cluster?[['cluster',d.cluster]]:[]),
+     ...(d.notes?[['notes',d.notes]]:[])
+    ].forEach(([k,v])=>{
+      const row=document.createElement('div');row.className='tt-row';
+      row.innerHTML=`<span class="tt-key">${k}</span><span class="tt-val">${v}</span>`;
+      body.appendChild(row);
+    });
+  });
+  tt.style.left=(e.clientX+16)+'px';
+  tt.style.top=Math.max(8,e.clientY-60)+'px';
+  tt.style.display='block';
+}
+function hideTooltip(){document.getElementById('tooltip').style.display='none';}
+
+function drawDot(ctx,x,y,r,fill,stroke,count,dark){
+  ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);
+  ctx.fillStyle=fill;ctx.fill();
+  ctx.strokeStyle=stroke;ctx.lineWidth=1.5;ctx.stroke();
+  if(count>1){
+    const br=8,bx=x+r*0.7,by=y-r*0.7;
+    ctx.beginPath();ctx.arc(bx,by,br,0,Math.PI*2);
+    ctx.fillStyle=dark?'#333331':'#ffffff';ctx.fill();
+    ctx.strokeStyle=stroke;ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle=stroke;ctx.font='bold 9px -apple-system,sans-serif';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(count,bx,by);ctx.textBaseline='alphabetic';
+  }
+}
+
+function drawLabels(ctx,dots,W,dark,skipOverlapCheck){
+  const drawn=[];
+  [...dots].sort((a,b)=>{
+    const ad=a.items?a.items[0].desire:0;
+    const bd=b.items?b.items[0].desire:0;
+    return bd-ad;
+  }).forEach(dot=>{
+    const names=(dot.items||[dot]).map(d=>d.name);
+    const count=names.length;
+    const fs=count>=6?8:count>=4?9:10;
+    const lineH=fs+3;
+    const totalH=count*lineH;
+    ctx.font=`bold ${fs}px -apple-system,sans-serif`;
+    const maxW=Math.max(...names.map(n=>ctx.measureText(n).width));
+    const col=dark?'#c8c7c0':'#333';
+    const ly=dot.y-(totalH/2)+lineH;
+
+    // try right, fall back to left
+    let lx=dot.x+dot.r+3;
+    if(lx+maxW>W-4) lx=dot.x-dot.r-3-maxW;
+
+    const box={x:lx-1,y:ly-lineH,w:maxW+2,h:totalH+2};
+    const overlaps=!skipOverlapCheck&&drawn.some(b=>box.x<b.x+b.w&&box.x+box.w>b.x&&box.y<b.y+b.h&&box.y+box.h>b.y);
+    if(!overlaps){
+      ctx.textAlign='left';ctx.fillStyle=col;
+      names.forEach((n,i)=>ctx.fillText(n,lx,ly+i*lineH));
+      drawn.push(box);
+    }
+  });
+}
+
+function drawAxes(ctx,PAD,plotW,plotH,W,H,xMin,xMax,yMin,yMax,px,py,dark,xLabel,yLabel){
+  ctx.strokeStyle=dark?'rgba(255,255,255,0.07)':'rgba(0,0,0,0.07)';ctx.lineWidth=0.5;
+  for(let i=xMin;i<=xMax;i++){ctx.beginPath();ctx.moveTo(px(i),PAD.t);ctx.lineTo(px(i),PAD.t+plotH);ctx.stroke();}
+  for(let i=Math.max(1,yMin);i<=yMax;i++){ctx.beginPath();ctx.moveTo(PAD.l,py(i));ctx.lineTo(PAD.l+plotW,py(i));ctx.stroke();}
+  ctx.strokeStyle=dark?'rgba(255,255,255,0.25)':'rgba(0,0,0,0.25)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(PAD.l,PAD.t);ctx.lineTo(PAD.l,PAD.t+plotH);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(PAD.l,PAD.t+plotH);ctx.lineTo(PAD.l+plotW,PAD.t+plotH);ctx.stroke();
+  ctx.fillStyle=dark?'#6b6a65':'#888780';ctx.font='10px -apple-system,sans-serif';
+  ctx.textAlign='center';
+  for(let i=xMin;i<=xMax;i++)ctx.fillText(i,px(i),PAD.t+plotH+14);
+  ctx.textAlign='right';
+  for(let i=Math.max(1,yMin);i<=yMax;i++)ctx.fillText(i,PAD.l-5,py(i)+3);
+  ctx.font='11px -apple-system,sans-serif';ctx.textAlign='center';
+  ctx.fillText(xLabel,PAD.l+plotW/2,H-6);
+  ctx.save();ctx.translate(12,PAD.t+plotH/2);ctx.rotate(-Math.PI/2);ctx.fillText(yLabel,0,0);ctx.restore();
+}
+
+// ── CHART 1 ───────────────────────────────────────────────────────────
+function drawChart1(){
+  const fixedH=c1ShowUnscored?null:null;
+  const{ctx,W,H}=setupCanvas('c1Canvas',null);
+  const dark=isDark();
+  const PAD={l:48,r:30,t:24,b:44};
+  const plotW=W-PAD.l-PAD.r,plotH=H-PAD.t-PAD.b;
+
+  const scorerKey=c1Scorer==='laura'?'lauraScore':'bekScore';
+  const local=allData.filter(d=>{
+    if(d.desire<c1YouMin)return false;
+    if(!c1ShowUnscored&&d[scorerKey]==null)return false;
+    if(d[scorerKey]!=null&&d[scorerKey]<c1LauraMin)return false;
+    if(c1Comp==='bekah'&&!d.bekah)return false;
+    if(c1Comp==='laura'&&!d.laura)return false;
+    return true;
+  });
+
+  const xMin=c1YouMin,xMax=10;
+  const yMin=c1ShowUnscored?0:(c1LauraMin>1?c1LauraMin:0),yMax=10;
+  // (scorerKey used below for dot placement)
+  const xR=xMax-xMin+1,yR=yMax-yMin+1;
+  function px(x){return PAD.l+((x-xMin+0.3)/(xR+0.6))*plotW;}
+  function py(y){return PAD.t+(1-((y-yMin+0.3)/(yR+0.6)))*plotH;}
+
+  ctx.fillStyle=dark?'#1e1e1c':'#ffffff';ctx.fillRect(0,0,W,H);
+  drawAxes(ctx,PAD,plotW,plotH,W,H,xMin,xMax,yMin,yMax,px,py,dark,'your desire →',(c1Scorer==='laura'?"laura's desire →":"bek's desire →"));
+
+  // build dots with jitter — one dot per destination (no grouping in chart 1)
+  c1Dots=[];
+  local.forEach((d,idx)=>{
+    const score=d[scorerKey];
+    const baseX=px(d.desire);
+    const baseY=score!=null?py(score):py(c1ShowUnscored?0.3:yMin);
+    // deterministic jitter per destination
+    const seed=d.name.split('').reduce((a,c)=>a+c.charCodeAt(0),0);
+    const jx=(seededRand(seed)-0.5)*c1JitterX;
+    const jy=(seededRand(seed+1)-0.5)*c1JitterY;
+    const x=baseX+jx, y=baseY+jy;
+    const r=12;
+    const noScore=score==null;
+    const fill=noScore?'rgba(136,135,128,0.25)':lauraColor(score,0.6);
+    const stroke=noScore?'rgba(136,135,128,0.6)':lauraColor(score,1);
+    drawDot(ctx,x,y,r,fill,stroke,1,dark);
+    c1Dots.push({x,y,r,items:[d],noScore});
+  });
+
+  drawLabels(ctx,c1Dots,W,dark,true);
+}
+
+function setupC1Events(){
+  const canvas=document.getElementById('c1Canvas');
+  canvas.addEventListener('mousemove',e=>{
+    const rect=canvas.getBoundingClientRect();
+    const mx=e.clientX-rect.left,my=e.clientY-rect.top;
+    let best=null,bestD=Infinity;
+    c1Dots.forEach(dot=>{
+      const d=Math.sqrt((mx-dot.x)**2+(my-dot.y)**2);
+      if(d<=dot.r+10&&d<bestD){bestD=d;best=dot;}
+    });
+    if(best){showTooltip(e,best.items,null);canvas.style.cursor='pointer';}
+    else{hideTooltip();canvas.style.cursor='default';}
+  });
+  canvas.addEventListener('mouseleave',hideTooltip);
+}
+
+// ── CHART 2 ───────────────────────────────────────────────────────────
+function drawChart2(){
+  const{ctx,W,H}=setupCanvas('c2Canvas',null);
+  const dark=isDark();
+  const PAD={l:48,r:160,t:24,b:52};
+  const plotW=W-PAD.l-PAD.r,plotH=H-PAD.t-PAD.b;
+
+  const activeComps=[...c2Comps];
+  if(!activeComps.length){ctx.fillStyle=dark?'#1e1e1c':'#ffffff';ctx.fillRect(0,0,W,H);return;}
+
+  const local=allData.filter(d=>d.desire>=c2DesireMin);
+  const yMin=c2DesireMin>1?c2DesireMin:1,yMax=10,yR=yMax-yMin+1;
+
+  // evenly space active companion columns
+  const xPos={};
+  activeComps.forEach((ck,i)=>xPos[ck]=i/Math.max(activeComps.length-1,1));
+  function px(t){return PAD.l+t*plotW;}
+  function py(y){return PAD.t+(1-((y-yMin+0.3)/(yR+0.6)))*plotH;}
+
+  ctx.fillStyle=dark?'#1e1e1c':'#ffffff';ctx.fillRect(0,0,W,H);
+
+  // grid
+  ctx.strokeStyle=dark?'rgba(255,255,255,0.07)':'rgba(0,0,0,0.07)';ctx.lineWidth=0.5;
+  activeComps.forEach(ck=>{ctx.beginPath();ctx.moveTo(px(xPos[ck]),PAD.t);ctx.lineTo(px(xPos[ck]),PAD.t+plotH);ctx.stroke();});
+  for(let i=yMin;i<=yMax;i++){ctx.beginPath();ctx.moveTo(PAD.l,py(i));ctx.lineTo(PAD.l+plotW,py(i));ctx.stroke();}
+  ctx.strokeStyle=dark?'rgba(255,255,255,0.25)':'rgba(0,0,0,0.25)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(PAD.l,PAD.t);ctx.lineTo(PAD.l,PAD.t+plotH);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(PAD.l,PAD.t+plotH);ctx.lineTo(PAD.l+plotW,PAD.t+plotH);ctx.stroke();
+
+  // y ticks
+  ctx.fillStyle=dark?'#6b6a65':'#888780';ctx.font='10px -apple-system,sans-serif';ctx.textAlign='right';
+  for(let i=yMin;i<=yMax;i++)ctx.fillText(i,PAD.l-5,py(i)+3);
+
+  // x companion labels
+  ctx.font='11px -apple-system,sans-serif';ctx.textAlign='center';
+  activeComps.forEach(ck=>{ctx.fillStyle=COMP_COLORS[ck];ctx.fillText(COMP_NAMES[ck],px(xPos[ck]),PAD.t+plotH+16);});
+  ctx.fillStyle=dark?'#6b6a65':'#888780';ctx.fillText('companion →',PAD.l+plotW/2,PAD.t+plotH+34);
+  ctx.save();ctx.translate(12,PAD.t+plotH/2);ctx.rotate(-Math.PI/2);ctx.fillText('your desire →',0,0);ctx.restore();
+
+  // group by companion+desire
+  const groups={};
+  local.forEach(d=>{
+    activeComps.forEach(ck=>{
+      if(ck==='solo'&&!d.solo)return;
+      if(ck==='friend'&&!d.friend)return;
+      if(ck==='family'&&!d.family)return;
+      if(ck==='bekah'&&!d.bekah)return;
+      if(ck==='laura'&&d.laura===false)return;
+      const key=ck+'|'+d.desire;
+      if(!groups[key])groups[key]={items:[],ck,desire:d.desire};
+      groups[key].items.push(d);
+    });
+  });
+
+  c2Dots=[];
+  Object.values(groups).forEach(g=>{
+    const seed=g.ck.split('').reduce((a,c)=>a+c.charCodeAt(0),0)+(g.desire*7);
+    const jx=(seededRand(seed)-0.5)*c2JitterX;
+    const jy=(seededRand(seed+1)-0.5)*c2JitterY;
+    const x=px(xPos[g.ck])+jx;
+    const y=py(g.desire)+jy;
+    const maxV=Math.max(...g.items.map(d=>d.versatility));
+    const r=Math.max(8,maxV*5+2+(g.items.length>1?3:0));
+    const lead=g.items.slice().sort((a,b)=>b.desire-a.desire)[0];
+    const col=VISIT_COLORS[Math.min(lead.visits,5)];
+    drawDot(ctx,x,y,r,col+'88',col+'cc',g.items.length,dark);
+    c2Dots.push({x,y,r,items:g.items,ck:g.ck});
+  });
+
+  drawLabels(ctx,c2Dots,W,dark);
+
+  // legend
+  const leg=document.getElementById('c2Legend');leg.innerHTML='';
+  VISIT_LABELS.forEach((lbl,i)=>leg.innerHTML+=`<span><span class="ldot" style="background:${VISIT_COLORS[i]}"></span>${lbl}</span> `);
+}
+
+function setupC2Events(){
+  const canvas=document.getElementById('c2Canvas');
+  canvas.addEventListener('mousemove',e=>{
+    const rect=canvas.getBoundingClientRect();
+    const mx=e.clientX-rect.left,my=e.clientY-rect.top;
+    let best=null,bestD=Infinity;
+    c2Dots.forEach(dot=>{
+      const d=Math.sqrt((mx-dot.x)**2+(my-dot.y)**2);
+      if(d<=dot.r+10&&d<bestD){bestD=d;best=dot;}
+    });
+    if(best){
+      const hdr=(best.items.length>1?best.items.length+' destinations · ':'')+COMP_NAMES[best.ck]+' trips';
+      showTooltip(e,best.items,hdr);canvas.style.cursor='pointer';
+    }else{hideTooltip();canvas.style.cursor='default';}
+  });
+  canvas.addEventListener('mouseleave',hideTooltip);
+}
+
+// ── GLOBAL / QUADRANT / TABLE ─────────────────────────────────────────
+function applyGlobal(){
+  setTimeout(updateAiScope,0);
+  gFiltered=allData.filter(d=>{
+    if(d.desire<gDesireMin)return false;
+    if(gVisit==='new'&&d.visits>0)return false;
+    if(gVisit==='familiar'&&d.visits===0)return false;
+    if(gComp==='solo'&&!d.solo)return false;
+    if(gComp==='friend'&&!d.friend)return false;
+    if(gComp==='family'&&!d.family)return false;
+    if(gComp==='bekah'&&!d.bekah)return false;
+    if(gComp==='laura'&&d.laura===false)return false;
+    if(gStatus!=='all'&&d.status!==gStatus)return false;
+    return true;
+  });
+}
+
+function updateStats(){
+  document.getElementById('statTotal').textContent=allData.length;
+  if(!allData.length)return;
+  document.getElementById('statYou').textContent=(allData.reduce((s,d)=>s+d.desire,0)/allData.length).toFixed(1);
+  const ld=allData.filter(d=>d.lauraScore!=null);
+  document.getElementById('statLaura').textContent=ld.length?(ld.reduce((s,d)=>s+d.lauraScore,0)/ld.length).toFixed(1):'—';
+  const bd=allData.filter(d=>d.bekScore!=null);
+  document.getElementById('statBek').textContent=bd.length?(bd.reduce((s,d)=>s+d.bekScore,0)/bd.length).toFixed(1):'—';
+  if(ld.length){const top=[...ld].sort((a,b)=>(b.desire+b.lauraScore)-(a.desire+a.lauraScore))[0];document.getElementById('statTop').textContent=top.name;}
+}
+
+function renderQuadrant(){
+  const qg=document.getElementById('quadGrid');qg.innerHTML='';
+  const defs=[
+    {label:'both want it',sub:`you ≥${qYou} · laura ≥${qLaura}`,bg:'#EAF3DE',border:'#1D9E75',test:d=>d.desire>=qYou&&d.lauraScore!=null&&d.lauraScore>=qLaura},
+    {label:'laura more than you',sub:`you <${qYou} · laura ≥${qLaura}`,bg:'#E6F1FB',border:'#378ADD',test:d=>d.desire<qYou&&d.lauraScore!=null&&d.lauraScore>=qLaura},
+    {label:'you want it, she scored lower',sub:`you ≥${qYou} · laura scored <${qLaura}`,bg:'#FCEBEB',border:'#E24B4A',test:d=>d.desire>=qYou&&d.lauraScore!=null&&d.lauraScore<qLaura},
+    {label:"you want it, she hasn't scored",sub:`you ≥${qYou} · no laura score`,bg:'#F5EEF8',border:'#8E44AD',test:d=>d.desire>=qYou&&d.lauraScore==null},
+    {label:'neither priority',sub:`you <${qYou} · laura <${qLaura} or unscored`,bg:'#FAEEDA',border:'#BA7517',test:d=>d.desire<qYou&&(d.lauraScore==null||d.lauraScore<qLaura)},
+  ];
+  defs.forEach(q=>{
+    const members=gFiltered.filter(q.test);
+    const card=document.createElement('div');card.className='quad-card';
+    card.style.cssText=`background:${q.bg};border:1px solid ${q.border}44;border-radius:var(--radius-lg);padding:12px;`;
+    const title=document.createElement('div');title.className='quad-title';title.style.color=q.border;title.textContent=q.label+' ('+members.length+')';
+    const sub=document.createElement('div');sub.className='quad-sub';sub.style.color=q.border;sub.textContent=q.sub;
+    const chips=document.createElement('div');chips.className='quad-chips';
+    members.forEach(d=>{
+      const c=document.createElement('span');c.className='chip';c.textContent=d.name;
+      const col=COMP_COLORS[d.dominant]||'#888780';
+      c.style.cssText=`background:${col}22;border-color:${col}88;color:${col};`;
+      chips.appendChild(c);
+    });
+    card.appendChild(title);card.appendChild(sub);card.appendChild(chips);qg.appendChild(card);
+  });
+}
+
+function renderTable(){
+  const dateKey=(s)=>{
+    s=s||'';
+    let m=s.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if(m)return parseInt(m[3])*10000+parseInt(m[1])*100+parseInt(m[2]);
+    m=s.match(/(\d{1,2})\/(\d{4})/);
+    if(m)return parseInt(m[2])*10000+parseInt(m[1])*100;
+    return -Infinity;
+  };
+  const sorted=[...gFiltered].sort((a,b)=>{
+    if(sortCol==='target'||sortCol==='booked')
+      return sortDir*(dateKey(a[sortCol])-dateKey(b[sortCol]));
+    const av=a[sortCol]??-Infinity,bv=b[sortCol]??-Infinity;
+    if(typeof av==='string')return sortDir*av.localeCompare(bv);
+    return sortDir*(av-bv);
+  });
+  document.getElementById('rowCount').textContent=sorted.length+' destination'+(sorted.length!==1?'s':'');
+  const tbody=document.getElementById('tableBody');tbody.innerHTML='';
+  sorted.forEach(d=>{
+    const tr=document.createElement('tr');
+    const pips=d.compList.map(c=>{const k=c.toLowerCase();const col=COMP_COLORS[k]||COMP_COLORS.solo;return`<span class="pip" style="background:${col}55;border:1px solid ${col}" title="${c}"></span>`;}).join('');
+    tr.innerHTML=`
+      <td style="font-weight:500">${d.name}</td>
+      <td><div class="bar-wrap"><div class="bar" style="width:${d.desire*16}px;background:var(--green)"></div><span style="font-size:12px">${d.desire}</span></div></td>
+      <td>${d.lauraScore!=null?`<div class="bar-wrap"><div class="bar" style="width:${d.lauraScore*16}px;background:var(--purple)"></div><span style="font-size:12px">${d.lauraScore}</span></div>`:`<span style="color:var(--text3)">—</span>`}</td>
+      <td>${d.bekScore!=null?`<div class="bar-wrap"><div class="bar" style="width:${d.bekScore*16}px;background:var(--pink)"></div><span style="font-size:12px">${d.bekScore}</span></div>`:`<span style="color:var(--text3)">—</span>`}</td>
+      <td><span style="color:${VISIT_COLORS[Math.min(d.visits,5)]};font-weight:500">${d.visits}</span> <span style="color:var(--text3);font-size:11px">${VISIT_LABELS[Math.min(d.visits,5)]}</span></td>
+      <td style="color:var(--text2);font-size:12px">${d.versatility}/5</td>
+      <td>${d.status?`<span style="font-size:11px;padding:2px 7px;border-radius:10px;background:${STATUS_COLORS[d.status]||'#888'}22;color:${STATUS_COLORS[d.status]||'#888'};border:1px solid ${STATUS_COLORS[d.status]||'#888'}66">${d.status}</span>`:'<span style="color:var(--text3)">—</span>'}</td>
+      <td style="font-size:11px;color:var(--text3)">${d.cluster||'—'}</td>
+      <td style="font-size:11px;color:var(--text3)">${d.freq||'—'}</td>
+      <td style="font-size:11px;color:var(--text2)">${d.target||'—'}</td>
+      <td style="font-size:11px;color:var(--text2)">${d.booked||'—'}</td>
+      <td>${pips}<span style="font-size:11px;color:var(--text3);margin-left:3px">${d.compList.join(', ')}</span></td>
+      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:var(--text3)" title="${d.notes.replace(/"/g,'&quot;')}">${d.notes||'—'}</td>`;
+    tbody.appendChild(tr);
+  });
+  document.querySelectorAll('th[id^="th-"]').forEach(th=>{
+    const col=th.id.replace('th-','');th.classList.toggle('sorted',col===sortCol);
+    const sa=th.querySelector('.sa');if(sa)sa.textContent=col===sortCol?(sortDir===-1?'↓':'↑'):'↕';
+  });
+}
+
+
+// ── CONTROLS ──────────────────────────────────────────────────────────
+function setC1JitterX(v){c1JitterX=parseInt(v);document.getElementById('c1JitterXVal').textContent=v;drawChart1();}
+function setC1JitterY(v){c1JitterY=parseInt(v);document.getElementById('c1JitterYVal').textContent=v;drawChart1();}
+function setC1You(v){c1YouMin=parseInt(v);document.getElementById('c1YouVal').textContent=v;drawChart1();}
+function setC1Laura(v){c1LauraMin=parseInt(v);document.getElementById('c1LauraVal').textContent=v;drawChart1();}
+function setC1Scorer(v){
+  c1Scorer=v;
+  drawChart1();
+}
+function setC1Comp(v){
+  c1Comp=v;
+  ['bekah','laura'].forEach(s=>{
+    const el=document.getElementById('c1Comp'+s);
+    if(el)el.classList.toggle('active',v===s);
+  });
+  if(v==='bekah')setC1Scorer('bek');
+  else setC1Scorer('laura');
+}
+function toggleC1Unscored(){c1ShowUnscored=!c1ShowUnscored;document.getElementById('c1UnscoredBtn').classList.toggle('active',c1ShowUnscored);drawChart1();}
+function setC2JitterX(v){c2JitterX=parseInt(v);document.getElementById('c2JitterXVal').textContent=v;drawChart2();}
+function setC2JitterY(v){c2JitterY=parseInt(v);document.getElementById('c2JitterYVal').textContent=v;drawChart2();}
+function setC2Desire(v){c2DesireMin=parseInt(v);document.getElementById('c2DesireVal').textContent=v;drawChart2();}
+function toggleC2Comp(ck){
+  if(c2Comps.has(ck))c2Comps.delete(ck);else c2Comps.add(ck);
+  const btn=document.getElementById('c2'+ck);
+  btn.classList.toggle('active',c2Comps.has(ck));
+  btn.textContent=(c2Comps.has(ck)?'✓ ':'')+COMP_NAMES[ck];
+  drawChart2();
+}
+function setGStatus(v){
+  gStatus=v;
+  applyGlobal();renderQuadrant();renderTable();
+}
+let sbFilter='all';
+let sbScorer='laura';
+let sbDots=[];
+let sbJitterX=160,sbJitterY=300;
+
+function setSbScorer(v){
+  sbScorer=v;
+  ['laura','bek','both','neither'].forEach(s=>{
+    const id='sbScore'+s.charAt(0).toUpperCase()+s.slice(1);
+    const el=document.getElementById(id);if(el)el.classList.toggle('active',v===s);
+  });
+  // hide sliders when neither selected - they don't apply
+  const sliderVis=v==='neither'?'hidden':'visible';
+  const xg=document.getElementById('sbJitterXSlider');if(xg)xg.closest('.filter-group').style.visibility=sliderVis;
+  const yg=document.getElementById('sbJitterYSlider');if(yg)yg.closest('.filter-group').style.visibility=sliderVis;
+  drawStatusBubble();
+}
+function setSbJitterX(v){sbJitterX=parseInt(v);document.getElementById('sbJitterXVal').textContent=v;drawStatusBubble();}
+function setSbJitterY(v){sbJitterY=parseInt(v);document.getElementById('sbJitterYVal').textContent=v;drawStatusBubble();}
+function setSbFilter(v){
+  sbFilter=v;
+  const lbl=document.getElementById('sbActiveFilter');
+  if(lbl)lbl.textContent=v==='all'?'all destinations':v;
+  gStatus=v==='all'?'all':v;
+  const gsa=document.getElementById('gSAll');if(gsa)gsa.classList.toggle('active',v==='all');
+  STATUS_ALL.forEach(s=>{const el=document.getElementById('gS'+s);if(el)el.classList.toggle('active',v===s);});
+  applyGlobal();renderQuadrant();renderTable();
+  drawStatusBubble();
+}
+
+function drawStatusBubbleNeither(wrap,canvas){
+  const dark=isDark();
+  const dpr=window.devicePixelRatio||1;
+  const W=wrap.clientWidth;
+  const VISIT_H=110; // height per visit lane
+  const VISIT_LABELS_MAP={0:'never',1:'once',2:'twice',3:'3×',4:'4×',5:'often'};
+  const VISIT_VALS=[0,1,2,3,4,5];
+  const H=VISIT_VALS.length*VISIT_H+60;
+  wrap.style.height=H+'px';canvas.style.height=H+'px';
+  canvas.width=W*dpr;canvas.height=H*dpr;
+  canvas.style.width=W+'px';
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  ctx.fillStyle=dark?'#1e1e1c':'#ffffff';
+  ctx.fillRect(0,0,W,H);
+
+  const LABEL_W=70;
+  const PAD_R=24;
+  const plotW=W-LABEL_W-PAD_R;
+
+  // get neither destinations (no laura, no bek score)
+  const neitherData=allData.filter(d=>d.lauraScore==null&&d.bekScore==null&&d.desire>0);
+  const filtered=sbFilter==='all'?neitherData:neitherData.filter(d=>d.status===sbFilter);
+
+  const allDesires=allData.map(d=>d.desire);
+  const xMin=Math.min(...allDesires);
+  const xMax=Math.max(...allDesires);
+  const xRange=xMax-xMin||1;
+  function px(desire){return LABEL_W+((desire-xMin)/xRange)*plotW;}
+
+  sbDots=[];
+
+  // x-axis labels
+  ctx.fillStyle=dark?'#6b6a65':'#888780';
+  ctx.font='10px -apple-system,sans-serif';
+  ctx.textAlign='center';
+  for(let i=Math.ceil(xMin);i<=xMax;i++) ctx.fillText(i,px(i),20);
+  ctx.fillText('desire →',LABEL_W+plotW/2,H-8);
+
+  VISIT_VALS.forEach((v,vi)=>{
+    const cy=vi*VISIT_H+VISIT_H/2+30;
+    const items=filtered.filter(d=>d.visits===v);
+
+    // lane label
+    ctx.fillStyle=dark?'#6b6a65':'#888780';
+    ctx.font='500 11px -apple-system,sans-serif';
+    ctx.textAlign='right';
+    ctx.fillText(VISIT_LABELS_MAP[v],LABEL_W-10,cy+4);
+
+    // separator line
+    ctx.strokeStyle=dark?'rgba(255,255,255,0.04)':'rgba(0,0,0,0.04)';
+    ctx.lineWidth=0.5;
+    ctx.beginPath();ctx.moveTo(LABEL_W,vi*VISIT_H+30);ctx.lineTo(W-PAD_R,vi*VISIT_H+30);ctx.stroke();
+
+    if(!items.length)return;
+
+    // group by desire value for stacking
+    const byDesire={};
+    items.forEach(d=>{
+      const key=d.desire;
+      if(!byDesire[key])byDesire[key]=[];
+      byDesire[key].push(d);
+    });
+
+    Object.entries(byDesire).forEach(([desireKey,group])=>{
+      const desire=parseFloat(desireKey);
+      const x=px(desire);
+      const r=Math.max(5,desire*1.0);
+      const col=STATUS_COLORS[group[0].status]||'#888';
+
+      // draw dot (use first item's status color, or split if mixed)
+      ctx.beginPath();ctx.arc(x,cy,r,0,Math.PI*2);
+      ctx.fillStyle=col+'99';ctx.fill();
+      ctx.strokeStyle=col+'cc';ctx.lineWidth=1.5;ctx.stroke();
+
+      // register all for tooltip
+      group.forEach(d=>sbDots.push({x,y:cy,r,d,s:d.status}));
+
+      // draw name list to the right of dot
+      const listX=x+r+6;
+      ctx.textAlign='left';
+      ctx.font='11px -apple-system,sans-serif';
+      group.forEach((d,gi)=>{
+        const col2=STATUS_COLORS[d.status]||'#888';
+        ctx.fillStyle=col2;
+        ctx.fillText(d.name,listX,cy-((group.length-1)*7)+(gi*14));
+      });
+    });
+  });
+}
+
+function drawStatusBubble(){
+  if(!allData.length)return;
+  const wrap=document.getElementById('sbWrap');
+  const canvas=document.getElementById('sbCanvas');
+  if(!wrap||!canvas)return;
+  if(sbScorer==='neither'){drawStatusBubbleNeither(wrap,canvas);return;}
+  const dark=isDark();
+  const dpr=window.devicePixelRatio||1;
+  const W=wrap.clientWidth;
+  const BUCKET_H=140;
+  const H=STATUS_ALL.length*BUCKET_H+60;
+  wrap.style.height=H+'px';canvas.style.height=H+'px';
+  canvas.width=W*dpr;canvas.height=H*dpr;
+  canvas.style.width=W+'px';
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  ctx.fillStyle=dark?'#1e1e1c':'#ffffff';
+  ctx.fillRect(0,0,W,H);
+
+  const LABEL_W=130;
+  const PAD_R=24;
+  const plotW=W-LABEL_W-PAD_R;
+  const plotH=H-60; // usable vertical space for dots
+
+  // dynamic x range from actual data
+  const allDesires=allData.map(d=>d.desire);
+  const xMin=Math.min(...allDesires);
+  const xMax=Math.max(...allDesires);
+  const xRange=xMax-xMin||1;
+  function px(desire){return LABEL_W+((desire-xMin)/xRange)*plotW;}
+
+  // group data by status
+  const groups={};
+  STATUS_ALL.forEach(s=>groups[s]=[]);
+  allData.forEach(d=>{if(groups[d.status])groups[d.status].push(d);});
+
+  sbDots=[];
+
+  // draw lane labels and separators first (always in fixed positions)
+  STATUS_ALL.forEach((s,si)=>{
+    const cy=si*BUCKET_H+BUCKET_H/2+30;
+    const col=STATUS_COLORS[s]||'#888';
+    const items=groups[s]||[];
+    const isActive=sbFilter==='all'||sbFilter===s;
+    const scoredItems=items.filter(d=>sbScorer==='laura'?d.lauraScore!=null:sbScorer==='bek'?d.bekScore!=null:(d.lauraScore!=null||d.bekScore!=null));
+    ctx.fillStyle=isActive?col:(dark?'#333':'#ddd');
+    ctx.font='500 12px -apple-system,sans-serif';
+    ctx.textAlign='right';
+    ctx.fillText(s+' ('+scoredItems.length+'/'+items.length+')',LABEL_W-10,cy+4);
+    ctx.strokeStyle=dark?'rgba(255,255,255,0.04)':'rgba(0,0,0,0.04)';
+    ctx.lineWidth=0.5;
+    ctx.beginPath();ctx.moveTo(LABEL_W,si*BUCKET_H+30);ctx.lineTo(W-PAD_R,si*BUCKET_H+30);ctx.stroke();
+  });
+
+  // draw dimmed dots first (inactive), then active dots on top
+  // X nudge: Laura score (0-10) normalized to -0.5..+0.5, scaled by sbJitterX
+  // Y position: Laura score drives vertical within lane/canvas, scaled by sbJitterY
+  const drawGroup=(s,dimmed)=>{
+    const col=STATUS_COLORS[s]||'#888';
+    const items=groups[s]||[];
+    const si=STATUS_ALL.indexOf(s);
+    const laneCy=si*BUCKET_H+BUCKET_H/2+30;
+    const spreadY=dimmed?BUCKET_H*0.6:(sbFilter==='all'?BUCKET_H*0.6:plotH*0.85);
+    const centerY=dimmed?laneCy:(sbFilter==='all'?laneCy:plotH/2+30);
+    const fillAlpha=dimmed?0.03:0.6;
+    const strokeAlpha=dimmed?0.06:0.95;
+    const placeDot=(d,push)=>{
+      const score=sbScorer==='laura'?d.lauraScore:sbScorer==='bek'?d.bekScore:(d.lauraScore??d.bekScore);
+      if(score==null)return;
+      const factor=(score/10)-0.5;
+      const xNudge=factor*(sbJitterX*0.8);
+      const yRange=sbJitterY===0?0:spreadY*(sbJitterY/500);
+      const yNudge=((1-(score/10))-0.5)*yRange;
+      const x=Math.min(W-PAD_R-6,Math.max(LABEL_W+6,px(d.desire)+xNudge));
+      const y=Math.min(H-30,Math.max(30,centerY+yNudge));
+      const r=Math.max(4,d.desire*1.0);
+      ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);
+      ctx.fillStyle=col+(Math.round(fillAlpha*255).toString(16).padStart(2,'0'));
+      ctx.fill();
+      ctx.strokeStyle=col+(Math.round(strokeAlpha*255).toString(16).padStart(2,'0'));
+      ctx.lineWidth=1.5;ctx.stroke();
+      if(push)sbDots.push({x,y,r,d,s});
+    };
+    items.forEach(d=>placeDot(d,!dimmed));
+    if(dimmed)items.forEach(d=>{
+      const score=sbScorer==='laura'?d.lauraScore:sbScorer==='bek'?d.bekScore:(d.lauraScore??d.bekScore);
+      if(score==null)return;
+      const xNudge=((score/10)-0.5)*(sbJitterX*0.8);
+      sbDots.push({x:Math.min(W-PAD_R-6,Math.max(LABEL_W+6,px(d.desire)+xNudge)),y:laneCy,r:Math.max(4,d.desire*1.0),d,s});
+    });
+  };
+
+  // draw inactive first, active on top
+  STATUS_ALL.forEach(s=>{
+    if(sbFilter!=='all'&&sbFilter!==s)drawGroup(s,true);
+  });
+  STATUS_ALL.forEach(s=>{
+    if(sbFilter==='all'||sbFilter===s)drawGroup(s,false);
+  });
+
+  // x-axis labels at top
+  ctx.fillStyle=dark?'#6b6a65':'#888780';
+  ctx.font='10px -apple-system,sans-serif';
+  ctx.textAlign='center';
+  for(let i=Math.ceil(xMin);i<=xMax;i++) ctx.fillText(i,px(i),20);
+  ctx.fillText('desire →',LABEL_W+plotW/2,H-8);
+}
+
+function setupSbEvents(){
+  const canvas=document.getElementById('sbCanvas');
+  if(!canvas)return;
+  canvas.addEventListener('mousemove',e=>{
+    const rect=canvas.getBoundingClientRect();
+    const mx=e.clientX-rect.left,my=e.clientY-rect.top;
+    let best=null,bestD=Infinity;
+    const nearby=[];
+    sbDots.forEach(dot=>{
+      const d=Math.sqrt((mx-dot.x)**2+(my-dot.y)**2);
+      if(d<=dot.r+8){nearby.push(dot);if(d<bestD){bestD=d;best=dot;}}
+    });
+    if(nearby.length){
+      const seen=new Set();
+      const items=nearby.filter(dot=>{if(seen.has(dot.d.name))return false;seen.add(dot.d.name);return true;}).map(dot=>dot.d);
+      showTooltip(e,items,null);canvas.style.cursor='pointer';
+    } else{hideTooltip();canvas.style.cursor='default';}
+  });
+  canvas.addEventListener('mouseleave',hideTooltip);
+  canvas.addEventListener('click',e=>{
+    const rect=canvas.getBoundingClientRect();
+    const mx=e.clientX-rect.left,my=e.clientY-rect.top;
+    // check dot first
+    let best=null,bestD=Infinity;
+    sbDots.forEach(dot=>{
+      const d=Math.sqrt((mx-dot.x)**2+(my-dot.y)**2);
+      if(d<=dot.r+8&&d<bestD){bestD=d;best=dot;}
+    });
+    if(best){setSbFilter(best.s);return;}
+    // check bucket lane click
+    const BUCKET_H=140;
+    const laneY=my-30;
+    if(laneY>=0){
+      const si=Math.floor(laneY/BUCKET_H);
+      if(si>=0&&si<STATUS_ALL.length){
+        const s=STATUS_ALL[si];
+        setSbFilter(sbFilter===s?'all':s);
+      }
+    }
+  });
+}
+
+function setGComp(v){
+  gComp=v;
+  ['All','Solo','Friend','Family','Bekah','Laura'].forEach(s=>{const el=document.getElementById('g'+s);if(el)el.classList.toggle('active',v===s.toLowerCase());});
+  applyGlobal();renderQuadrant();renderTable();
+}
+function setGVisit(v){
+  gVisit=v;
+  ['All','New','Fam'].forEach(s=>document.getElementById('gV'+s).classList.toggle('active',{All:'all',New:'new',Fam:'familiar'}[s]===v));
+  applyGlobal();renderQuadrant();renderTable();
+}
+function setGDesire(v){gDesireMin=parseInt(v);document.getElementById('gDesireVal').textContent=v;applyGlobal();renderQuadrant();renderTable();}
+function setQThresh(who,v){
+  if(who==='you'){qYou=parseInt(v);document.getElementById('qYouVal').textContent=v;}
+  else{qLaura=parseInt(v);document.getElementById('qLauraVal').textContent=v;}
+  renderQuadrant();
+}
+function sortBy(col){if(sortCol===col)sortDir*=-1;else{sortCol=col;sortDir=-1;}renderTable();}
+function resetAll(){
+  c1YouMin=7;c1LauraMin=2;c1ShowUnscored=false;
+  c2DesireMin=7;c2Comps=new Set(['solo','friend','family','bekah','laura']);
+  c2JitterX=0;document.getElementById('c2JitterXSlider').value=0;document.getElementById('c2JitterXVal').textContent=0;
+  c2JitterY=20;document.getElementById('c2JitterYSlider').value=20;document.getElementById('c2JitterYVal').textContent=20;
+  gComp='all';gVisit='all';gDesireMin=1;gStatus='all';qYou=8;qLaura=8;
+  document.getElementById('c1YouSlider').value=7;document.getElementById('c1YouVal').textContent=7;
+  document.getElementById('c1LauraSlider').value=2;document.getElementById('c1LauraVal').textContent=2;
+  document.getElementById('c1UnscoredBtn').classList.remove('active');
+  c1JitterX=80;document.getElementById('c1JitterXSlider').value=80;document.getElementById('c1JitterXVal').textContent=80;
+  sbJitterX=160;document.getElementById('sbJitterXSlider').value=160;document.getElementById('sbJitterXVal').textContent=160;
+  sbJitterY=300;document.getElementById('sbJitterYSlider').value=300;document.getElementById('sbJitterYVal').textContent=300;
+  setSbFilter('all');
+  c1JitterY=20;document.getElementById('c1JitterYSlider').value=20;document.getElementById('c1JitterYVal').textContent=20;
+  document.getElementById('c2DesireSlider').value=7;document.getElementById('c2DesireVal').textContent=7;
+  ['solo','friend','family','bekah','laura'].forEach(ck=>{
+    c2Comps.add(ck);const btn=document.getElementById('c2'+ck);
+    btn.classList.add('active');btn.textContent='✓ '+COMP_NAMES[ck];
+  });
+  document.getElementById('gDesireSlider').value=1;document.getElementById('gDesireVal').textContent=1;
+  document.getElementById('qYouSlider').value=8;document.getElementById('qYouVal').textContent=8;
+  document.getElementById('qLauraSlider').value=8;document.getElementById('qLauraVal').textContent=8;
+  setGComp('all');setGVisit('all');setGStatus('all');
+  setC1Comp('laura');
+  drawChart1();drawChart2();
+}
+
+// ── AI ANALYSIS ───────────────────────────────────────────────────────
+let aiAbortController=null;
+
+const AI_SYSTEM_PROMPT=`You are a personal travel planning analyst with access to my complete travel destination database. I give you a CSV. Don't summarize it back to me — I know what's in it. Reason about it, challenge it, and give me clear, honest, actionable advice.
+
+DATA STRUCTURE — every field below is its own CSV COLUMN, not a tag buried in Notes:
+B Rank = Bekah's desire score (blank = not yet scored; "-" = no interest)
+L Rank = Laura's desire score (blank = not yet scored; "-" = no interest)
+My Desire = my own desire score, 1-10
+num visits = times I've been (0 = never, 5 = often)
+Status = one of six values (taxonomy below)
+Cluster = group code binding destinations into one multi-city trip, or "Cruise-only". Blank = standalone.
+freq = recurring cadence, e.g. 2xYr (twice a year), 1xYr (annual), 0.5xYr (every other year). Blank = not recurring.
+target = intended timeframe, format MM/DD/YYYY, optionally "MM/DD/YYYY w Person" naming the planned companion. Not a confirmed booking.
+booked = confirmed and scheduled, format MM/DD/YYYY, optionally "MM/DD/YYYY w Person" naming the confirmed companion.
+Notes = freeform context only (e.g. "Same as Cruise:Brazil", "fetish event"). The structured tags that used to live here are now their own columns.
+
+COMPANION COLUMNS — solo, friend, family (Laura and Bekah are NOT companion columns; see below):
+- These mark COMPATIBILITY, not combined attendance. A row viable both solo and with Laura means the trip works as a solo trip OR a Laura trip — not that Laura joins a solo trip.
+- Treat each trip as one instance using any valid subset of compatible companions. Several options available = a flexible trip, not a group trip with everyone at once.
+- solo: x = viable solo.
+- friend: holds a named person with a score, e.g. Creighton:8. A trailing question mark in any form — ASCII "?" or full-width "？" — means tentative, e.g. Jeff?:7. Any value = a friend option exists. A tentative companion is a MAYBE, not a confirmed option — do not build a recommendation that depends on a tentative companion being available, and do not describe a trip as ready-to-go with that person. Note them as a possibility only; the score (the number after the colon) reflects how good a fit they'd be IF they come, not how likely they are to come.
+- family: x, or a spelled-out roster (e.g. "Steph, Sarah, Billy, Joe, Eli, Relila"). Any value = family-compatible.
+- Laura and Bekah have NO separate companion column. Their L Rank / B Rank score IS the signal: a numeric rank means that person has scored the destination and is a companion option for it; "-" means no interest; blank means not yet scored. Do not look for a Laura or Bekah "x" column — it does not exist. A score reflects interest, NOT guaranteed availability: actual ability to join may still depend on real constraints (e.g. funding noted in Notes, or a "Cruise-only" cluster). Don't assume a person can join a given trip just because they scored it highly.
+- "Bekah-will-go-if-I-fund" appears in the Notes column for some destinations. It means Bekah joins if I pay — the trip is NOT blocked and I am the decision-maker, so never list Bekah as blocking these. "Cruise-only" (in Cluster) means that companion only joins as part of a cruise.
+- The "w Person" inside target/booked is informational (who the planned/confirmed companion is). Don't treat it as a separate companion flag.
+
+STATUS TAXONOMY — six distinct states, do not conflate or suggest migrating one to another without an external trigger:
+- "decided": Committed, will happen. Effectively already booked in my mind.
+- "waiting-me": Actively want it and actively pursuing. This is NOT avoidance, hesitation, or procrastination.
+- "waiting-other": Genuine desire, blocked strictly on someone else's decision or availability.
+- "opportunistic": Would go if circumstances arose, not actively pursuing. Don't push these to decided without a clear external trigger.
+- "aspirational": Genuinely want it, may realistically never happen due to external constraints.
+- "someday": Unlikely, not ready to delete.
+aspirational and someday are different psychological states — keep them separate.
+
+FREQUENCY: freq is observed cadence, not a guarantee. High-freq destinations still need an active decision each cycle — note their recurring nature but don't exempt them from analysis.
+
+CLUSTERS: any non-blank Cluster code is ALREADY one bound itinerary. Never suggest combining, grouping, or triggering them as a single trip — they are combined by design. Treat a cluster as one pre-existing project: identify its anchor, reason about what timeline triggers it, or flag status mismatches within the same cluster. Codes are self-describing (US-SE, US-NE, EU-IT, etc.).
+
+DAYTRIPS: a destination noted as a daytrip needs no overnight logistics. If it's waiting-other, the dependency is only social scheduling, not a real blocker. Don't treat daytrips like multi-day trips.
+
+DATA CONSISTENCY — flag these:
+- decided but no booked AND no target date → may need a booking. Before flagging this, you MUST check BOTH the target column AND the booked column for that exact row. If either column holds any value (a date, or "MM/DD/YYYY w Person"), the destination is already dated — do NOT flag it and do NOT tell me to add a date. freq alone does NOT count as a date, but a real value in target or booked does. Never assert a destination "lacks a date" without having confirmed both columns are empty.
+- My Desire >= 8 but Status is aspirational or someday → contradiction worth calling out.
+- Two rows that are the same trip (Notes say "Same as X") → treat as one.
+- A target/booked date within the next 45 days → time-critical, surface it.
+
+GUARDRAILS:
+- Don't psychologize or guess motivations behind destination, companion, or funding choices.
+- Don't give life-coaching on travel balance, budget, or relationships.
+- Focus on structural alignment, scheduling, routing, and data gaps.
+- A far-future target date is a genuine committed plan — never call it unrealistic, dead weight, a placeholder, or a dream, and never suggest downgrading or removing a destination because its target is distant.
+- target vs booked is a hard distinction. A target is a planned intent, NOT a confirmation — even when a target is imminent (within the next 45 days), the action is always to "firm up" or "set the booking," never to "book it now," "confirm the booking," or "secure it" as if it were already bookable. Only a booked date means already confirmed; never tell me to confirm, book, or secure a destination that already has a booked date. This also governs how you LABEL a trip: a "decided" status does NOT mean booked. A decided trip with a target date but an empty booked column is still a firm-up candidate — describe its date as a target (e.g. "target 11/2026"), NEVER as "booked 11/2026." Read the booked column itself; only call a date booked if it sits in the booked column.
+- "fetish event" is factual context only — don't editorialize.
+- If a Notes field explains that something is deliberate (e.g. "not in EU-IT on purpose", "planning this far in advance", or similar), treat that note as authoritative: do NOT flag it as a contradiction, an error, or something to reconsider, and do not suggest reversing it. The note is my stated intent — respect it.
+- Don't suggest verifying/checking anything already settled by the data: no "verify funding" when Bekah-will-go-if-I-fund, no "check logistics" or "confirm" for a booked trip.
+
+CONTEXT: I live between Amsterdam and Gran Canaria — home bases, not destinations. European trips carry lower logistical friction than long-haul. Laura and Bekah are my two primary companions: separate people, separate scores, separate styles. Don't conflate them.
+
+FORMAT:
+- TL;DR first — max 5 bullets. Each bullet must state a DECISION, TENSION, or CONSEQUENCE — not restate the data. Lead with what is surprising, contradictory, time-pressured, or costly to ignore. Do not tell me what is in the data (I know); tell me what it MEANS or what it is forcing. BAD: "Five destinations have desire 9 and are waiting-me." GOOD: "Five of your highest-desire trips are stalled on nobody but you, while you're booking lower-desire trips around them." If a bullet could be generated by sorting a column, cut it.
+- Each section: 1-2 sentence intro, then bullets. No walls of text. Short, punchy, direct.
+- Challenge me where the data warrants it. Show scores when they support your reasoning.
+- End with STRATEGIC ACTION ITEMS, numbered, priority order, one sentence each.
+
+SECTIONS:
+---
+TL;DR
+---
+SECTION 1: WHAT IS ACTUALLY HAPPENING
+---
+SECTION 2: WHAT IS BLOCKED AND BY WHOM
+---
+SECTION 3: QUICK WINS
+---
+SECTION 4: GET OFF THE FENCE
+---
+SECTION 5: OPPORTUNISTIC ONES WORTH WATCHING
+---
+SECTION 6: HONEST ACKNOWLEDGMENT — data contradictions only (status vs desire mismatches, duplicates, decided with no date, high desire in someday/aspirational). No motivation/finance editorializing.
+---
+SECTION 7: OVERALL PATTERNS
+---
+STRATEGIC ACTION ITEMS
+---
+ACTION ITEM RULES:
+- This is a briefing, not a report. No tables. Bullets throughout.
+- Each item actionable, distinct, tied to a data gap, a near-term date window, or an unresolved waiting-me at high desire (8+).
+- Consolidate: if several destinations share one action, that's ONE item — don't repeat the instruction with different names.
+- Only output items that pass these filters. If only 8 genuine actions exist, output 8 and stop. Never pad to a quota.
+- No filler for daytrips or stable waiting-other rows blocked on an external person.
+---`;
+
+function filteredToCSV(){
+  const headers=['Place','My Desire','L Rank','B Rank','num visits','solo','friend','family','Cluster','Status','freq','target','booked','Notes'];
+  const rows=gFiltered.map(d=>[
+    d.name,d.desire,
+    d.lrank!=null?d.lrank:'',d.brank!=null?d.brank:'',
+    d.visits,
+    d.solo?'x':'',d.friendRaw||'',d.familyRaw||'',
+    d.cluster,d.status,d.freq,d.target,d.booked,d.notes
+  ].map(v=>String(v).includes(',')?`"${v}"`:v).join(','));
+  return[headers.join(','),...rows].join('\n');
+}
+
+function updateAiScope(){
+  const el=document.getElementById('aiScope');
+  if(!el)return;
+  if(!allData.length){el.textContent='— load csv first —';return;}
+  el.textContent=gFiltered.length+' destinations (current filter)';
+}
+
+async function fetchModels(){
+  const host=document.getElementById('aiHost').value.trim().replace(/\/$/,'');
+  const sel=document.getElementById('aiModel');
+  sel.innerHTML='<option value="">loading…</option>';
+  try{
+    const res=await fetch(host+'/api/tags',{signal:AbortSignal.timeout(5000)});
+    if(!res.ok)throw new Error(res.status);
+    const data=await res.json();
+    const models=(data.models||[]).map(m=>m.name).sort();
+    sel.innerHTML=models.length
+      ?models.map(m=>`<option value="${m}">${m}</option>`).join('')
+      :'<option value="">no models found</option>';
+  }catch(e){
+    sel.innerHTML='<option value="">error: '+e.message+'</option>';
+  }
+}
+
+function buildQuickUserMsg(csv,today){
+  return 'Today is '+today+'.\n\nHere is my travel data:\n\n'+csv+'\n\nReturn ONLY a numbered list of strategic action items in priority order. Rules: (1) Each item must be distinct — do not repeat the same instruction with different destination names. (2) Only include genuine high-value actions that require a real decision or resolve a data gap. (3) Do not generate items that all say the same thing in different words. (4) If fewer than 10 genuine distinct actions exist, stop — do not pad. (5) One sentence each explaining why. (6) A target date is a planned intent, not a confirmation — even when a target is imminent, the action is to "firm up" or "set the booking," never "book it now," "confirm the booking," or "secure it." Only a booked date is already confirmed; never tell me to confirm, book, or secure a destination that already has a booked date. (7) Never suggest moving a destination to "decided" or otherwise promoting its status unless the data shows a concrete external trigger — "waiting-me" is already active pursuit, not a trip awaiting promotion, and "opportunistic" stays put without a trigger. No sections, no headers, no preamble. Just the numbered list.';
+}
+async function copyPrompt(mode){
+  if(!gFiltered.length){alert('No data loaded or filtered.');return;}
+  const csv=filteredToCSV();
+  const today=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+  let system,user;
+  if(mode==='full'){system=AI_SYSTEM_PROMPT;user='Today is '+today+'.\n\nHere is my travel data:\n\n'+csv+'\n\nPlease analyse it.';}
+  else if(mode==='brief'){system=AI_SYSTEM_PROMPT+' '+AI_BRIEF_PROMPT;user='Today is '+today+'.\n\nHere is my travel data:\n\n'+csv+'\n\nPlease provide the brief analysis.';}
+  else if(mode==='itinerary'){system=AI_ITINERARY_PROMPT;user='Today is '+today+'.\n\nHere is my travel data:\n\n'+csv+'\n\nLooking through my destinations and the relationships of who\'d travel with me, give me the suggested trips in ranked order.';}
+  else{system=AI_SYSTEM_PROMPT;user=buildQuickUserMsg(csv,today);}
+  const payload='===== SYSTEM PROMPT =====\n\n'+system+'\n\n===== USER MESSAGE =====\n\n'+user;
+  try{
+    await navigator.clipboard.writeText(payload);
+    const status=document.getElementById('aiStatus');
+    status.style.display='block';
+    status.textContent='copied '+mode+' prompt ('+payload.length.toLocaleString()+' chars, '+gFiltered.length+' destinations) to clipboard';
+    setTimeout(()=>{if(status.textContent.startsWith('copied'))status.style.display='none';},4000);
+  }catch(e){
+    alert('Clipboard copy failed: '+e.message+'\n\n(On some browsers this needs https or localhost.)');
+  }
+}
+async function runAnalysis(quickMode=false){
+  if(!gFiltered.length){alert('No data loaded or filtered.');return;}
+  const host=document.getElementById('aiHost').value.trim().replace(/\/$/,'');
+  const model=document.getElementById('aiModel').value;
+  const csv=filteredToCSV();
+  const today=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+  const userMsg=quickMode
+    ?buildQuickUserMsg(csv,today)
+    :'Today is '+today+'.\n\nHere is my travel data:\n\n'+csv+'\n\nPlease analyse it.';
+  const out=document.getElementById('aiOutput');
+  const status=document.getElementById('aiStatus');
+  const btn=document.getElementById('aiBtn');
+  const stopBtn=document.getElementById('aiStopBtn');
+  out.style.display='block';out.textContent='';
+  status.style.display='block';
+  status.textContent='connecting to '+host+' · model: '+model+' · '+gFiltered.length+' destinations';
+  btn.disabled=true;document.getElementById('aiBriefBtn').disabled=true;document.getElementById('aiQuickBtn').disabled=true;document.getElementById('ai3x3Btn').disabled=true;stopBtn.style.display='inline-block';
+  aiAbortController=new AbortController();
+  try{
+    const ctxVal=parseInt(document.getElementById('aiCtx').value);
+    const tempVal=parseFloat(document.getElementById('aiTemp').value);
+    const res=await fetch(host+'/api/chat',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      signal:aiAbortController.signal,
+      body:JSON.stringify({model,stream:true,options:{...(ctxVal>0?{num_ctx:ctxVal}:{}),temperature:tempVal},messages:[
+        {role:'system',content:AI_SYSTEM_PROMPT},
+        {role:'user',content:userMsg}
+      ]})
+    });
+    if(!res.ok){status.textContent='error: '+res.status+' '+res.statusText;btn.disabled=false;stopBtn.style.display='none';return;}
+    status.textContent='streaming from '+model+'…';
+    const reader=res.body.getReader();
+    const dec=new TextDecoder();
+    let buf='';
+    while(true){
+      const{done,value}=await reader.read();
+      if(done)break;
+      buf+=dec.decode(value,{stream:true});
+      const lines=buf.split('\n');buf=lines.pop();
+      for(const line of lines){
+        if(!line.trim())continue;
+        try{
+          const j=JSON.parse(line);
+          const token=j?.message?.content||'';
+          out.textContent+=token;
+          out.scrollTop=out.scrollHeight;
+          if(j.done){status.textContent='done · '+model;break;}
+        }catch(e){}
+      }
+    }
+    status.textContent='done · '+model+' · '+gFiltered.length+' destinations';
+  }catch(e){
+    if(e.name==='AbortError')status.textContent='stopped';
+    else status.textContent='error: '+e.message;
+  }finally{
+    btn.disabled=false;document.getElementById('aiBriefBtn').disabled=false;document.getElementById('aiQuickBtn').disabled=false;document.getElementById('ai3x3Btn').disabled=false;stopBtn.style.display='none';aiAbortController=null;
+  }
+}
+function stopAnalysis(){if(aiAbortController)aiAbortController.abort();}
+function clearAnalysis(){
+  const out=document.getElementById('aiOutput'),status=document.getElementById('aiStatus');
+  out.textContent='';out.style.display='none';
+  status.textContent='';status.style.display='none';
+}
+
+// ── LOAD ──────────────────────────────────────────────────────────────
+
+
+const AI_BRIEF_PROMPT=`You are a personal travel planning analyst. I am going to give you a CSV file of my travel destinations. Return a focused briefing in exactly this format:
+
+TL;DR (max 5 bullets — most urgent things right now)
+
+WHO IS BLOCKING WHAT
+List each external blocker and which destinations they gate. One line per person.
+
+STRATEGIC ACTION ITEMS
+Apply all the same rules as the full analysis. Each item distinct. Stop when genuine actions run out.
+
+Nothing else. No other sections.`;
+
+const AI_ITINERARY_PROMPT=`You are a personal travel planning analyst. I give you one input: a CSV of my travel destination database. Don't summarize the data back to me — I know what's in it. Produce a single ranked, ordered list of suggested trips.
+
+OUTPUT TONE — open with one line in this voice: "Looking through your list of destinations and the relationships of those who'd travel with you, I'd suggest these trips in this order:" Then a bullet list, ordered by priority (confirmed/dated first, then high-alignment undated, then the rest). Direct, punchy, no walls of text.
+
+LINE FORMAT — each bullet is one trip-instance:
+- Lead with the destination and the recommended companion + their score, e.g. Antwerpen — w Laura (L:9.9). A trip with multiple valid companion options gets MULTIPLE lines (one per distinct companion instance) ONLY when the second option is materially different in timing or score (e.g. GranCanaria booked-w-Creighton vs target-w-Laura). Otherwise note alternates inline.
+- Follow with key structured facts: status, booked/target date if any, freq, cluster, relevant Notes flag (Bekah-will-go-if-I-fund, daytrip, Cruise-only).
+- End with a short reason WHY it's selected and ranked here (alignment score gap, confirmed vs undated, who the right companion is and why, recurring cadence needing a decision).
+
+DATA STRUCTURE — every field is its own CSV column:
+B Rank = Bekah's desire (blank = unscored; "-" = no interest). L Rank = Laura's desire (same convention). My Desire = mine, 1-10. num visits = times been (0-5). Status = the six-value taxonomy below. Cluster = code binding destinations into one multi-city trip, or "Cruise-only"; blank = standalone. freq = recurring cadence (2xYr, 1xYr, 0.5xYr; blank = not recurring). target = intended timeframe MM/DD/YYYY, optionally "MM/DD/YYYY w Person" (NOT a confirmed booking). booked = confirmed MM/DD/YYYY, optionally "MM/DD/YYYY w Person". Notes = freeform context only.
+
+COMPANION COLUMNS — solo, friend, family (Laura and Bekah are NOT companion columns):
+- These mark COMPATIBILITY, not combined attendance. A trip viable solo AND with Laura works as a solo trip OR a Laura trip — not Laura joining a solo trip. Each trip is one instance using any valid subset.
+- solo: x = viable solo. friend: holds a named person + score, e.g. Creighton:8; a trailing question mark in any form (ASCII "?" or full-width "？") = tentative (a MAYBE, not confirmed — never build a ready-to-go recommendation around a tentative companion; note as possibility only; the score is fit IF they come, not likelihood). family: x or a spelled-out roster.
+- Laura/Bekah have NO companion column — their L Rank / B Rank IS the signal: numeric = scored + is an option; "-" = no interest; blank = not yet scored. A score reflects interest, NOT guaranteed availability (may still depend on funding in Notes, or a Cruise-only cluster). The "w Person" inside target/booked is informational.
+- "Bekah-will-go-if-I-fund" in Notes = Bekah joins if I pay; trip is NOT blocked and I'm the decision-maker — never list Bekah as blocking these. "Cruise-only" (Cluster) = that companion only joins via a cruise.
+
+STATUS TAXONOMY — six distinct states, do not conflate or migrate without an external trigger:
+decided: committed, will happen. waiting-me: actively want it and actively pursuing (NOT avoidance/procrastination). waiting-other: genuine desire, blocked strictly on someone else's decision/availability. opportunistic: would go if circumstances arose, not actively pursuing. aspirational: genuinely want it, may realistically never happen. someday: unlikely, not ready to delete. aspirational and someday are different states — keep separate.
+
+COMPUTE THESE YOURSELF FROM THE CSV (the PDF dashboard used to provide them):
+- Assign each destination to an alignment group by comparing My Desire against L Rank and B Rank: (a) both want it — My Desire >= 8 AND L Rank >= 8; (b) Laura more than me — L Rank > My Desire and L Rank >= 8; (c) I want it, she scored lower — My Desire >= 8 AND L Rank present but < 8; (d) I want it, she hasn't scored — My Desire >= 8 AND L Rank blank; (e) neither priority — everything else. Use these groupings to pick the RIGHT companion per trip and to justify ranking.
+- Use the gap between My Desire and the scorer's desire as alignment intensity: high mutual alignment (both high, small gap) ranks above lopsided pairings.
+- Cross-check internally: if a row's columns look internally inconsistent (e.g. a companion named in target/booked who has no corresponding score or compatibility), flag it.
+
+RANKING LOGIC (priority order):
+- Confirmed (booked) and near-term first, in date order.
+- decided with a target date (firm-up candidates).
+- waiting-me at high My Desire (8+) with strong companion alignment and no external block — especially Bekah-will-go-if-I-fund ones (gated only on my decision).
+- Strong-alignment undated trips lower down.
+- Pick the companion that maximizes mutual alignment. Where Bekah out-scores Laura, recommend Bekah; where a friend is the top fit, name them; where only solo is clean, say solo. EXCEPTION: if target or booked already names a companion ("w Person"), that companion is a committed choice — do NOT override it on score alone. If someone else scores higher, note them as an alternative ("Bekah scores higher if plans change"), but keep the named companion as the recommendation.
+
+GUARDRAILS:
+- Don't psychologize or guess motivations behind destination, companion, or funding choices. No life-coaching on balance, budget, or relationships. Focus on structural alignment, scheduling, routing, companion fit.
+- target vs booked is a hard distinction. A target is intent, NOT a confirmation — even if imminent, the action is "firm up" / "set the booking," never "book it now" or "confirm/secure." Only booked = already confirmed; never tell me to confirm/book/secure something already booked. This governs LABELING too: "decided" status does NOT mean booked. A decided trip with a target date but an empty booked column is a firm-up candidate — label its date "target MM/DD/YYYY," NEVER "booked MM/DD/YYYY." Only call a date booked if it sits in the booked column.
+- A far-future target is a genuine committed plan — never call it unrealistic, a placeholder, or dead weight, and never suggest downgrading/removing for a distant date.
+- If a Notes field says something is deliberate ("not in EU-IT on purpose", "planning this far in advance"), treat it as authoritative — don't flag it as a contradiction.
+- Clusters are ALREADY one bound itinerary — never suggest combining/grouping/triggering them as a single trip; treat as one pre-existing project, identify its anchor.
+- Daytrips need no overnight logistics; if waiting-other, the dependency is only social scheduling.
+- Two rows that are the same trip (Notes say "Same as X") = treat as one, note the duplication.
+- "fetish event" is factual context only — don't editorialize.
+- Don't suggest verifying/checking anything already settled by the data (no "verify funding" when Bekah-will-go-if-I-fund, no "confirm" for a booked trip).
+
+CONTEXT: I live between Amsterdam and Gran Canaria — home bases, not destinations. European trips carry lower logistical friction than long-haul. Laura and Bekah are my two primary companions: separate people, separate scores, separate styles — don't conflate them.
+
+CLOSING: After the list, add a short paragraph of trips to deliberately NOT slot yet (waiting-other rows blocked on someone else, daytrips needing only a calendar pick, intentionally far-out targets). End by offering ONE relevant next step (e.g. a dated sequencing plan for any dense booking window).`;
+
+async function runBrief(){
+  if(!gFiltered.length){alert('No data loaded.');return;}
+  const host=document.getElementById('aiHost').value.trim().replace(/\/$/,'');
+  const model=document.getElementById('aiModel').value;
+  const ctxVal=parseInt(document.getElementById('aiCtx').value);
+  const tempVal=parseFloat(document.getElementById('aiTemp').value);
+  const csv=filteredToCSV();
+  const today=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+  const userMsg='Today is '+today+'.\n\nHere is my travel data:\n\n'+csv+'\n\nPlease provide the brief analysis.';
+
+  const out=document.getElementById('aiOutput');
+  const status=document.getElementById('aiStatus');
+  const btn=document.getElementById('aiBtn');
+  const briefBtn=document.getElementById('aiBriefBtn');
+  const stopBtn=document.getElementById('aiStopBtn');
+
+  out.style.display='block';out.textContent='';
+  status.style.display='block';
+  status.textContent='connecting to '+host+' · brief mode · '+gFiltered.length+' destinations';
+  btn.disabled=true;briefBtn.disabled=true;
+  document.getElementById('aiQuickBtn').disabled=true;
+  document.getElementById('ai3x3Btn').disabled=true;
+  stopBtn.style.display='inline-block';
+  aiAbortController=new AbortController();
+  try{
+    const res=await fetch(host+'/api/chat',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      signal:aiAbortController.signal,
+      body:JSON.stringify({model,stream:true,
+        options:{...(ctxVal>0?{num_ctx:ctxVal}:{}),temperature:tempVal},
+        messages:[
+          {role:'system',content:AI_SYSTEM_PROMPT+' '+AI_BRIEF_PROMPT},
+          {role:'user',content:userMsg}
+        ]
+      })
+    });
+    if(!res.ok){status.textContent='error: '+res.status;return;}
+    status.textContent='streaming brief…';
+    const reader=res.body.getReader();const dec=new TextDecoder();
+    let buf='';
+    while(true){
+      const{done,value}=await reader.read();if(done)break;
+      buf+=dec.decode(value,{stream:true});
+      const lines=buf.split('\n');buf=lines.pop();
+      for(const line of lines){
+        if(!line.trim())continue;
+        try{const j=JSON.parse(line);out.textContent+=(j?.message?.content||'');out.scrollTop=out.scrollHeight;}catch(e){}
+      }
+    }
+    status.textContent='done · brief · '+model+' · '+gFiltered.length+' destinations';
+  }catch(e){
+    if(e.name==='AbortError')status.textContent='stopped';
+    else status.textContent='error: '+e.message;
+  }finally{
+    btn.disabled=false;briefBtn.disabled=false;
+    document.getElementById('aiQuickBtn').disabled=false;
+    document.getElementById('ai3x3Btn').disabled=false;
+    stopBtn.style.display='none';aiAbortController=null;
+  }
+}
+async function runItinerary(){
+  if(!gFiltered.length){alert('No data loaded or filtered.');return;}
+  const host=document.getElementById('aiHost').value.trim().replace(/\/$/,'');
+  const model=document.getElementById('aiModel').value;
+  const ctxVal=parseInt(document.getElementById('aiCtx').value);
+  const tempVal=parseFloat(document.getElementById('aiTemp').value);
+  const csv=filteredToCSV();
+  const today=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+  const userMsg='Today is '+today+'.\n\nHere is my travel data:\n\n'+csv+'\n\nLooking through my destinations and the relationships of who\'d travel with me, give me the suggested trips in ranked order.';
+  const out=document.getElementById('aiOutput');
+  const status=document.getElementById('aiStatus');
+  const stopBtn=document.getElementById('aiStopBtn');
+  out.style.display='block';out.textContent='';
+  status.style.display='block';
+  status.textContent='connecting to '+host+' · deep analysis · '+gFiltered.length+' destinations';
+  document.getElementById('aiBtn').disabled=true;document.getElementById('aiBriefBtn').disabled=true;
+  document.getElementById('aiQuickBtn').disabled=true;document.getElementById('ai3x3Btn').disabled=true;
+  const itinBtn=document.getElementById('aiItinBtn');if(itinBtn)itinBtn.disabled=true;
+  stopBtn.style.display='inline-block';
+  aiAbortController=new AbortController();
+  try{
+    const res=await fetch(host+'/api/chat',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      signal:aiAbortController.signal,
+      body:JSON.stringify({model,stream:true,
+        options:{...(ctxVal>0?{num_ctx:ctxVal}:{}),temperature:tempVal},
+        messages:[
+          {role:'system',content:AI_ITINERARY_PROMPT},
+          {role:'user',content:userMsg}
+        ]
+      })
+    });
+    if(!res.ok){status.textContent='error: '+res.status;return;}
+    status.textContent='streaming deep analysis…';
+    const reader=res.body.getReader();const dec=new TextDecoder();
+    let buf='';
+    while(true){
+      const{done,value}=await reader.read();if(done)break;
+      buf+=dec.decode(value,{stream:true});
+      const lines=buf.split('\n');buf=lines.pop();
+      for(const line of lines){
+        if(!line.trim())continue;
+        try{const j=JSON.parse(line);out.textContent+=(j?.message?.content||'');out.scrollTop=out.scrollHeight;}catch(e){}
+      }
+    }
+    status.textContent='done · deep analysis · '+model+' · '+gFiltered.length+' destinations';
+  }catch(e){
+    if(e.name==='AbortError')status.textContent='stopped';
+    else status.textContent='error: '+e.message;
+  }finally{
+    document.getElementById('aiBtn').disabled=false;document.getElementById('aiBriefBtn').disabled=false;
+    document.getElementById('aiQuickBtn').disabled=false;document.getElementById('ai3x3Btn').disabled=false;
+    if(itinBtn)itinBtn.disabled=false;
+    stopBtn.style.display='none';aiAbortController=null;
+  }
+}
+
+async function run3x3(){
+  if(!gFiltered.length){alert('No data loaded.');return;}
+  const host=document.getElementById('aiHost').value.trim().replace(/\/$/,'');
+  const model=document.getElementById('aiModel').value;
+  const ctxVal=parseInt(document.getElementById('aiCtx').value);
+  const tempVal=parseFloat(document.getElementById('aiTemp').value);
+  const genTemp=Math.min(0.7,tempVal+0.2);
+  const csv=filteredToCSV();
+  const today=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+  const quickMsg=buildQuickUserMsg(csv,today);
+
+  const out=document.getElementById('aiOutput');
+  const status=document.getElementById('aiStatus');
+  const btn=document.getElementById('aiBtn');
+  const quickBtn=document.getElementById('aiQuickBtn');
+  const btn3=document.getElementById('ai3x3Btn');
+  const stopBtn=document.getElementById('aiStopBtn');
+
+  out.style.display='block';out.textContent='';
+  status.style.display='block';
+  btn.disabled=true;document.getElementById('aiBriefBtn').disabled=true;quickBtn.disabled=true;btn3.disabled=true;stopBtn.style.display='inline-block';
+  aiAbortController=new AbortController();
+
+  const runs=[];
+  try{
+    for(let i=0;i<3;i++){
+      status.textContent='run '+(i+1)+'/3 (temp '+genTemp.toFixed(1)+')…';
+      const res=await fetch(host+'/api/chat',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        signal:aiAbortController.signal,
+        body:JSON.stringify({model,stream:true,
+          options:{...(ctxVal>0?{num_ctx:ctxVal}:{}),temperature:genTemp},
+          messages:[{role:'system',content:AI_SYSTEM_PROMPT},{role:'user',content:quickMsg}]
+        })
+      });
+      if(!res.ok)throw new Error('run '+(i+1)+' failed: '+res.status);
+      const reader=res.body.getReader();const dec=new TextDecoder();
+      let buf='';let runText='';
+      while(true){
+        const{done,value}=await reader.read();if(done)break;
+        buf+=dec.decode(value,{stream:true});
+        const lines=buf.split('\n');buf=lines.pop();
+        for(const line of lines){
+          if(!line.trim())continue;
+          try{const j=JSON.parse(line);runText+=(j?.message?.content||'');}catch(e){}
+        }
+      }
+      runs.push(runText.trim());
+      out.textContent='run '+(i+1)+'/3 complete\n\n'+runs.map((r,idx)=>'=== RUN '+(idx+1)+' ===\n'+r).join('\n\n');
+    }
+
+    status.textContent='judging… (temp '+tempVal.toFixed(1)+')';
+    const judgePrompt=`You are a data consistency judge. Below are 3 independent action lists generated from the same travel database, followed by the raw CSV data. Your ONLY job is to decide which actions are true against the CSV. Run frequency does not matter — an item appearing in just one run is kept if the CSV supports it; an item appearing in all three is dropped if the CSV does not.
+
+Your job:
+1. Collect every distinct action across all three runs.
+2. Keep an action ONLY if the raw CSV supports its claim — the date, status, blocker, or data gap it references must actually be present in the CSV. If you cannot verify it against the CSV, drop it.
+3. Drop any action that contradicts the raw CSV (e.g. tells me to book or confirm a destination that already has a booked date, references a wrong status, or claims a date that is not in the target/booked columns).
+4. Respect the target/booked distinction: a target is a plan, not a confirmation. Keep "firm up the target" wording; drop "book it now / confirm" wording for a destination that only has a target.
+5. Consolidate duplicate or near-duplicate actions into single items; group destinations sharing the same action so each final item is distinct.
+6. Return ONLY a clean numbered list of the validated actions. No preamble, no explanation, no headers. Just the numbered list.
+
+=== RUN 1 ===
+${runs[0]}
+
+=== RUN 2 ===
+${runs[1]}
+
+=== RUN 3 ===
+${runs[2]}
+
+=== RAW CSV ===
+${csv}`;
+
+    const judgeRes=await fetch(host+'/api/chat',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      signal:aiAbortController.signal,
+      body:JSON.stringify({model,stream:true,
+        options:{...(ctxVal>0?{num_ctx:ctxVal}:{}),temperature:tempVal},
+        messages:[{role:'user',content:judgePrompt}]
+      })
+    });
+    if(!judgeRes.ok)throw new Error('judge failed: '+judgeRes.status);
+    const jreader=judgeRes.body.getReader();const jdec=new TextDecoder();
+    let jbuf='';let judgeText='';
+    while(true){
+      const{done,value}=await jreader.read();if(done)break;
+      jbuf+=jdec.decode(value,{stream:true});
+      const lines=jbuf.split('\n');jbuf=lines.pop();
+      for(const line of lines){
+        if(!line.trim())continue;
+        try{const j=JSON.parse(line);judgeText+=(j?.message?.content||'');}catch(e){}
+      }
+    }
+    out.textContent='=== CONSOLIDATED (judge temp '+tempVal.toFixed(1)+') ===\n\n'+judgeText.trim()+'\n\n---\n\n=== RUN 1 ===\n'+runs[0]+'\n\n=== RUN 2 ===\n'+runs[1]+'\n\n=== RUN 3 ===\n'+runs[2];
+    status.textContent='done · 3×'+model+' → judge · '+gFiltered.length+' destinations';
+  }catch(e){
+    if(e.name==='AbortError')status.textContent='stopped';
+    else status.textContent='error: '+e.message;
+  }finally{
+    btn.disabled=false;document.getElementById('aiBriefBtn').disabled=false;quickBtn.disabled=false;btn3.disabled=false;
+    stopBtn.style.display='none';aiAbortController=null;
+  }
+}
+
+function loadCSV(text){
+  const rows=parseCSV(text);
+  allData=rows.map(processRow).filter(d=>d.desire>0);
+  if(allData.length){
+    document.getElementById('dropZone').classList.add('loaded');
+    document.getElementById('dropTitle').textContent=allData.length+' destinations loaded';
+    document.getElementById('dropSub').textContent='Drop a new file to reload';
+    document.getElementById('dashboard').style.display='block';
+    updateStats();
+    drawChart1();drawChart2();
+    setupC1Events();setupC2Events();
+    applyGlobal();renderQuadrant();renderTable();drawStatusBubble();setupSbEvents();updateAiScope();
+    window.addEventListener('resize',()=>{drawChart1();drawChart2();drawStatusBubble();});
+  }
+}
+fetchModels();
+const dz=document.getElementById('dropZone'),fi=document.getElementById('fileInput');
+dz.addEventListener('click',()=>fi.click());
+fi.addEventListener('change',e=>{const f=e.target.files[0];if(f){const r=new FileReader();r.onload=ev=>loadCSV(ev.target.result);r.readAsText(f);}});
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('dragover');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('dragover'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('dragover');const f=e.dataTransfer.files[0];if(f){const r=new FileReader();r.onload=ev=>loadCSV(ev.target.result);r.readAsText(f);}});
+</script>
+</body>
+</html>

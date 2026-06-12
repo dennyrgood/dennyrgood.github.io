@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<!-- Travel Pipeline Board — wired CSV loader. Created 2026-06-11 by Claude.
+     Parser machinery (splitLine/parseCSV/processRow) mirrors the user's Travel Alignment Dashboard. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Travel Pipeline</title>
+<style>
+:root{
+  --bg:#ffffff; --bg2:#f5f4f0; --bg3:#eeede9;
+  --text:#1a1a18; --text2:#5f5e5a; --text3:#888780;
+  --border:rgba(0,0,0,0.1); --border2:rgba(0,0,0,0.2);
+  --radius:8px; --radius-lg:12px;
+  --green:#1D9E75; --blue:#378ADD; --amber:#BA7517;
+  --orange:#D85A30; --red:#E24B4A; --purple:#534AB7; --pink:#D4537E; --gray:#888780;
+  --booked:#1D9E75; --targeted:#BA7517; --ready:#378ADD;
+  --waiting:#D85A30; --possible:#888780; --parked:#b8b0a0;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#1e1e1c; --bg2:#2a2a28; --bg3:#333331;
+    --text:#f0efeb; --text2:#a8a79f; --text3:#6b6a65;
+    --border:rgba(255,255,255,0.1); --border2:rgba(255,255,255,0.2);
+    --parked:#6b6a65;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg3);color:var(--text);font-size:14px;min-height:100vh;}
+.app{max-width:100%;margin:0 auto;padding:24px 20px;}
+h1{font-size:20px;font-weight:500;margin-bottom:2px;}
+.subtitle{font-size:13px;color:var(--text3);margin-bottom:18px;}
+.constrained{max-width:1100px;margin:0 auto;}
+.drop-zone{border:1.5px dashed var(--border2);border-radius:var(--radius-lg);padding:20px;text-align:center;background:var(--bg);cursor:pointer;transition:background 0.15s;margin-bottom:18px;}
+.drop-zone.dragover{background:var(--bg2);}
+.drop-zone.loaded{border-style:solid;border-color:var(--green);}
+.drop-zone p{color:var(--text2);font-size:13px;margin-top:4px;}
+.drop-zone strong{font-size:15px;font-weight:500;}
+input[type=file]{display:none;}
+.stats{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px;}
+.stat{background:var(--bg2);border-radius:var(--radius);padding:10px 16px;min-width:96px;}
+.stat-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:2px;}
+.stat-val{font-size:22px;font-weight:500;}
+.controls{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;margin-bottom:18px;}
+.filter-group{display:flex;flex-direction:column;gap:5px;}
+.filter-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.04em;}
+.filter-btns{display:flex;flex-wrap:wrap;gap:4px;}
+button.tog{font-size:12px;padding:4px 11px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text2);cursor:pointer;transition:background 0.1s;}
+button.tog.active{background:var(--bg3);color:var(--text);font-weight:500;}
+button.tog:hover{background:var(--bg2);}
+.searchbox{font:inherit;font-size:13px;padding:6px 11px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);min-width:190px;}
+.board{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;align-items:start;}
+@media(max-width:1200px){.board{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:720px){.board{grid-template-columns:1fr;}}
+.col{min-width:0;}
+.colhead{position:sticky;top:0;background:var(--bg3);padding:4px 0 8px;z-index:3;border-bottom:0.5px solid var(--border2);margin-bottom:10px;}
+.colhead .nm{font-size:12px;font-weight:600;letter-spacing:.02em;display:flex;align-items:center;gap:7px;}
+.colhead .ct{font-size:11px;color:var(--text3);margin-top:2px;}
+.dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto;}
+.d-BOOKED{background:var(--booked);} .d-TARGETED{background:var(--targeted);}
+.d-READY{background:var(--ready);} .d-WAITING-OTHER{background:var(--waiting);}
+.d-POSSIBLE{background:var(--possible);} .d-PARKED{background:var(--parked);}
+.card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:9px 11px 10px;margin-bottom:9px;border-left:3px solid transparent;}
+.card.s-BOOKED{border-left-color:var(--booked);}
+.card.s-TARGETED{border-left-color:var(--targeted);}
+.card.s-READY{border-left-color:var(--ready);}
+.card.s-WAITING-OTHER{border-left-color:var(--waiting);}
+.card.s-POSSIBLE{border-left-color:var(--possible);}
+.card.s-PARKED{border-left-color:var(--parked);opacity:.82;}
+.card .pl{font-weight:600;font-size:14px;display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
+.card .pl .mine{font-size:11px;color:var(--text3);font-weight:400;flex:0 0 auto;}
+.comp{font-size:12px;margin-top:4px;color:var(--text2);}
+.comp .who{color:var(--text);font-weight:500;}
+.comp .sc{color:var(--blue);}
+.sched{font-size:11px;color:var(--green);margin-top:3px;font-weight:600;}
+.s-TARGETED .sched{color:var(--amber);}
+.tags{margin-top:6px;display:flex;flex-wrap:wrap;gap:4px;}
+.tag{font-size:9.5px;letter-spacing:.04em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:var(--bg3);color:var(--text2);}
+.tag.fund{background:rgba(29,158,117,0.14);color:var(--green);}
+.tag.day{background:rgba(55,138,221,0.14);color:var(--blue);}
+.tag.clu{background:rgba(186,117,23,0.14);color:var(--amber);}
+.tag.tent{background:var(--bg3);color:var(--text3);}
+.tag.cruise{background:rgba(83,74,183,0.14);color:var(--purple);}
+.note{font-size:10px;color:var(--text3);margin-top:5px;font-style:italic;}
+.empty{font-size:11px;color:var(--text3);padding:8px 2px;opacity:.6;}
+.foot{margin-top:30px;border-top:0.5px solid var(--border2);padding-top:12px;font-size:11.5px;color:var(--text3);line-height:1.7;}
+.btn-print{font-size:12px;padding:5px 13px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);cursor:pointer;font-weight:500;}
+.btn-print:hover{background:var(--bg2);}
+.print-head{display:none;}
+/* tooltip — mirrors Travel Alignment Dashboard */
+.tooltip{position:fixed;pointer-events:none;background:var(--bg);border:0.5px solid var(--border2);border-radius:var(--radius);padding:10px 14px;font-size:12px;min-width:190px;max-width:280px;z-index:200;display:none;box-shadow:0 4px 12px rgba(0,0,0,0.15);}
+.tt-name{font-size:14px;font-weight:500;margin-bottom:6px;}
+.tt-row{display:flex;justify-content:space-between;gap:16px;padding:2px 0;border-bottom:0.5px solid var(--border);}
+.tt-row:last-child{border-bottom:none;}
+.tt-key{color:var(--text3);}
+.tt-val{font-weight:500;text-align:right;}
+.card{cursor:default;}
+/* sliders */
+.slider-group{display:flex;flex-direction:column;gap:3px;min-width:150px;}
+.slider-group input[type=range]{width:100%;}
+.slider-group .sv{font-weight:600;color:var(--text);}
+
+/* ===== PRINT: reflow board into titled stage sections, page-break between ===== */
+@media print{
+  @page{margin:14mm 12mm;}
+  body{background:#fff;color:#000;font-size:11px;}
+  .app{padding:0;}
+  /* hide screen-only chrome */
+  .drop-zone,.controls,.stats,.subtitle,.foot{display:none !important;}
+  h1{display:none;}
+  /* printed title block */
+  .print-head{display:block;margin-bottom:6px;}
+  .print-head .pt{font-size:18px;font-weight:600;}
+  .print-head .ps{font-size:11px;color:#444;margin-top:2px;}
+  .print-head .pmeta{font-size:10px;color:#666;margin-top:4px;}
+  /* board becomes a single flowing column of sections */
+  .board{display:block !important;}
+  .col{display:block;break-inside:auto;}
+  .col:not(:first-child){break-before:page;}     /* new page per stage */
+  .colhead{position:static !important;background:#fff !important;border-bottom:1.5px solid #000;
+    margin:0 0 10px;padding:0 0 6px;}
+  .colhead .nm{font-size:14px;}
+  .colhead .ct{font-size:10px;color:#444;}
+  .dot{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  /* cards: paper-friendly, two-up to save pages, never split across pages */
+  .col>.card,.col .card{break-inside:avoid;page-break-inside:avoid;
+    border:0.5px solid #bbb;border-left:3px solid #999;box-shadow:none;background:#fff;
+    margin-bottom:7px;}
+  .card.s-BOOKED{border-left-color:#1D9E75;}
+  .card.s-TARGETED{border-left-color:#BA7517;}
+  .card.s-READY{border-left-color:#378ADD;}
+  .card.s-WAITING-OTHER{border-left-color:#D85A30;}
+  .card.s-POSSIBLE{border-left-color:#888;}
+  .card.s-PARKED{border-left-color:#bbb;opacity:1;}
+  .card,.colhead .dot{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .card .pl{font-size:12px;} .comp{color:#222;} .comp .sc{color:#1a5f9e;}
+  .sched{color:#157a4f;} .s-TARGETED .sched{color:#8a5712;}
+  .tag{background:#eee !important;color:#333 !important;border:0.5px solid #ddd;}
+  .note{color:#555;}
+  /* flow cards in 2 columns within each stage section to cut page count */
+  .col .cardflow{column-count:2;column-gap:10px;}
+  .col .cardflow>.card{break-inside:avoid;display:block;width:100%;}
+}
+.foot b{color:var(--text2);}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>Travel Pipeline</h1>
+  <p class="subtitle">destinations × companions — staged by opportunity, not score</p>
+
+  <div class="constrained">
+  <div class="drop-zone" id="dropZone">
+    <strong id="dropTitle">Drop your CSV here</strong>
+    <p id="dropSub">or click to browse</p>
+    <input type="file" id="fileInput" accept=".csv">
+  </div>
+  </div>
+
+  <div id="dashboard" style="display:none">
+    <div class="constrained">
+      <div class="stats" id="stats"></div>
+      <div class="controls">
+        <div class="filter-group">
+          <div class="filter-label">filter</div>
+          <input class="searchbox" id="q" type="text" placeholder="destination name…" autocomplete="off">
+        </div>
+        <div class="slider-group">
+          <div class="filter-label">my desire ≥ <span class="sv" id="mineVal">1</span></div>
+          <input type="range" min="1" max="10" value="1" step="1" id="mineSlider" oninput="setMine(this.value)" onchange="setMine(this.value)">
+        </div>
+        <div class="slider-group">
+          <div class="filter-label">companion score ≥ <span class="sv" id="scoreVal">0</span></div>
+          <input type="range" min="0" max="10" value="0" step="1" id="scoreSlider" oninput="setScore(this.value)" onchange="setScore(this.value)">
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">sort undated</div>
+          <select id="sortSel" class="searchbox" onchange="setSort(this.value)" style="cursor:pointer;">
+            <option value="desire">My desire (high→low)</option>
+            <option value="score">Companion score (high→low)</option>
+            <option value="align">Best alignment</option>
+            <option value="cluster">Cluster</option>
+            <option value="freq">Recurring first</option>
+            <option value="alpha">A–Z</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">companion</div>
+          <div class="filter-btns" id="compBtns">
+            <button class="tog" data-comp="Laura">Laura</button>
+            <button class="tog" data-comp="Bekah">Bekah</button>
+            <button class="tog" data-comp="solo">solo</button>
+            <button class="tog" data-comp="Family">family</button>
+          </div>
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">flags</div>
+          <div class="filter-btns">
+            <button class="tog" id="fFund" data-flag="fund">fund-Bekah</button>
+            <button class="tog" id="fDay" data-flag="day">daytrips</button>
+          </div>
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">parked</div>
+          <div class="filter-btns">
+            <button class="tog" id="fPark" data-flag="hidepark">hide parked</button>
+          </div>
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">export</div>
+          <div class="filter-btns">
+            <button class="btn-print" id="printBtn" type="button">Print / Save PDF</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="print-head">
+      <div class="pt">Travel Pipeline</div>
+      <div class="ps">destinations × companions — staged by opportunity, not score</div>
+      <div class="pmeta" id="printMeta"></div>
+    </div>
+    <div class="board" id="board"></div>
+    <div class="constrained"><div class="foot" id="foot"></div></div>
+
+    <div class="constrained">
+    <div class="panel" id="aiPanel" style="background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-top:18px;">
+      <div class="filter-label" style="margin-bottom:12px;">ai analysis — powered by local ollama · analyzes your pipeline (staged instances)</div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;">
+        <div class="filter-group">
+          <div class="filter-label">ollama host</div>
+          <select id="aiHost" onchange="fetchModels()" style="font-size:12px;padding:4px 8px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);">
+            <option value="https://chatworkhorse.tailb73767.ts.net">chatworkhorse (3060) — https</option>
+            <option value="http://chatworkhorse:11434">chatworkhorse (3060) — local</option>
+            <option value="https://imagebeast.tailb73767.ts.net">imagebeast (5090) — https</option>
+            <option value="http://imagebeast:11434">imagebeast (5090) — local</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">model</div>
+          <select id="aiModel" style="font-size:12px;padding:4px 8px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);">
+            <option value="">— select host first —</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">context window</div>
+          <select id="aiCtx" style="font-size:12px;padding:4px 8px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);">
+            <option value="0">default</option>
+            <option value="32768">32K</option>
+            <option value="65536">64K</option>
+            <option value="131072" selected>128K</option>
+            <option value="262144">256K</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">temperature</div>
+          <select id="aiTemp" style="font-size:12px;padding:4px 8px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);">
+            <option value="0.0">0.0 — deterministic</option>
+            <option value="0.1" selected>0.1 — focused</option>
+            <option value="0.2">0.2</option>
+            <option value="0.3">0.3</option>
+            <option value="0.5">0.5</option>
+            <option value="0.7">0.7 — default</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <div class="filter-label">scope</div>
+          <div id="aiScope" style="font-size:12px;color:var(--text2);padding-top:2px;">— load csv first —</div>
+        </div>
+        <div class="filter-group" style="margin-left:auto;margin-top:auto;display:flex;gap:8px;">
+          <button class="tog" id="aiBtn" onclick="runPipeline()" style="padding:5px 16px;font-size:13px;">Analyze</button>
+          <button class="tog" onclick="copyPipeline()" title="Copy pipeline prompt + staged data to clipboard" style="padding:5px 12px;font-size:12px;">Copy</button>
+          <button class="tog" id="aiStopBtn" onclick="stopAnalysis()" style="padding:5px 12px;display:none;">stop</button>
+          <button class="tog" onclick="clearAnalysis()" style="padding:5px 12px;">Clear</button>
+        </div>
+      </div>
+      <div id="aiStatus" style="font-size:11px;color:var(--text3);margin:6px 0 0;display:none;"></div>
+      <div id="aiOutput" style="margin-top:12px;font-size:13px;line-height:1.7;color:var(--text);white-space:pre-wrap;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-height:600px;overflow-y:auto;border-top:0.5px solid var(--border);padding-top:12px;display:none;"></div>
+      <div id="aiSummary" style="margin-top:16px;display:none;"></div>
+      <div style="font-size:11px;color:var(--text3);margin-top:8px;">requires <code style="font-size:11px">OLLAMA_ORIGINS=*</code> on the ollama host</div>
+    </div>
+    </div>
+  </div>
+</div>
+<div class="tooltip" id="tooltip"><div id="ttBody"></div></div>
+
+<script>
+/* ===== CSV machinery — mirrors Travel Alignment Dashboard ===== */
+function splitLine(line){
+  const v=[];let c='',q=false;
+  for(let ch of line){if(ch==='"'){q=!q;}else if(ch===','&&!q){v.push(c.trim());c='';}else c+=ch;}
+  v.push(c.trim());return v;
+}
+function parseCSV(text){
+  const lines=text.trim().split(/\r?\n/);
+  if(lines.length<2)return[];
+  const raw=splitLine(lines[0]).map(h=>h.replace(/^"|"$/g,'').trim().toLowerCase());
+  const hm={};
+  raw.forEach((h,i)=>{
+    if(h==='l rank')hm.l_rank=i;
+    else if(h==='b rank')hm.b_rank=i;
+    else if(h==='my desire')hm.desire=i;
+    else if(h==='place')hm.place=i;
+    else if(h.startsWith('num visit'))hm.visits=i;
+    else if(h==='solo')hm.solo=i;
+    else if(h==='friend')hm.friend=i;
+    else if(h==='family')hm.family=i;
+    else if(h==='notes')hm.notes=i;
+    else if(h==='status')hm.status=i;
+    else if(h==='cluster')hm.cluster=i;
+    else if(h==='freq')hm.freq=i;
+    else if(h==='target')hm.target=i;
+    else if(h==='booked')hm.booked=i;
+  });
+  return lines.slice(1).map(line=>{
+    const v=splitLine(line);const r={};
+    Object.entries(hm).forEach(([k,i])=>r[k]=v[i]||'');
+    return r;
+  }).filter(r=>r.place&&r.desire);
+}
+
+/* ===== instance expander (JS port of the Python expander) ===== */
+function parseCompanionTok(tok){
+  tok=tok.trim();if(!tok)return null;
+  // accept ASCII '?' and full-width/variant question marks (？ ⁇ etc.)
+  const tent=/[?\uFF1F\u2047\u2370]/.test(tok);
+  tok=tok.replace(/[?\uFF1F\u2047\u2370]/g,'');
+  if(tok.includes(':')){const [n,s]=tok.split(':');return{name:n.trim(),score:s.trim(),tent};}
+  return{name:tok.trim(),score:null,tent};
+}
+function splitFriends(field){
+  const out=[];(field||'').split(',').forEach(p=>{const c=parseCompanionTok(p);if(c&&c.name)out.push(c);});
+  return out;
+}
+function namedIn(s){const m=/w\s+([A-Za-z]+)/.exec(s||'');return m?m[1]:null;}
+
+function expand(r){
+  const place=r.place.trim();
+  const mine=(r.desire||'').trim();
+  const L=(r.l_rank||'').trim(), B=(r.b_rank||'').trim();
+  const solo=(r.solo||'').toLowerCase().trim()==='x';
+  const friendField=(r.friend||'').trim();
+  const familyField=(r.family||'').trim();
+  const cluster=(r.cluster||'').trim();
+  const status=(r.status||'').trim().toLowerCase();
+  const freq=(r.freq||'').trim();
+  const target=(r.target||'').trim();
+  const booked=(r.booked||'').trim();
+  const notes=(r.notes||'').trim();
+  const visits=parseInt(r.visits)||0;
+
+  const fund_bekah=/bekah-will-go-if-i-fund/i.test(notes);
+  const daytrip=/daytrip/i.test(notes);
+  const cruise_only=cluster.toLowerCase()==='cruise-only';
+  const parked_status=(status==='aspirational'||status==='someday');
+  const bookedP=namedIn(booked), targetP=namedIn(target);
+  const parkLike=parked_status||cruise_only;
+
+  const inst=[];
+  const add=(companion,score,stage,sched,tentative,note)=>inst.push({companion,score:score||null,stage,sched:sched||'',tentative:!!tentative,note:note||''});
+
+  // Laura
+  if(L!==''&&L!=='-'){
+    if(bookedP==='Laura')add('Laura',L,'BOOKED',booked);
+    else if(targetP==='Laura')add('Laura',L,'TARGETED',target);
+    else add('Laura',L, parkLike?'PARKED':'READY');
+  }
+  // Bekah
+  if(B!==''&&B!=='-'){
+    if(bookedP==='Bekah')add('Bekah',B,'BOOKED',booked);
+    else if(targetP==='Bekah')add('Bekah',B,'TARGETED',target);
+    else add('Bekah',B, parkLike?'PARKED':'READY','',false, fund_bekah?'joins if you fund':'');
+  }
+  // solo
+  if(solo){
+    if(bookedP==='solo')add('solo',null,'BOOKED',booked);
+    else add('solo',null, parkLike?'PARKED':'READY');
+  }
+  // friends
+  splitFriends(friendField).forEach(f=>{
+    if(bookedP===f.name)add(f.name,f.score,'BOOKED',booked,f.tent);
+    else if(targetP===f.name)add(f.name,f.score,'TARGETED',target,f.tent);
+    else if(f.tent)add(f.name,f.score,'POSSIBLE','',true);
+    else add(f.name,f.score, parkLike?'PARKED':'READY');
+  });
+  // family
+  if(familyField){
+    if(bookedP==='Family')add('Family',null,'BOOKED',booked,false,familyField);
+    else if(targetP==='Family')add('Family',null,'TARGETED',target,false,familyField);
+    else if(parkLike)add('Family',null,'PARKED','',false,familyField);
+    else add('Family',null,'WAITING-OTHER','',false,familyField);
+  }
+  // any named companion in booked/target not yet captured
+  [[bookedP,'BOOKED',booked],[targetP,'TARGETED',target]].forEach(([p,st,val])=>{
+    if(p&&p!=='Family'&&p!=='solo'&&!inst.some(i=>i.companion===p&&i.stage===st))
+      add(p,null,st,val);
+  });
+  if(!inst.length)add('—',null, parkLike?'PARKED':'READY');
+
+  const compList=[];
+  if(solo)compList.push('solo');
+  splitFriends(friendField).forEach(f=>compList.push(f.name+(f.score?':'+f.score:'')+(f.tent?'?':'')));
+  if(familyField)compList.push('family');
+  if(B!==''&&B!=='-')compList.push('Bekah');
+  if(L!==''&&L!=='-')compList.push('Laura');
+
+  return {place,mine,L,B,cluster,freq,status,notes,fund_bekah,daytrip,cruise_only,
+    visits,lauraScore:(L!==''&&L!=='-')?L:null,bekScore:(B!==''&&B!=='-')?B:null,
+    compList,instances:inst};
+}
+
+/* ===== render ===== */
+const STAGES=["BOOKED","TARGETED","READY","WAITING-OTHER","POSSIBLE","PARKED"];
+const LABEL={BOOKED:"Booked",TARGETED:"Targeted",READY:"Ready — your call",
+  "WAITING-OTHER":"Waiting on others",POSSIBLE:"Possible",PARKED:"Parked"};
+const SUB={BOOKED:"date confirmed",TARGETED:"named, not booked",READY:"opportunity is yours",
+  "WAITING-OTHER":"gated on someone else",POSSIBLE:"tentative companion",PARKED:"longshot / someday"};
+
+let DATA=[];
+const VISIT_LABELS=['never','once','twice','3×','4×','often'];
+const state={q:"",comps:new Set(),fund:false,day:false,hidepark:false,mine:1,score:0,sort:'desire'};
+
+function cardHTML(d,inst,di){
+  const sc=inst.score?'<span class="sc">'+inst.score+'</span>':'';
+  const who=inst.companion==='—'?'<span class="who">(no companion set)</span>'
+    :'<span class="who">'+inst.companion+'</span>'+(sc?' · '+sc:'');
+  let tags='';
+  if(inst.tentative)tags+='<span class="tag tent">maybe</span>';
+  if(d.fund_bekah&&inst.companion==='Bekah')tags+='<span class="tag fund">funds → joins</span>';
+  if(d.daytrip)tags+='<span class="tag day">daytrip</span>';
+  if(d.cluster&&d.cluster.toLowerCase()!=='cruise-only')tags+='<span class="tag clu">'+d.cluster+'</span>';
+  if(d.cruise_only)tags+='<span class="tag cruise">cruise-only</span>';
+  if(d.freq)tags+='<span class="tag">'+d.freq+'</span>';
+  const sched=inst.sched?'<div class="sched">'+inst.sched+'</div>':'';
+  const note=inst.note?'<div class="note">'+inst.note+'</div>':'';
+  return '<div class="card s-'+inst.stage+'" data-di="'+di+'">'+
+    '<div class="pl"><span>'+d.place+'</span><span class="mine">me '+d.mine+'</span></div>'+
+    '<div class="comp">'+who+'</div>'+sched+note+
+    (tags?'<div class="tags">'+tags+'</div>':'')+'</div>';
+}
+function passes(d,inst){
+  if(state.q&&!d.place.toLowerCase().includes(state.q))return false;
+  if(state.comps.size&&!state.comps.has(inst.companion))return false;
+  if(state.fund&&!(d.fund_bekah&&inst.companion==='Bekah'))return false;
+  if(state.day&&!d.daytrip)return false;
+  if(state.hidepark&&inst.stage==='PARKED')return false;
+  if(state.mine>1){const m=parseFloat(d.mine);if(isNaN(m)||m<state.mine)return false;}
+  if(state.score>0){const s=parseFloat(inst.score);if(isNaN(s)||s<state.score)return false;}
+  return true;
+}
+function renderStats(){
+  const c={};STAGES.forEach(s=>c[s]=0);
+  DATA.forEach(d=>d.instances.forEach(i=>c[i.stage]++));
+  const el=document.getElementById('stats');
+  el.innerHTML=
+    '<div class="stat"><div class="stat-label">destinations</div><div class="stat-val">'+DATA.length+'</div></div>'+
+    '<div class="stat"><div class="stat-label">instances</div><div class="stat-val">'+DATA.reduce((a,d)=>a+d.instances.length,0)+'</div></div>'+
+    '<div class="stat"><div class="stat-label">booked</div><div class="stat-val">'+c.BOOKED+'</div></div>'+
+    '<div class="stat"><div class="stat-label">targeted</div><div class="stat-val">'+c.TARGETED+'</div></div>'+
+    '<div class="stat"><div class="stat-label">ready — your call</div><div class="stat-val">'+c.READY+'</div></div>';
+}
+function dateKey(sched){
+  // accepts "MM/DD/YYYY w Laura", "M/D/YYYY", or legacy "MM/YYYY" → sortable YYYYMMDD, or Infinity if none
+  const s=sched||'';
+  let m=s.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);   // MM/DD/YYYY
+  if(m)return parseInt(m[3])*10000+parseInt(m[1])*100+parseInt(m[2]);
+  m=s.match(/(\d{1,2})\/(\d{4})/);                  // legacy MM/YYYY → day 0
+  if(m)return parseInt(m[2])*10000+parseInt(m[1])*100;
+  return Infinity;
+}
+function sortInstances(list,stage){
+  const dated=(stage==='BOOKED'||stage==='TARGETED');
+  if(dated){
+    // dated columns always chronological, nearest first
+    return list.sort((a,b)=>dateKey(a.inst.sched)-dateKey(b.inst.sched) || a.d.place.localeCompare(b.d.place));
+  }
+  const s=state.sort;
+  const num=v=>{const f=parseFloat(v);return isNaN(f)?-1:f;};
+  const desire=x=>num(x.d.mine);
+  const cscore=x=>x.inst.score!=null?num(x.inst.score):-1;
+  const align=x=>desire(x)+(cscore(x)>=0?cscore(x):0); // combined, scoreless adds 0
+  const freqRank=x=>{const f=(x.d.freq||'').toLowerCase();if(f.includes('2x'))return 0;if(f.includes('1x'))return 1;if(f.includes('0.5'))return 2;return 3;};
+  let cmp;
+  if(s==='desire')      cmp=(a,b)=>desire(b)-desire(a) || a.d.place.localeCompare(b.d.place);
+  else if(s==='score')  cmp=(a,b)=>cscore(b)-cscore(a) || desire(b)-desire(a) || a.d.place.localeCompare(b.d.place);
+  else if(s==='align')  cmp=(a,b)=>align(b)-align(a) || a.d.place.localeCompare(b.d.place);
+  else if(s==='cluster')cmp=(a,b)=>(a.d.cluster||'~').localeCompare(b.d.cluster||'~') || desire(b)-desire(a) || a.d.place.localeCompare(b.d.place);
+  else if(s==='freq')   cmp=(a,b)=>freqRank(a)-freqRank(b) || desire(b)-desire(a) || a.d.place.localeCompare(b.d.place);
+  else                  cmp=(a,b)=>a.d.place.localeCompare(b.d.place); // 'alpha'
+  return list.sort(cmp);
+}
+function render(){
+  const board=document.getElementById('board');board.innerHTML='';
+  const counts={};
+  STAGES.forEach(s=>{
+    const col=document.createElement('div');col.className='col';
+    let list=[];
+    DATA.forEach((d,di)=>d.instances.forEach(inst=>{
+      if(inst.stage!==s)return;
+      if(!passes(d,inst))return;
+      list.push({d,di,inst});
+    }));
+    list=sortInstances(list,s);
+    let cards='',n=0;
+    list.forEach(x=>{cards+=cardHTML(x.d,x.inst,x.di);n++;});
+    counts[s]=n;
+    col.innerHTML='<div class="colhead"><div class="nm"><span class="dot d-'+s+'"></span>'+LABEL[s]+
+      '</div><div class="ct">'+n+' · '+SUB[s]+'</div></div>'+
+      '<div class="cardflow">'+(cards||'<div class="empty">—</div>')+'</div>';
+    board.appendChild(col);
+  });
+  document.getElementById('foot').innerHTML=
+    '<b>Booked</b> &amp; <b>Targeted</b> come straight from your CSV. '+
+    '<b>Ready</b> = viable, unscheduled, you decide — the opportunity is yours to take. '+
+    '<b>Waiting</b> = gated on a family roster or another person. '+
+    '<b>Possible</b> = a “?” companion, never the basis of a plan. '+
+    '<b>Parked</b> = aspirational / someday / cruise-only. '+
+    'Scores ride on each card as context — they never sort or filter.';
+  const sc=document.getElementById('aiScope');if(sc&&DATA.length)sc.textContent=aiScopeText();
+}
+
+/* ===== load ===== */
+function loadCSV(text){
+  const rows=parseCSV(text);
+  DATA=rows.map(expand);
+  if(DATA.length){
+    document.getElementById('dropZone').classList.add('loaded');
+    document.getElementById('dropTitle').textContent=DATA.length+' destinations loaded';
+    document.getElementById('dropSub').textContent='Drop a new file to reload';
+    document.getElementById('dashboard').style.display='block';
+    renderStats();render();
+    const sc=document.getElementById('aiScope');if(sc)sc.textContent=aiScopeText();
+    if(document.getElementById('aiModel').options.length<=1)fetchModels();
+    const c={};STAGES.forEach(s=>c[s]=0);
+    DATA.forEach(d=>d.instances.forEach(i=>c[i.stage]++));
+    const today=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+    document.getElementById('printMeta').textContent=
+      DATA.length+' destinations · '+DATA.reduce((a,d)=>a+d.instances.length,0)+' instances · '+
+      'printed '+today;
+  }
+}
+const dz=document.getElementById('dropZone'),fi=document.getElementById('fileInput');
+document.getElementById('printBtn').addEventListener('click',()=>window.print());
+dz.addEventListener('click',()=>fi.click());
+fi.addEventListener('change',e=>{const f=e.target.files[0];if(f){const r=new FileReader();r.onload=ev=>loadCSV(ev.target.result);r.readAsText(f);}});
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('dragover');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('dragover'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('dragover');const f=e.dataTransfer.files[0];if(f){const r=new FileReader();r.onload=ev=>loadCSV(ev.target.result);r.readAsText(f);}});
+
+document.getElementById('q').addEventListener('input',e=>{state.q=e.target.value.trim().toLowerCase();render();});
+document.querySelectorAll('#compBtns .tog').forEach(b=>b.addEventListener('click',()=>{
+  const c=b.dataset.comp,on=b.classList.toggle('active');
+  if(on)state.comps.add(c);else state.comps.delete(c);render();
+}));
+document.querySelectorAll('[data-flag]').forEach(b=>b.addEventListener('click',()=>{
+  const on=b.classList.toggle('active');state[b.dataset.flag==='hidepark'?'hidepark':b.dataset.flag]=on;render();
+}));
+
+/* sliders — named handlers called inline (oninput/onchange) for cross-browser reliability */
+function setMine(v){state.mine=parseInt(v);document.getElementById('mineVal').textContent=v;render();}
+function setScore(v){state.score=parseInt(v);document.getElementById('scoreVal').textContent=v;render();}
+function setSort(v){state.sort=v;render();}
+
+/* tooltip — full card info on hover (mirrors Travel Alignment Dashboard) */
+function showTooltip(e,d){
+  const tt=document.getElementById('tooltip'),body=document.getElementById('ttBody');
+  body.innerHTML='';
+  const nm=document.createElement('div');nm.className='tt-name';nm.textContent=d.place;body.appendChild(nm);
+  const rows=[
+    ['your desire',d.mine||'—'],
+    ['laura',d.lauraScore!=null?d.lauraScore:'—'],
+    ['bek',d.bekScore!=null?d.bekScore:'—'],
+    ['visits',d.visits+' ('+VISIT_LABELS[Math.min(d.visits,5)]+')'],
+    ['companions',d.compList.join(', ')||'—'],
+    ['status',d.status||'—'],
+    ...(d.freq?[['freq',d.freq]]:[]),
+    ...(d.cluster?[['cluster',d.cluster]]:[]),
+    ...(d.notes?[['notes',d.notes]]:[])
+  ];
+  rows.forEach(([k,v])=>{
+    const row=document.createElement('div');row.className='tt-row';
+    row.innerHTML='<span class="tt-key">'+k+'</span><span class="tt-val">'+v+'</span>';
+    body.appendChild(row);
+  });
+  tt.style.display='block';
+  // position with viewport clamp
+  const w=tt.offsetWidth,h=tt.offsetHeight;
+  let x=e.clientX+16,y=Math.max(8,e.clientY-60);
+  if(x+w>window.innerWidth-8)x=e.clientX-w-16;
+  if(y+h>window.innerHeight-8)y=window.innerHeight-h-8;
+  tt.style.left=x+'px';tt.style.top=y+'px';
+}
+function hideTooltip(){document.getElementById('tooltip').style.display='none';}
+
+const board=document.getElementById('board');
+board.addEventListener('mousemove',e=>{
+  const card=e.target.closest('.card');
+  if(card&&card.dataset.di!=null){showTooltip(e,DATA[+card.dataset.di]);}
+  else hideTooltip();
+});
+board.addEventListener('mouseleave',hideTooltip);
+
+/* ===== AI pipeline analysis ===== */
+let aiAbortController=null;
+
+const PIPELINE_PROMPT=`You are a personal travel planning analyst. I give you my travel pipeline: every destination split into companion-instances, each already placed in a funnel stage. Your job is to tell me WHAT TO DO, IN WHAT ORDER, AND WHY — not to summarize the board back to me (I can see it).
+
+THE STAGES (already assigned — do not re-stage):
+- BOOKED: date confirmed. Nothing to do but pre-trip logistics. Mostly ignore these except to note scheduling collisions.
+- TARGETED: committed, date + companion named, not yet booked. Action: firm up the booking when its window opens. Flag any whose date is approaching.
+- READY: viable, unscheduled, I am the sole decision-maker — the opportunity is mine to take. THIS IS THE HEART OF THE ANALYSIS. These are gated only on me picking a date. Tell me which to act on and in what order.
+- WAITING-OTHER: gated on someone else (a family roster, or a named person). Action: nudge that person, or nothing until they move. Distinguish genuinely-blocked from ones where an unblocked alternative companion-instance exists elsewhere on the board.
+- POSSIBLE: a tentative ("?") companion — never the basis of a firm plan. Note only if one is worth firming up the companion for.
+- PARKED: aspirational / someday / cruise-only longshots. Largely ignore.
+
+DATA ON EACH INSTANCE: destination, companion, that companion's score, my desire ("me"), schedule date if any, cluster, freq (recurring cadence), and flags (fund-Bekah = Bekah joins if I pay, so it's gated on me not blocked; daytrip = calendar pick only; cruise-only).
+
+HOW TO REASON:
+- Lead with READY. Which instances are highest-leverage to act on now? Order them. Weigh my desire, companion alignment, recurring cadence (a 1xYr/2xYr with no date is overdue a decision), and low friction (European/home-base trips, daytrips). fund-Bekah and other "gated on me" items belong here — they're pure decisions.
+- For WAITING-OTHER: call out which are truly blocked vs. which have a Ready alternative instance (same destination, different companion) — those aren't really blocked, I just need to treat them as the other companion's trip. Daytrips here need only a calendar pick.
+- For TARGETED: flag anything with an approaching date, and any dense booking windows (several trips same month) that need sequencing.
+- Note the SHAPE of the funnel if it's telling (e.g. a large Ready pile = lots of decisions parked on me; a Waiting column that's all family rosters = coordination is the real bottleneck).
+
+GUARDRAILS:
+- target vs booked is hard: a TARGETED trip is "firm up," never "book it now" or "confirm." Only BOOKED is confirmed.
+- A far-future date (e.g. 2031) is a deliberate committed plan — never call it unrealistic.
+- A tentative ("?") companion is a maybe — never build a firm recommendation on one.
+- If a destination's date or stage reflects a deliberate Notes choice, respect it; don't flag it as an error.
+- Don't psychologize or give life-coaching. Structural, scheduling, companion-fit reasoning only.
+- Where Bekah or a friend out-scores the named companion but a companion is already named in a booked/target date, keep the named one — note the higher scorer only as an alternative.
+
+OUTPUT: Open with a 3-5 line TL;DR of the most action-forcing things (each a decision/tension/consequence, not a restatement). Then a section ordering the READY column (what to do, in what order, why). Then a short WAITING section (real blocks vs. false blocks). Then a short TARGETED/scheduling section. Direct, punchy, bullets not walls. End with ONE concrete next step.`;
+
+function serializePipeline(){
+  // build the same filtered+sorted instance lists the board shows, grouped by stage, as text
+  let out='Today is '+new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})+'.\n\nHere is my travel pipeline — destinations split into companion-instances, grouped by stage:\n';
+  STAGES.forEach(s=>{
+    let list=[];
+    DATA.forEach((d,di)=>d.instances.forEach(inst=>{
+      if(inst.stage!==s)return;
+      if(!passes(d,inst))return;
+      list.push({d,di,inst});
+    }));
+    list=sortInstances(list,s);
+    out+='\n=== '+LABEL[s].toUpperCase()+' ('+list.length+') ===\n';
+    if(!list.length){out+='(none)\n';return;}
+    list.forEach(x=>{
+      const d=x.d,i=x.inst;
+      let line='- '+d.place+' — '+(i.companion||'?')+(i.score?(' ('+i.companion.toLowerCase()+':'+i.score+')'):'')+' · me '+d.mine;
+      if(i.sched)line+=' · '+i.sched;
+      if(d.freq)line+=' · '+d.freq;
+      if(d.cluster&&d.cluster.toLowerCase()!=='cruise-only')line+=' · cluster '+d.cluster;
+      if(d.cluster&&d.cluster.toLowerCase()==='cruise-only')line+=' · cruise-only';
+      if(d.fund_bekah&&i.companion==='Bekah')line+=' · fund-Bekah (gated on me, not blocked)';
+      if(d.daytrip)line+=' · daytrip';
+      if(i.tentative)line+=' · TENTATIVE';
+      if(d.notes)line+=' · note: '+d.notes;
+      out+=line+'\n';
+    });
+  });
+  out+='\nAnalyze this pipeline: what to do, in what order, and why. Lead with the Ready column.';
+  return out;
+}
+
+function aiScopeText(){
+  let inst=0;DATA.forEach(d=>d.instances.forEach(i=>{if(passes(d,i))inst++;}));
+  return DATA.length+' destinations · '+inst+' instances shown (current filter)';
+}
+
+async function fetchModels(){
+  const host=document.getElementById('aiHost').value.trim().replace(/\/$/,'');
+  const sel=document.getElementById('aiModel');
+  sel.innerHTML='<option value="">loading…</option>';
+  try{
+    const res=await fetch(host+'/api/tags',{signal:AbortSignal.timeout(5000)});
+    if(!res.ok)throw new Error(res.status);
+    const data=await res.json();
+    const models=(data.models||[]).map(m=>m.name).sort();
+    sel.innerHTML=models.length?models.map(m=>'<option value="'+m+'">'+m+'</option>').join(''):'<option value="">no models found</option>';
+  }catch(e){sel.innerHTML='<option value="">error: '+e.message+'</option>';}
+}
+
+async function copyPipeline(){
+  if(!DATA.length){alert('No data loaded.');return;}
+  const payload='===== SYSTEM PROMPT =====\n\n'+PIPELINE_PROMPT+'\n\n===== USER MESSAGE =====\n\n'+serializePipeline();
+  try{
+    await navigator.clipboard.writeText(payload);
+    const st=document.getElementById('aiStatus');st.style.display='block';
+    st.textContent='copied pipeline prompt ('+payload.length.toLocaleString()+' chars, '+aiScopeText()+') to clipboard';
+    setTimeout(()=>{if(st.textContent.startsWith('copied'))st.style.display='none';},4000);
+  }catch(e){alert('Clipboard copy failed: '+e.message);}
+}
+
+function stopAnalysis(){if(aiAbortController)aiAbortController.abort();}
+function clearAnalysis(){
+  const out=document.getElementById('aiOutput'),st=document.getElementById('aiStatus');
+  out.textContent='';out.style.display='none';st.textContent='';st.style.display='none';
+  const sum=document.getElementById('aiSummary');if(sum){sum.style.display='none';sum.innerHTML='';}
+}
+
+async function runPipeline(){
+  if(!DATA.length){alert('No data loaded.');return;}
+  const host=document.getElementById('aiHost').value.trim().replace(/\/$/,'');
+  const model=document.getElementById('aiModel').value;
+  const ctxVal=parseInt(document.getElementById('aiCtx').value);
+  const tempVal=parseFloat(document.getElementById('aiTemp').value);
+  const out=document.getElementById('aiOutput'),status=document.getElementById('aiStatus'),stopBtn=document.getElementById('aiStopBtn');
+  out.style.display='block';out.textContent='';status.style.display='block';
+  status.textContent='connecting to '+host+' · '+aiScopeText();
+  document.getElementById('aiBtn').disabled=true;stopBtn.style.display='inline-block';
+  aiAbortController=new AbortController();
+  try{
+    const res=await fetch(host+'/api/chat',{
+      method:'POST',headers:{'Content-Type':'application/json'},signal:aiAbortController.signal,
+      body:JSON.stringify({model,stream:true,options:{...(ctxVal>0?{num_ctx:ctxVal}:{}),temperature:tempVal},
+        messages:[{role:'system',content:PIPELINE_PROMPT},{role:'user',content:serializePipeline()}]})
+    });
+    if(!res.ok){status.textContent='error: '+res.status;return;}
+    status.textContent='streaming pipeline analysis…';
+    const reader=res.body.getReader(),dec=new TextDecoder();let buf='';
+    while(true){
+      const{done,value}=await reader.read();if(done)break;
+      buf+=dec.decode(value,{stream:true});
+      const lines=buf.split('\n');buf=lines.pop();
+      for(const line of lines){if(!line.trim())continue;try{const j=JSON.parse(line);out.textContent+=(j?.message?.content||'');out.scrollTop=out.scrollHeight;}catch(e){}}
+    }
+    status.textContent='done · '+model+' · '+aiScopeText();
+    buildSummary();
+  }catch(e){status.textContent=e.name==='AbortError'?'stopped':'error: '+e.message;}
+  finally{document.getElementById('aiBtn').disabled=false;stopBtn.style.display='none';aiAbortController=null;}
+}
+/* ===== AI summary: parse the generated analysis into section boxes with instance pills ===== */
+const SUMMARY_COLORS=['var(--blue)','var(--orange)','var(--amber)','var(--green)','var(--purple)','var(--pink)','var(--gray)'];
+
+function parseSections(text){
+  // split into {title, body} by heading-ish lines: markdown ###, a bold-only line, or an ALLCAPS: lead
+  const lines=text.split('\n');
+  const secs=[];let cur=null;
+  const isHeading=(ln)=>{
+    const t=ln.trim();
+    if(!t)return null;
+    let m=t.match(/^#{1,4}\s+(.+)$/); if(m)return m[1].replace(/[*_`]/g,'').trim();
+    m=t.match(/^\*\*(.+?)\*\*:?\s*$/); if(m)return m[1].trim();
+    // a line that LEADS with an ALLCAPS word/phrase (>=4 chars), e.g. "READY — what to act on:", "TARGETED / scheduling:", "WAITING — real vs false"
+    m=t.match(/^([A-Z][A-Z0-9]{3,}(?:[ \/&\-][A-Z0-9]+)*)\b/);
+    if(m&&!/^\d/.test(t)){
+      // must not be a normal sentence: heading lines are short-ish and not bulleted
+      if(!/^[-*•]/.test(t)&&t.length<=80)return t.replace(/[*_`]/g,'').replace(/:$/,'').trim();
+    }
+    // pure ALLCAPS line
+    if(/^[A-Z0-9][A-Z0-9 ,\/&\-—:]{3,60}$/.test(t)&&/[A-Z]/.test(t)&&t===t.toUpperCase())return t.replace(/:$/,'').trim();
+    return null;
+  };
+  lines.forEach(ln=>{
+    const h=isHeading(ln);
+    if(h){cur={title:h,body:''};secs.push(cur);}
+    else if(cur){cur.body+=ln+'\n';}
+    else{cur={title:'Summary',body:ln+'\n'};secs.push(cur);}
+  });
+  return secs.filter(s=>s.body.trim());
+}
+
+function findInstancesInText(body){
+  // match known destinations; for each mention, attach the nearest companion token to form an instance pill
+  const found=[];const seen=new Set();
+  // build companion vocabulary from data
+  DATA.forEach((d,di)=>{
+    const name=d.place;
+    // escape regex
+    const esc=name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    // also tolerate a space-variant (GranCanaria <-> Gran Canaria)
+    const spaced=name.replace(/([a-z])([A-Z])/g,'$1 ?$2').replace(/[.*+?^${}()|[\]\\]/g,m=>m==='?'?'?':'\\'+m);
+    const re=new RegExp('(?:'+esc+'|'+spaced+')','g');
+    let m;
+    while((m=re.exec(body))){
+      // window around the hit to find a companion
+      const start=m.index, end=re.lastIndex;
+      const around=body.slice(Math.max(0,start-10),Math.min(body.length,end+60));
+      // candidate companions for this destination, in priority order found in text
+      let comp=null,score=null;
+      // check named friends, then Laura/Bekah, then solo/family
+      const cands=[];
+      d.instances.forEach(i=>{if(i.companion&&i.companion!=='—'&&!cands.find(c=>c.c===i.companion))cands.push({c:i.companion,s:i.score});});
+      for(const c of cands){
+        const cesc=c.c.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+        if(new RegExp('\\b'+cesc+'\\b','i').test(around)){comp=c.c;score=c.s;break;}
+      }
+      if(!comp){
+        if(/\bsolo\b/i.test(around))comp='solo';
+        else if(/\bfamily\b/i.test(around))comp='Family';
+        else comp=null; // mentioned without a clear companion → still pill it as the destination
+      }
+      const key=di+'|'+(comp||'');
+      if(seen.has(key))continue;seen.add(key);
+      found.push({di,place:name,comp,score});
+      if(found.length>200)break;
+    }
+  });
+  return found;
+}
+
+function buildSummary(){
+  const wrap=document.getElementById('aiSummary');
+  const text=document.getElementById('aiOutput').textContent||'';
+  if(!text.trim()||!DATA.length){wrap.style.display='none';return;}
+  const secs=parseSections(text);
+  let html='<div class="filter-label" style="margin-bottom:10px;">summary — destinations mentioned per section (hover a pill for details)</div>';
+  html+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;">';
+  let any=false;
+  secs.forEach((s,idx)=>{
+    const inst=findInstancesInText(s.body);
+    if(!inst.length)return;
+    any=true;
+    const col=SUMMARY_COLORS[idx%SUMMARY_COLORS.length];
+    html+='<div style="background:var(--bg2);border:0.5px solid var(--border);border-left:3px solid '+col+';border-radius:var(--radius);padding:12px 14px;">';
+    html+='<div style="font-weight:600;font-size:13px;margin-bottom:2px;color:'+col+';">'+s.title+'</div>';
+    html+='<div style="font-size:11px;color:var(--text3);margin-bottom:10px;">'+inst.length+' mentioned</div>';
+    html+='<div style="display:flex;flex-wrap:wrap;gap:6px;">';
+    inst.forEach(it=>{
+      const label=it.place+(it.comp?' · '+it.comp:'')+(it.score?' '+it.score:'');
+      html+='<span class="sumpill" data-di="'+it.di+'" style="font-size:12px;padding:3px 9px;border:0.5px solid var(--border2);border-radius:12px;background:var(--bg);color:var(--text);cursor:default;white-space:nowrap;">'+label+'</span>';
+    });
+    html+='</div></div>';
+  });
+  html+='</div>';
+  if(!any){wrap.style.display='none';return;}
+  wrap.innerHTML=html;wrap.style.display='block';
+  // wire hover → existing tooltip
+  wrap.querySelectorAll('.sumpill').forEach(p=>{
+    p.addEventListener('mousemove',e=>{const di=+p.dataset.di;if(DATA[di])showTooltip(e,DATA[di]);});
+    p.addEventListener('mouseleave',hideTooltip);
+  });
+}
+</script>
+</body>
+</html>
