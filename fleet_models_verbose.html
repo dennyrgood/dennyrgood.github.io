@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<!-- Fleet Model Inventory - created 2026-06-12 21:04:35, updated 2026-06-12 with "why kept" column -->
+<!-- Standalone artifact. Ground truth: OpenWebUI model list (23 models). -->
+<!-- Tier/role classifications applied from OllmaModelsEval.txt. Sizes carried from prior dashboard + verified Ollama/Gemma sources. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fleet Model Inventory</title>
+<style>
+  :root{
+    --bg:#0a0e14;
+    --panel:#111722;
+    --panel-2:#0d131c;
+    --edge:#1f2a3a;
+    --edge-hot:#2d3e57;
+    --ink:#e8edf5;
+    --ink-dim:#8a98ad;
+    --ink-faint:#5a6678;
+    --amber:#e9a23b;
+    --cyan:#48c9d6;
+    --green:#5bd99a;
+    --red:#e36464;
+    --violet:#a98be6;
+    --mono:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--mono);
+    font-size:14px;
+    line-height:1.5;
+    padding:28px 20px 60px;
+    background-image:
+      radial-gradient(circle at 12% -5%, rgba(73,201,214,.06), transparent 40%),
+      radial-gradient(circle at 90% 0%, rgba(233,162,59,.05), transparent 45%);
+  }
+  .wrap{max-width:1280px;margin:0 auto}
+
+  header.masthead{
+    display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;
+    border-bottom:1px solid var(--edge);
+    padding-bottom:14px;margin-bottom:26px;
+  }
+  .masthead h1{
+    font-size:15px;font-weight:700;letter-spacing:.28em;text-transform:uppercase;
+    color:var(--ink);
+  }
+  .masthead .tick{color:var(--amber)}
+  .masthead .meta{
+    margin-left:auto;color:var(--ink-faint);font-size:11px;letter-spacing:.1em;
+    display:flex;gap:18px;
+  }
+  .masthead .meta b{color:var(--cyan);font-weight:500}
+
+  .pillars{
+    display:flex;gap:10px;margin-bottom:30px;flex-wrap:wrap;
+    font-size:11px;letter-spacing:.06em;color:var(--ink-dim);
+  }
+  .pillar{
+    flex:1;min-width:200px;
+    border:1px solid var(--edge);border-radius:6px;
+    padding:10px 14px;background:var(--panel-2);
+    position:relative;overflow:hidden;
+  }
+  .pillar::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px}
+  .pillar.qwen::before{background:var(--cyan)}
+  .pillar.gemma::before{background:var(--green)}
+  .pillar.llama::before{background:var(--ink-faint)}
+  .pillar h3{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink);margin-bottom:3px}
+  .pillar.qwen h3{color:var(--cyan)}
+  .pillar.gemma h3{color:var(--green)}
+  .pillar.llama h3{color:var(--ink-dim)}
+
+  .machine{margin-bottom:26px}
+  .machine-head{
+    display:flex;align-items:baseline;gap:12px;
+    padding:8px 4px;border-bottom:1px solid var(--edge-hot);margin-bottom:2px;
+  }
+  .machine-head .id{
+    font-size:13px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+  }
+  .ib .id{color:var(--amber)}
+  .cw .id{color:var(--cyan)}
+  .tb .id{color:var(--violet)}
+  .mb .id{color:var(--ink-dim)}
+  .machine-head .hw{color:var(--ink-faint);font-size:11px;letter-spacing:.08em}
+  .machine-head .count{margin-left:auto;color:var(--ink-faint);font-size:11px}
+  .machine-head .mirror{
+    color:var(--violet);font-size:10px;letter-spacing:.1em;
+    border:1px solid var(--edge-hot);border-radius:3px;padding:1px 6px;
+  }
+
+  table{width:100%;border-collapse:collapse;table-layout:fixed}
+  col.c-model{width:24%}
+  col.c-why{width:auto}
+  col.c-size{width:74px}
+  col.c-vis{width:64px}
+  col.c-tags{width:230px}
+  tr.row{border-bottom:1px solid rgba(31,42,58,.5)}
+  tr.row:hover{background:rgba(73,201,214,.035)}
+  td{padding:10px 8px;vertical-align:top}
+  td.model{font-size:13px;color:var(--ink)}
+  td.model .name{display:block;word-break:break-word}
+  td.model .note{color:var(--ink-faint);font-size:11px}
+  td.why{font-size:12px;color:var(--ink-dim);line-height:1.55}
+  td.why b{color:var(--ink);font-weight:500}
+  td.size{color:var(--ink-dim);font-size:12px;text-align:right;white-space:nowrap}
+  td.vis{text-align:center}
+  td.tags{text-align:right;vertical-align:top}
+
+  .vis-pub{color:var(--green);font-size:10px;letter-spacing:.12em}
+  .vis-prv{color:var(--ink-faint);font-size:10px;letter-spacing:.12em}
+
+  .tag{
+    display:inline-block;font-size:10px;letter-spacing:.04em;
+    padding:2px 7px;border-radius:3px;margin:0 0 3px 5px;white-space:nowrap;
+    border:1px solid transparent;
+  }
+  .t-primary{color:var(--green);border-color:rgba(91,217,154,.4);background:rgba(91,217,154,.08)}
+  .t-secondary{color:var(--cyan);border-color:rgba(73,201,214,.35);background:rgba(73,201,214,.07)}
+  .t-conditional{color:var(--amber);border-color:rgba(233,162,59,.35);background:rgba(233,162,59,.07)}
+  .t-remove{color:var(--red);border-color:rgba(227,100,100,.4);background:rgba(227,100,100,.09)}
+  .t-role{color:var(--ink-dim);border-color:var(--edge);background:transparent}
+  .t-nsfw{color:var(--violet);border-color:rgba(169,139,230,.4);background:rgba(169,139,230,.08)}
+
+  tr.flagged td{background:rgba(227,100,100,.05)}
+  tr.flagged td.model .name{color:var(--red)}
+
+  .legend{
+    margin-top:34px;border-top:1px solid var(--edge);padding-top:16px;
+    display:flex;gap:10px 26px;flex-wrap:wrap;font-size:11px;color:var(--ink-dim);
+  }
+  .legend .grp{display:flex;align-items:center;gap:8px}
+  .legend .grp b{color:var(--ink);font-weight:500}
+  .footnote{
+    margin-top:18px;font-size:10.5px;color:var(--ink-faint);line-height:1.7;
+    border-left:2px solid var(--edge);padding-left:12px;
+  }
+  .footnote .warn{color:var(--amber)}
+  @media (max-width:900px){
+    col.c-model{width:36%}
+    col.c-why{width:auto}
+    col.c-size{width:60px}
+    col.c-vis{width:52px}
+    col.c-tags{width:180px}
+    td.why{font-size:11px}
+  }
+  @media (max-width:640px){
+    table{table-layout:auto}
+    td.why,td.size,td.vis{display:none}
+    td.model{width:55%}
+    td.tags{width:45%;text-align:right}
+    .tag{margin:0 0 4px 3px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <h1><span class="tick">&#9614;</span>Fleet Model Inventory</h1>
+    <div class="meta">
+      <span>MODELS <b>23</b></span>
+      <span>NODES <b>4</b></span>
+      <span>SCAN <b>2026-06-12</b></span>
+    </div>
+  </header>
+
+  <div class="pillars">
+    <div class="pillar qwen">
+      <h3>Qwen</h3>
+      reasoning + coding backbone &mdash; the deep-reasoning spine
+    </div>
+    <div class="pillar gemma">
+      <h3>Gemma 4</h3>
+      efficiency + multimodal &mdash; a parallel pillar, not a side branch
+    </div>
+    <div class="pillar llama">
+      <h3>LLaMA</h3>
+      baseline + compatibility layer &mdash; smoke tests
+    </div>
+  </div>
+
+  <!-- ===================== IMAGEBEAST ===================== -->
+  <section class="machine ib">
+    <div class="machine-head">
+      <span class="id">ImageBeast</span>
+      <span class="hw">RTX 5090 &middot; 32GB VRAM</span>
+      <span class="count">7 models</span>
+    </div>
+    <table>
+      <col class="c-model"><col class="c-why"><col class="c-size"><col class="c-vis"><col class="c-tags">
+      <tr class="row">
+        <td class="model"><span class="name">qwen35-27b:latest</span><span class="note">IB Dense</span></td>
+        <td class="why"><b>Deep analysis of a structured input.</b> "Read my full TravelWeights.csv and tell me who gates each blocked trip and where the data contradicts itself." Most careful reasoning over a whole dataset.</td>
+        <td class="size">21.6 GB</td>
+        <td class="vis"><span class="vis-pub">PUBLIC</span></td>
+        <td class="tags"><span class="tag t-primary">primary</span><span class="tag t-role">reasoning ceiling</span></td>
+      </tr>
+      <tr class="row">
+        <td class="model"><span class="name">qwen35-35b-a3b:latest</span><span class="note">IB MoE</span></td>
+        <td class="why"><b>Same depth, faster, biggest context.</b> "Review this entire comfy_fleet.py plus three config files at once and find the bug." For large inputs when you don't want to wait.</td>
+        <td class="size">28.0 GB</td>
+        <td class="vis"><span class="vis-pub">PUBLIC</span></td>
+        <td class="tags"><span class="tag t-primary">primary</span><span class="tag t-role">throughput reasoner</span></td>
+      </tr>
+      <tr class="row">
+        <td class="model"><span class="name">gemma4:31b-it-qat</span></td>
+        <td class="why"><b>Second-opinion reasoner, different family.</b> "Run that same travel briefing and see if Gemma reads the companion-score tradeoffs differently than Qwen." Also your best general model to hand to others.</td>
+        <td class="size">23.0 GB</td>
+        <td class="vis"><span class="vis-prv">PRIVATE</span></td>
+        <td class="tags"><span class="tag t-primary">primary</span><span class="tag t-role">alt reasoning</span></td>
+      </tr>
+      <tr class="row">
+        <td class="model"><span class="name">gemma4:26b-a4b-it-qat</span></td>
+        <td class="why"><b>Efficiency reasoner &mdash; near-31B quality at MoE speed.</b> "Quick reasoning pass when I don't want to spin up the full 31B." Throughput when 31B is overkill.</td>
+        <td class="size">19.0 GB</td>
+        <td class="vis"><span class="vis-prv">PRIVATE</span></td>
+        <td class="tags"><span class="tag t-primary">primary</span><span class="tag t-role">MoE efficiency</span></td>
+      </tr>
+      <tr class="row">
+        <td class="model"><span class="name">qwen3-coder:30b</span><span class="note">IB use 35moe</span></td>
+        <td class="why"><b>Dedicated agentic coding.</b> "Write me a PowerShell script that scans each machine and exports a model CSV." Code generation and tool-use, not chat.</td>
+        <td class="size">18.0 GB</td>
+        <td class="vis"><span class="vis-prv">PRIVATE</span></td>
+        <td class="tags"><span class="tag t-primary">primary</span><span class="tag t-role">agentic / code</span></td>
+      </tr>
+      <tr class="row">
+        <td class="model"><span class="name">qwen3:30b-a3b</span><span class="note">IB use 35moe</span></td>
+        <td class="why"><b>Superseded by 35moe.</b> Here only as a fallback / comparison reasoner. Safe to drop once you trust 35moe on your real prompts.</td>
+        <td class="size">18.0 GB</td>
+        <td class="vis"><span class="vis-prv">PRIVATE</span></td>
+        <td class="tags"><span class="tag t-secondary">secondary</span><span class="tag t-role">fallback</span></td>
+      </tr>
+      <tr class="row">
+        <td class="model"><span class="name">llama3.2:3b</span></td>
+        <td class="why"><b>Smoke test.</b> "Is Ollama on IB even responding?" Tiny sanity check, nothing more.</td>
+        <td class="size">2.0 GB</td>
+        <td class="vis"><span class="vis-pub">PUBLIC</span></td>
+        <td class="tags"><span class="tag t-conditional">conditional</span><span class="tag t-role">smoke test</span></td>
+      </tr>
+    </table>
+  </section>
+
+  <!-- ===================== CHATWORKHORSE ===================== -->
+  <section class="machine cw">
+    <div class="machine-head">
+      <span class="id">ChatWorkHorse</span>
+      <span class="hw">RTX 3060 &middot; 12GB VRAM</span>
+      <span class="mirror">&#8644; mirrors TB</span>
+      <span class="count">7 models</span>
+    </div>
+    <table>
+      <col class="c-model"><col class="c-why"><col class="c-size"><col class="c-vis"><col class="c-tags">
+      <tr class="row">
+        <td class="model"><span class="name">gemma4:12b-it-qat</span><span class="note">cw</span></td>
+        <td class="why"><b>Everyday workhorse on mid hardware.</b> "General question or draft while the 5090 is busy." Your daily driver when Qwen feels heavy or slow.</td>
+        <td class="size">8.5 GB</td>
+        <td class="vis"><span class="vis-prv">PRIVATE</span></td>
+        <td class="tags"><span class="tag t-primary">primary</span><span class="tag t-role">daily driver</span></td>
+      </tr>
+      <tr class="row">
+        <td class="model"><span class="name">qwen35-9b:latest</span><span class="note">cw</span></td>
+        <td class="why"><b>Fast reasoning on the small nodes.</b> "Quick structured-thinking task that's too much for a 3B but doesn't need the 5090."</td>
+        <td class="size">7.2 GB</td>
+        <td class="vis"><span class="vis-pub">PUBLIC</span></td>
+        <td class="tags"><span class="tag t-primary">primary</span><span class="tag t-role">fast reasoning</span></td>
+      </tr>
+      <tr class="row">
+        <td class="model"><span class="name">qwen3:8b</span><span class="note">CW use 35_9b</span></td>
+        <td class="why"><b>Superseded by 35_9b.</b> Comparison / fallback only. Droppable once 35_9b is trusted.</td>
+        <td class="size">5.2 GB</td>
+        <td class="vis"><span class="vis-prv">PRIVATE</span></td>
+        <td class="tags"><span class="tag t-secondary">secondary</span><span class="tag t-role">fallback</span></td>
+      </tr>
+      <tr class="row">
+        <td class="model"><span class="name">qwen3-vl:8b</span><span class="note">cw</span></td>
+        <td class="why"><b>Vision input for ComfyUI.</b> "Describe this reference image so I can feed the caption into a greeting-card workflow." The one with eyes.</td>
+        <td class="size">6.1 GB</td>
+        <td class="vis"><span class="vis-prv">PRIVATE</span></td>
+        <td class="tags"><span class="tag t-primary">primary</span><span class="tag t-role">vision / ComfyUI</span></td>
+      </tr>
+      <tr class="row">
+        <td class="model"><span class="name">huihui_ai/qwen3-abliterated:8b</span><span class="note">NSFW CW</span></td>
+        <td class="why"><b>Uncensored model for content the standard models refuse.</b> Keep only if you actually use it.</td>
+        <td class="size">5.2 GB</td>
+        <td class="vis"><span class="vis-prv">PRIVATE</span></td>
+        <td class="tags"><span class="tag t-conditional">conditional</span><span class="tag t-nsfw">abliterated</span></td>
+      </tr>
+      <tr class="row flagged">
+        <td class="model"><span class="name">qwen2.5:14b</span><span class="note">CW use 35_9b</span></td>
+        <td class="why"><b>Older generation doing a job qwen35-9b now does better.</b> No unique role left. Delete.</td>
+        <td class="size">9.0 GB</td>
+        <td class="vis"><span class="vis-prv">PRIVATE</span></td>
+        <td class="tags"><span class="tag t-remove">pending removal</span><span class="tag t-role">redundant</span></td>
+      </tr>
+      <tr class="row">
+        <td class="model"><span class="name">llama3.2:3b</span><span class="note">cw</span></td>
+        <td class="why"><b>Smoke test.</b> Quick "is this node alive?" check.</td>
+        <td class="size">2.0 GB</td>
+        <td class="vis"><span class="vis-pub">PUBLIC</span></td>
+        <td class="tags"><span class="tag t-conditional">conditional</span><span class="tag t-role">smoke test</span></td>
+      </tr>
+    </table>
+  </section>
+
+  <!-- ===================== TRAVELBEAST ===================== -->
+  <section class="machine tb">
+    <div class="machine-head">
+      <span class="id">TravelBeast</span>
+      <span class="hw">8GB VRAM</span>
+      <span class="mirror">&#8644; mirrors CW</span>
+      <span class="count">7 models</span>
+    </div>
+    <table>
+      <col class="c-model"><col class="c-why"><col class="c-size"><col class="c-vis"><col class="c-tags">
+      <tr class="row">
+        <td class="model"><span class="name">gemma4:12b-it-qat</span><span class="note">tb</span></td>
+        <td class="why"><b>Primary usable intelligence on the laptop.</b> "Real reasoning while travelling, fully offline." Your best on-the-road model.</td>
+        <td class="size">8.5 GB</td>
+        <td class="vis"><span class="vis-prv">PRIVATE</span></td>
+        <td class="tags"><span class="tag t-primary">primary</span><span class="tag t-role">primary intelligence</span></td>
+      </tr>
+      <tr class="row">
+        <td class="model"><span class="name">qwen35-9b:latest</span><span class="note">tb</span></td>
+        <td class="why"><b>Fast reasoning fallback.</b> "Quick structured task when Gemma 12B feels heavy on battery."</td>
+        <td class="size">7.2 GB</td>
+        <td class="vis"><span class="vis-prv">PRIVATE</span></td>
+        <td class="tags"><span class="tag t-primary">primary</span><span class="tag t-role">fast reasoning</span></td>
+      </tr>
+      <tr class="row">
+        <td class="model"><span class="name">qwen3:8b</span><span class="note">TB use 35_9b</span></td>
+        <td class="why"><b>Superseded by 35_9b.</b> Comparison / fallback only. Droppable once 35_9b is trusted.</td>
+        <td class="size">5.2 GB</td>
+        <td class="vis"><span class="vis-prv">PRIVATE</span></td>
+        <td class="tags"><span class="tag t-secondary">secondary</span><span class="tag t-role">fallback</span></td>
+      </tr>
+      <tr class="row">
+        <td class="model"><span class="name">qwen3-vl:8b</span><span class="note">tb</span></td>
+        <td class="why"><b>Vision input for ComfyUI on the road.</b> "Caption a reference shot to drive a workflow away from the 5090."</td>
+        <td class="size">6.1 GB</td>
+        <td class="vis"><span class="vis-prv">PRIVATE</span></td>
+        <td class="tags"><span class="tag t-primary">primary</span><span class="tag t-role">vision / ComfyUI</span></td>
+      </tr>
+      <tr class="row">
+        <td class="model"><span class="name">huihui_ai/qwen3-abliterated:8b</span><span class="note">NSFW TB</span></td>
+        <td class="why"><b>Uncensored model for content the standard models refuse.</b> Keep only if you actually use it.</td>
+        <td class="size">5.2 GB</td>
+        <td class="vis"><span class="vis-prv">PRIVATE</span></td>
+        <td class="tags"><span class="tag t-conditional">conditional</span><span class="tag t-nsfw">abliterated</span></td>
+      </tr>
+      <tr class="row flagged">
+        <td class="model"><span class="name">qwen2.5:14b</span><span class="note">TB use 35_9b</span></td>
+        <td class="why"><b>Older generation doing a job qwen35-9b now does better.</b> No unique role left. Delete.</td>
+        <td class="size">9.0 GB</td>
+        <td class="vis"><span class="vis-prv">PRIVATE</span></td>
+        <td class="tags"><span class="tag t-remove">pending removal</span><span class="tag t-role">redundant</span></td>
+      </tr>
+      <tr class="row">
+        <td class="model"><span class="name">llama3.2:3b</span><span class="note">tb</span></td>
+        <td class="why"><b>Smoke test.</b> Quick "is this node alive?" check.</td>
+        <td class="size">2.0 GB</td>
+        <td class="vis"><span class="vis-prv">PRIVATE</span></td>
+        <td class="tags"><span class="tag t-conditional">conditional</span><span class="tag t-role">smoke test</span></td>
+      </tr>
+    </table>
+  </section>
+
+  <!-- ===================== MACBOOK ===================== -->
+  <section class="machine mb">
+    <div class="machine-head">
+      <span class="id">MacBook</span>
+      <span class="hw">16GB &middot; personal workstation</span>
+      <span class="count">2 models</span>
+    </div>
+    <table>
+      <col class="c-model"><col class="c-why"><col class="c-size"><col class="c-vis"><col class="c-tags">
+      <tr class="row">
+        <td class="model"><span class="name">glm-4.6:cloud</span></td>
+        <td class="why"><b>Cloud API link, not a local model.</b> "Reach a bigger model from the laptop without local VRAM." Keep if you call it.</td>
+        <td class="size">N/A</td>
+        <td class="vis"><span class="vis-prv">PRIVATE</span></td>
+        <td class="tags"><span class="tag t-conditional">conditional</span><span class="tag t-role">API link</span></td>
+      </tr>
+      <tr class="row">
+        <td class="model"><span class="name">llama3.2:3b</span></td>
+        <td class="why"><b>Local baseline so the MacBook works fully offline.</b></td>
+        <td class="size">2.0 GB</td>
+        <td class="vis"><span class="vis-prv">PRIVATE</span></td>
+        <td class="tags"><span class="tag t-conditional">conditional</span><span class="tag t-role">local baseline</span></td>
+      </tr>
+    </table>
+  </section>
+
+  <div class="legend">
+    <div class="grp"><span class="tag t-primary">primary</span><b>keep &mdash; core tier</b></div>
+    <div class="grp"><span class="tag t-secondary">secondary</span><b>valuable but superseded</b></div>
+    <div class="grp"><span class="tag t-conditional">conditional</span><b>keep if actively used</b></div>
+    <div class="grp"><span class="tag t-remove">pending removal</span><b>redundant</b></div>
+  </div>
+
+  <div class="footnote">
+    Ground truth: OpenWebUI deployment (23 models). CW and TB share one Ollama models folder &mdash; pulls/deletes on one affect the other.<br>
+    Tier &amp; role tags applied from <b>OllmaModelsEval.txt</b>. <span class="warn">Note:</span> that file's tiering is interpretive AI commentary, not vendor fact &mdash; the model identities (Gemma 4 31B / 26B&nbsp;A4B / 12B, released Apr&nbsp;2&nbsp;2026) are verified; the "core pillar" framing is its author's opinion.<br>
+    Prune path: drop qwen2.5:14b now; drop qwen3:8b and qwen3:30b-a3b once the 35-series fully replaces them &mdash; that's 23 &rarr; ~18 with no capability lost.
+  </div>
+
+</div>
+</body>
+</html>
