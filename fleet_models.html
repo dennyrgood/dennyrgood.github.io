@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Fleet Model Inventory - created 2026-06-12 21:04:35, updated 2026-06-12 with "why kept" column, updated 2026-06-13 added qwen3.6:latest, added ?public filter -->
+<!-- Fleet Model Inventory - created 2026-06-12 21:04:35, updated 2026-06-12 with "why kept" column, updated 2026-06-13 added qwen3.6:latest, added ?public filter, updated 2026-06-13 corrected sizes from ollama ls -->
 <!-- Standalone artifact. Ground truth: OpenWebUI model list (24 models). -->
 <!-- Tier/role classifications applied from OllmaModelsEval.txt. Sizes carried from prior dashboard + verified Ollama/Gemma sources. -->
 <html lang="en">
@@ -195,49 +195,49 @@
       <tr class="row">
         <td class="model"><span class="name">qwen35-27b:latest</span><span class="note">IB Dense</span></td>
         <td class="why"><b>Deep analysis of a structured input.</b> "Read my full TravelWeights.csv and tell me who gates each blocked trip and where the data contradicts itself." Most careful reasoning over a whole dataset.</td>
-        <td class="size">21.6 GB</td>
+        <td class="size">17 GB</td>
         <td class="vis"><span class="vis-pub">PUBLIC</span></td>
         <td class="tags"><span class="tag t-primary">primary</span><span class="tag t-role">reasoning ceiling</span></td>
       </tr>
       <tr class="row">
         <td class="model"><span class="name">qwen35-35b-a3b:latest</span><span class="note">IB MoE</span></td>
         <td class="why"><b>Same depth, faster, biggest context.</b> "Review this entire comfy_fleet.py plus three config files at once and find the bug." For large inputs when you don't want to wait.</td>
-        <td class="size">28.0 GB</td>
+        <td class="size">23 GB</td>
         <td class="vis"><span class="vis-pub">PUBLIC</span></td>
         <td class="tags"><span class="tag t-primary">primary</span><span class="tag t-role">throughput reasoner</span></td>
       </tr>
       <tr class="row">
         <td class="model"><span class="name">qwen3.6:latest</span><span class="note">IB MoE</span></td>
         <td class="why"><b>Next-gen agentic coding &amp; reasoning upgrade.</b> "Benchmark this against qwen35-35b-a3b on your real prompts — 73.4% SWE-bench, 262K context, 30&times; smaller KV footprint than pure-attention models." Direct generational successor to the 35moe slot.</td>
-        <td class="size">24.0 GB</td>
+        <td class="size">23 GB</td>
         <td class="vis"><span class="vis-prv">PRIVATE</span></td>
         <td class="tags"><span class="tag t-primary">primary</span><span class="tag t-role">next-gen MoE</span></td>
       </tr>
       <tr class="row">
         <td class="model"><span class="name">gemma4:31b-it-qat</span></td>
         <td class="why"><b>Second-opinion reasoner, different family.</b> "Run that same travel briefing and see if Gemma reads the companion-score tradeoffs differently than Qwen." Also your best general model to hand to others.</td>
-        <td class="size">23.0 GB</td>
+        <td class="size">18 GB</td>
         <td class="vis"><span class="vis-prv">PRIVATE</span></td>
         <td class="tags"><span class="tag t-primary">primary</span><span class="tag t-role">alt reasoning</span></td>
       </tr>
       <tr class="row">
         <td class="model"><span class="name">gemma4:26b-a4b-it-qat</span></td>
         <td class="why"><b>Efficiency reasoner &mdash; near-31B quality at MoE speed.</b> "Quick reasoning pass when I don't want to spin up the full 31B." Throughput when 31B is overkill.</td>
-        <td class="size">19.0 GB</td>
+        <td class="size">15 GB</td>
         <td class="vis"><span class="vis-prv">PRIVATE</span></td>
         <td class="tags"><span class="tag t-primary">primary</span><span class="tag t-role">MoE efficiency</span></td>
       </tr>
       <tr class="row">
         <td class="model"><span class="name">qwen3-coder:30b</span><span class="note">IB use 35moe</span></td>
         <td class="why"><b>Dedicated agentic coding.</b> "Write me a PowerShell script that scans each machine and exports a model CSV." Code generation and tool-use, not chat.</td>
-        <td class="size">18.0 GB</td>
+        <td class="size">18 GB</td>
         <td class="vis"><span class="vis-prv">PRIVATE</span></td>
         <td class="tags"><span class="tag t-primary">primary</span><span class="tag t-role">agentic / code</span></td>
       </tr>
       <tr class="row">
         <td class="model"><span class="name">qwen3:30b-a3b</span><span class="note">IB use 35moe</span></td>
         <td class="why"><b>Superseded by 35moe.</b> Here only as a fallback / comparison reasoner. Safe to drop once you trust 35moe on your real prompts.</td>
-        <td class="size">18.0 GB</td>
+        <td class="size">18 GB</td>
         <td class="vis"><span class="vis-prv">PRIVATE</span></td>
         <td class="tags"><span class="tag t-secondary">secondary</span><span class="tag t-role">fallback</span></td>
       </tr>
@@ -264,14 +264,14 @@
       <tr class="row">
         <td class="model"><span class="name">gemma4:12b-it-qat</span><span class="note">cw</span></td>
         <td class="why"><b>Everyday workhorse on mid hardware.</b> "General question or draft while the 5090 is busy." Your daily driver when Qwen feels heavy or slow.</td>
-        <td class="size">8.5 GB</td>
+        <td class="size">7.2 GB</td>
         <td class="vis"><span class="vis-prv">PRIVATE</span></td>
         <td class="tags"><span class="tag t-primary">primary</span><span class="tag t-role">daily driver</span></td>
       </tr>
       <tr class="row">
         <td class="model"><span class="name">qwen35-9b:latest</span><span class="note">cw</span></td>
         <td class="why"><b>Fast reasoning on the small nodes.</b> "Quick structured-thinking task that's too much for a 3B but doesn't need the 5090."</td>
-        <td class="size">7.2 GB</td>
+        <td class="size">6.6 GB</td>
         <td class="vis"><span class="vis-pub">PUBLIC</span></td>
         <td class="tags"><span class="tag t-primary">primary</span><span class="tag t-role">fast reasoning</span></td>
       </tr>
@@ -292,7 +292,7 @@
       <tr class="row">
         <td class="model"><span class="name">huihui_ai/qwen3-abliterated:8b</span><span class="note">NSFW CW</span></td>
         <td class="why"><b>Uncensored model for content the standard models refuse.</b> Keep only if you actually use it.</td>
-        <td class="size">5.2 GB</td>
+        <td class="size">5.0 GB</td>
         <td class="vis"><span class="vis-prv">PRIVATE</span></td>
         <td class="tags"><span class="tag t-conditional">conditional</span><span class="tag t-nsfw">abliterated</span></td>
       </tr>
@@ -326,14 +326,14 @@
       <tr class="row">
         <td class="model"><span class="name">gemma4:12b-it-qat</span><span class="note">tb</span></td>
         <td class="why"><b>Primary usable intelligence on the laptop.</b> "Real reasoning while travelling, fully offline." Your best on-the-road model.</td>
-        <td class="size">8.5 GB</td>
+        <td class="size">7.2 GB</td>
         <td class="vis"><span class="vis-prv">PRIVATE</span></td>
         <td class="tags"><span class="tag t-primary">primary</span><span class="tag t-role">primary intelligence</span></td>
       </tr>
       <tr class="row">
         <td class="model"><span class="name">qwen35-9b:latest</span><span class="note">tb</span></td>
         <td class="why"><b>Fast reasoning fallback.</b> "Quick structured task when Gemma 12B feels heavy on battery."</td>
-        <td class="size">7.2 GB</td>
+        <td class="size">6.6 GB</td>
         <td class="vis"><span class="vis-prv">PRIVATE</span></td>
         <td class="tags"><span class="tag t-primary">primary</span><span class="tag t-role">fast reasoning</span></td>
       </tr>
@@ -354,7 +354,7 @@
       <tr class="row">
         <td class="model"><span class="name">huihui_ai/qwen3-abliterated:8b</span><span class="note">NSFW TB</span></td>
         <td class="why"><b>Uncensored model for content the standard models refuse.</b> Keep only if you actually use it.</td>
-        <td class="size">5.2 GB</td>
+        <td class="size">5.0 GB</td>
         <td class="vis"><span class="vis-prv">PRIVATE</span></td>
         <td class="tags"><span class="tag t-conditional">conditional</span><span class="tag t-nsfw">abliterated</span></td>
       </tr>
@@ -411,7 +411,8 @@
   <div class="footnote">
     Ground truth: OpenWebUI deployment (24 models). CW and TB share one Ollama models folder &mdash; pulls/deletes on one affect the other.<br>
     Tier &amp; role tags applied from <b>OllmaModelsEval.txt</b>. <span class="warn">Note:</span> that file's tiering is interpretive AI commentary, not vendor fact &mdash; the model identities (Gemma 4 31B / 26B&nbsp;A4B / 12B, released Apr&nbsp;2&nbsp;2026) are verified; the "core pillar" framing is its author's opinion.<br>
-    Prune path: drop qwen2.5:14b now; drop qwen3:8b and qwen3:30b-a3b once the 35-series fully replaces them &mdash; that's 23 &rarr; ~18 with no capability lost.
+    Prune path: drop qwen2.5:14b now; drop qwen3:8b and qwen3:30b-a3b once the 35-series fully replaces them &mdash; that's 23 &rarr; ~18 with no capability lost.<br>
+    <span class="warn">Incident 2026-06-13:</span> IB models dropped from OpenWebUI overnight after AmsterdamDesktop rebooted due to Windows Update. Ollama on IB was unaffected. Fixed by restarting the OpenWebUI Task Scheduler job on AmsterdamDesktop. Mitigation: add restart-on-failure and a 60s startup delay to the task, so Tailscale is up before OpenWebUI tries to connect to IB.
   </div>
 
 </div>
