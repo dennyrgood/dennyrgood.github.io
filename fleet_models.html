@@ -458,5 +458,21 @@
     wrap.insertBefore(banner, masthead.nextSibling);
   })();
   </script>
+
+  <script>
+  (function(){
+    const params = new URLSearchParams(window.location.search);
+    if (!params.has('public')) return;
+    const rec = document.createElement('div');
+    rec.style.cssText = 'font-family:var(--mono);font-size:13px;border:1px solid rgba(233,162,59,.4);background:rgba(233,162,59,.07);border-radius:6px;padding:14px 18px;margin-bottom:22px;line-height:1.8;';
+    rec.innerHTML = '<span style="color:var(--amber);font-weight:700;letter-spacing:.1em;font-size:11px;">&#9646; RECOMMENDED FOR GENERAL USE</span><br>'
+      + '<span style="color:var(--ink);font-size:15px;font-weight:600;">qwen35-27b:latest</span>'
+      + '<span style="color:var(--ink-faint);font-size:12px;"> &nbsp;on ImageBeast</span><br>'
+      + '<span style="color:var(--ink-dim);font-size:12px;">Best all-round model for questions, analysis, writing, and reasoning. If you're not sure which to pick, use this one.</span>';
+    const wrap = document.querySelector('.wrap');
+    const pillars = document.querySelector('.pillars');
+    wrap.insertBefore(rec, pillars);
+  })();
+  </script>
 </body>
 </html>
