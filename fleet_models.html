@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Fleet Model Inventory - created 2026-06-12 21:04:35, updated 2026-06-12 with "why kept" column, updated 2026-06-13 added qwen3.6:latest -->
+<!-- Fleet Model Inventory - created 2026-06-12 21:04:35, updated 2026-06-12 with "why kept" column, updated 2026-06-13 added qwen3.6:latest, added ?public filter -->
 <!-- Standalone artifact. Ground truth: OpenWebUI model list (24 models). -->
 <!-- Tier/role classifications applied from OllmaModelsEval.txt. Sizes carried from prior dashboard + verified Ollama/Gemma sources. -->
 <html lang="en">
@@ -415,5 +415,47 @@
   </div>
 
 </div>
+
+  <script>
+  (function(){
+    const params = new URLSearchParams(window.location.search);
+    if (!params.has('public')) return;
+
+    // Hide all rows that contain a vis-prv span
+    document.querySelectorAll('tr.row, tr.row.flagged').forEach(function(row){
+      if (row.querySelector('.vis-prv')) row.style.display = 'none';
+    });
+
+    // Hide machine sections where all rows are now hidden
+    document.querySelectorAll('section.machine').forEach(function(sec){
+      const visible = Array.from(sec.querySelectorAll('tr.row')).filter(r => r.style.display !== 'none');
+      if (visible.length === 0) {
+        sec.style.display = 'none';
+      } else {
+        // Update per-machine count
+        const countEl = sec.querySelector('.count');
+        if (countEl) countEl.textContent = visible.length + ' model' + (visible.length !== 1 ? 's' : '') + ' (public)';
+      }
+    });
+
+    // Update masthead count
+    const pubRows = document.querySelectorAll('tr.row');
+    let pubCount = 0;
+    pubRows.forEach(function(r){ if (r.style.display !== 'none') pubCount++; });
+    const modelsMeta = document.querySelector('.masthead .meta');
+    if (modelsMeta) {
+      const first = modelsMeta.querySelector('span');
+      if (first) first.innerHTML = 'MODELS <b>' + pubCount + '</b> <span style="color:var(--green);font-size:10px">(PUBLIC ONLY)</span>';
+    }
+
+    // Add filter banner under masthead
+    const banner = document.createElement('div');
+    banner.style.cssText = 'font-size:11px;letter-spacing:.1em;color:var(--green);border:1px solid rgba(91,217,154,.3);background:rgba(91,217,154,.06);border-radius:5px;padding:8px 14px;margin-bottom:20px;';
+    banner.innerHTML = '&#9646; FILTERED: showing public models only &nbsp;&mdash;&nbsp; <a href="?" style="color:var(--ink-dim);text-decoration:none;">show all</a>';
+    const wrap = document.querySelector('.wrap');
+    const masthead = document.querySelector('header.masthead');
+    wrap.insertBefore(banner, masthead.nextSibling);
+  })();
+  </script>
 </body>
 </html>
