@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <!-- Travel Pipeline Board — wired CSV loader. Created 2026-06-11 by Claude.
-     Parser machinery (splitLine/parseCSV/processRow) mirrors the user's Travel Alignment Dashboard.
-     Updated 2026-06-25: Data model migration. CSV header matcher fixed (l rank/b rank/status -> l desire/b desire/intent). expand() staging logic now routes "blocked"-Intent rows to WAITING-OTHER instead of falling through to READY; PARKED no longer checks the removed "someday" value. Notes column now shown on any card whose text isn't already redundant with an existing tag (daytrip/fund-Bekah). PIPELINE_PROMPT rewritten for the new taxonomy and broadened "blocked" definition, including a self-blocked vs externally-blocked distinction in WAITING-OTHER reasoning.
-     Code review fixes (same date): HTML-escaped CSV-derived strings and AI-output text in cardHTML/showTooltip/buildSummary; ollama host is now an imagebeast-default dropdown with a custom-URL option; run-metadata header + copy-output button added to the AI panel; companion scores of 0/- now excluded (matching analysis.html); blank-My-Desire rows now dropped (matching analysis.html). serializePipeline() no longer leaks redundant Notes text onto every instance (matches cardHTML's redundancy check). PIPELINE_PROMPT hardened for small local models: explicit instance-vs-trip framing (multiple companion instances = one trip, not cadence creep), note-applies-to-destination guardrail. Self-blocked vs externally-blocked classification MOVED INTO CODE (expand computes a structural BLOCKER=external/self label from whether any companion/roster exists to coordinate with, plus HAS-READY-ALTERNATIVE) and serializePipeline emits these labels; the prompt now trusts the labels instead of re-deriving from row fields — removes the brittleness of string-matching "scheduling issues" and survives data changes. -->
+     Parser machinery (splitLine/parseCSV/processRow) mirrors the user's Travel Alignment Dashboard. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -230,12 +228,12 @@ button.tog:hover{background:var(--bg2);}
       <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;">
         <div class="filter-group">
           <div class="filter-label">ollama host</div>
-          <select id="aiHostSelect" onchange="onHostSelectChange()" style="font-size:12px;padding:4px 8px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);">
-            <option value="http://imagebeast:11434">imagebeast (5090) — local</option>
+          <select id="aiHost" onchange="fetchModels()" style="font-size:12px;padding:4px 8px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);">
+            <option value="https://chatworkhorse.tailb73767.ts.net">chatworkhorse (3060) — https</option>
             <option value="http://chatworkhorse:11434">chatworkhorse (3060) — local</option>
-            <option value="custom">custom URL…</option>
+            <option value="https://imagebeast.tailb73767.ts.net">imagebeast (5090) — https</option>
+            <option value="http://imagebeast:11434">imagebeast (5090) — local</option>
           </select>
-          <input id="aiHost" value="http://imagebeast:11434" onchange="fetchModels()" onkeydown="if(event.key==='Enter'){event.preventDefault();fetchModels();}" style="display:none;font-size:12px;padding:4px 8px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);min-width:220px;margin-left:6px;" placeholder="http://host:11434">
         </div>
         <div class="filter-group">
           <div class="filter-label">model</div>
@@ -272,7 +270,6 @@ button.tog:hover{background:var(--bg2);}
           <button class="tog" id="aiBtn" onclick="runPipeline()" style="padding:5px 16px;font-size:13px;">Analyze</button>
           <button class="tog" onclick="copyPipeline()" title="Copy pipeline prompt + staged data to clipboard" style="padding:5px 12px;font-size:12px;">Copy</button>
           <button class="tog" id="aiStopBtn" onclick="stopAnalysis()" style="padding:5px 12px;display:none;">stop</button>
-          <button class="tog" onclick="copyOutput()" title="Copy the analysis output (including run header) to clipboard" style="padding:5px 12px;">copy output</button>
           <button class="tog" onclick="clearAnalysis()" style="padding:5px 12px;">Clear</button>
         </div>
       </div>
@@ -288,7 +285,6 @@ button.tog:hover{background:var(--bg2);}
 
 <script>
 /* ===== CSV machinery — mirrors Travel Alignment Dashboard ===== */
-function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function splitLine(line){
   const v=[];let c='',q=false;
   for(let ch of line){if(ch==='"'){q=!q;}else if(ch===','&&!q){v.push(c.trim());c='';}else c+=ch;}
@@ -300,8 +296,8 @@ function parseCSV(text){
   const raw=splitLine(lines[0]).map(h=>h.replace(/^"|"$/g,'').trim().toLowerCase());
   const hm={};
   raw.forEach((h,i)=>{
-    if(h==='l desire')hm.l_rank=i;
-    else if(h==='b desire')hm.b_rank=i;
+    if(h==='l rank')hm.l_rank=i;
+    else if(h==='b rank')hm.b_rank=i;
     else if(h==='my desire')hm.desire=i;
     else if(h==='place')hm.place=i;
     else if(h.startsWith('num visit'))hm.visits=i;
@@ -309,7 +305,7 @@ function parseCSV(text){
     else if(h==='friend')hm.friend=i;
     else if(h==='family')hm.family=i;
     else if(h==='notes')hm.notes=i;
-    else if(h==='intent')hm.status=i;
+    else if(h==='status')hm.status=i;
     else if(h==='cluster')hm.cluster=i;
     else if(h==='freq')hm.freq=i;
     else if(h==='target')hm.target=i;
@@ -339,12 +335,8 @@ function namedIn(s){const m=/w\s+([A-Za-z]+)/.exec(s||'');return m?m[1]:null;}
 
 function expand(r){
   const place=r.place.trim();
-  const mineRaw=(r.desire||'').trim();
-  const hasDesire=mineRaw!=='';
-  const mine=mineRaw==='-'?'0':mineRaw;
+  const mine=(r.desire||'').trim();
   const L=(r.l_rank||'').trim(), B=(r.b_rank||'').trim();
-  const lValid=L!==''&&L!=='-'&&!isNaN(L)&&parseFloat(L)>0;
-  const bValid=B!==''&&B!=='-'&&!isNaN(B)&&parseFloat(B)>0;
   const solo=(r.solo||'').toLowerCase().trim()==='x';
   const friendField=(r.friend||'').trim();
   const familyField=(r.family||'').trim();
@@ -359,38 +351,36 @@ function expand(r){
   const fund_bekah=/bekah-will-go-if-i-fund/i.test(notes);
   const daytrip=/daytrip/i.test(notes);
   const cruise_only=cluster.toLowerCase()==='cruise-only';
-  const parked_status=(status==='aspirational');
-  const blocked_status=(status==='blocked');
+  const parked_status=(status==='aspirational'||status==='someday');
   const bookedP=namedIn(booked), targetP=namedIn(target);
   const parkLike=parked_status||cruise_only;
-  const stageFor=()=>parkLike?'PARKED':blocked_status?'WAITING-OTHER':'READY';
 
   const inst=[];
   const add=(companion,score,stage,sched,tentative,note)=>inst.push({companion,score:score||null,stage,sched:sched||'',tentative:!!tentative,note:note||''});
 
   // Laura
-  if(lValid){
+  if(L!==''&&L!=='-'){
     if(bookedP==='Laura')add('Laura',L,'BOOKED',booked);
     else if(targetP==='Laura')add('Laura',L,'TARGETED',target);
-    else add('Laura',L, stageFor());
+    else add('Laura',L, parkLike?'PARKED':'READY');
   }
   // Bekah
-  if(bValid){
+  if(B!==''&&B!=='-'){
     if(bookedP==='Bekah')add('Bekah',B,'BOOKED',booked);
     else if(targetP==='Bekah')add('Bekah',B,'TARGETED',target);
-    else add('Bekah',B, stageFor(),'',false, fund_bekah?'joins if you fund':'');
+    else add('Bekah',B, parkLike?'PARKED':'READY','',false, fund_bekah?'joins if you fund':'');
   }
   // solo
   if(solo){
     if(bookedP==='solo')add('solo',null,'BOOKED',booked);
-    else add('solo',null, stageFor());
+    else add('solo',null, parkLike?'PARKED':'READY');
   }
   // friends
   splitFriends(friendField).forEach(f=>{
     if(bookedP===f.name)add(f.name,f.score,'BOOKED',booked,f.tent);
     else if(targetP===f.name)add(f.name,f.score,'TARGETED',target,f.tent);
     else if(f.tent)add(f.name,f.score,'POSSIBLE','',true);
-    else add(f.name,f.score, stageFor());
+    else add(f.name,f.score, parkLike?'PARKED':'READY');
   });
   // family
   if(familyField){
@@ -404,40 +394,17 @@ function expand(r){
     if(p&&p!=='Family'&&p!=='solo'&&!inst.some(i=>i.companion===p&&i.stage===st))
       add(p,null,st,val);
   });
-  if(!inst.length)add('—',null, stageFor());
+  if(!inst.length)add('—',null, parkLike?'PARKED':'READY');
 
   const compList=[];
   if(solo)compList.push('solo');
   splitFriends(friendField).forEach(f=>compList.push(f.name+(f.score?':'+f.score:'')+(f.tent?'?':'')));
   if(familyField)compList.push('family');
-  if(bValid)compList.push('Bekah');
-  if(lValid)compList.push('Laura');
+  if(B!==''&&B!=='-')compList.push('Bekah');
+  if(L!==''&&L!=='-')compList.push('Laura');
 
-  // Structural blocker classification (computed once, not inferred by the AI).
-  // A WAITING-OTHER destination is EXTERNAL if there's anyone to coordinate with
-  // (family roster, named friend, or Laura/Bekah). It's SELF-blocked only when the
-  // sole option is solo (or no companion at all) — i.e. nothing external explains the
-  // stall, so the block is the user's own decision/indecision/logistics.
-  const namedFriends=splitFriends(friendField).filter(f=>!f.tent).map(f=>f.name);
-  const hasCoordCompanion=!!familyField||namedFriends.length>0||lValid||bValid;
-  let blocker='none';
-  if(blocked_status){
-    blocker=hasCoordCompanion?'external-coordination':'self';
-  }
-  // family-roster-only WAITING (non-blocked Intent reaching WAITING-OTHER via family) is external too
-  const blockerDetail=blocked_status
-    ?(hasCoordCompanion
-        ?'external — coordinate with '+[familyField?'family':null].concat(namedFriends, lValid?['Laura']:[], bValid?['Bekah']:[]).filter(Boolean).join(', ')
-        :'self — no one else involved; the stall is your own decision/logistics')
-    :'';
-
-  // Does this destination have a READY instance alongside its WAITING-OTHER ones?
-  // If so, a WAITING-OTHER instance isn't truly blocking — there's an unblocked way to take the trip.
-  const hasReadyAlt=inst.some(i=>i.stage==='READY');
-
-  return {place,mine,hasDesire,L,B,cluster,freq,status,notes,fund_bekah,daytrip,cruise_only,
-    visits,lauraScore:lValid?L:null,bekScore:bValid?B:null,
-    blocker,blockerDetail,hasReadyAlt,
+  return {place,mine,L,B,cluster,freq,status,notes,fund_bekah,daytrip,cruise_only,
+    visits,lauraScore:(L!==''&&L!=='-')?L:null,bekScore:(B!==''&&B!=='-')?B:null,
     compList,instances:inst};
 }
 
@@ -446,29 +413,27 @@ const STAGES=["BOOKED","TARGETED","READY","WAITING-OTHER","POSSIBLE","PARKED"];
 const LABEL={BOOKED:"Booked",TARGETED:"Targeted",READY:"Ready — your call",
   "WAITING-OTHER":"Waiting on others",POSSIBLE:"Possible",PARKED:"Parked"};
 const SUB={BOOKED:"date confirmed",TARGETED:"named, not booked",READY:"opportunity is yours",
-  "WAITING-OTHER":"gated on someone/something else",POSSIBLE:"tentative companion",PARKED:"aspirational / cruise-only longshot"};
+  "WAITING-OTHER":"gated on someone else",POSSIBLE:"tentative companion",PARKED:"longshot / someday"};
 
 let DATA=[];
 const VISIT_LABELS=['never','once','twice','3×','4×','often'];
 const state={q:"",comps:new Set(),fund:false,day:false,hidepark:false,mine:1,score:0,sort:'desire'};
 
 function cardHTML(d,inst,di){
-  const sc=inst.score?'<span class="sc">'+esc(inst.score)+'</span>':'';
+  const sc=inst.score?'<span class="sc">'+inst.score+'</span>':'';
   const who=inst.companion==='—'?'<span class="who">(no companion set)</span>'
-    :'<span class="who">'+esc(inst.companion)+'</span>'+(sc?' · '+sc:'');
+    :'<span class="who">'+inst.companion+'</span>'+(sc?' · '+sc:'');
   let tags='';
   if(inst.tentative)tags+='<span class="tag tent">maybe</span>';
   if(d.fund_bekah&&inst.companion==='Bekah')tags+='<span class="tag fund">funds → joins</span>';
   if(d.daytrip)tags+='<span class="tag day">daytrip</span>';
-  if(d.cluster&&d.cluster.toLowerCase()!=='cruise-only')tags+='<span class="tag clu">'+esc(d.cluster)+'</span>';
+  if(d.cluster&&d.cluster.toLowerCase()!=='cruise-only')tags+='<span class="tag clu">'+d.cluster+'</span>';
   if(d.cruise_only)tags+='<span class="tag cruise">cruise-only</span>';
-  if(d.freq)tags+='<span class="tag">'+esc(d.freq)+'</span>';
-  const sched=inst.sched?'<div class="sched">'+esc(inst.sched)+'</div>':'';
-  const notesRedundant=/^(bekah-will-go-if-i-fund|daytrip)$/i.test(d.notes||'');
-  const note=inst.note?'<div class="note">'+esc(inst.note)+'</div>'
-    :(d.notes&&!notesRedundant?'<div class="note">'+esc(d.notes)+'</div>':'');
+  if(d.freq)tags+='<span class="tag">'+d.freq+'</span>';
+  const sched=inst.sched?'<div class="sched">'+inst.sched+'</div>':'';
+  const note=inst.note?'<div class="note">'+inst.note+'</div>':'';
   return '<div class="card s-'+inst.stage+'" data-di="'+di+'">'+
-    '<div class="pl"><span>'+esc(d.place)+'</span><span class="mine">me '+esc(d.mine)+'</span></div>'+
+    '<div class="pl"><span>'+d.place+'</span><span class="mine">me '+d.mine+'</span></div>'+
     '<div class="comp">'+who+'</div>'+sched+note+
     (tags?'<div class="tags">'+tags+'</div>':'')+'</div>';
 }
@@ -546,9 +511,9 @@ function render(){
   document.getElementById('foot').innerHTML=
     '<b>Booked</b> &amp; <b>Targeted</b> come straight from your CSV. '+
     '<b>Ready</b> = viable, unscheduled, you decide — the opportunity is yours to take. '+
-    '<b>Waiting</b> = gated on a family roster, another person, or something else outside pure desire (time, money, logistics, your own indecision). '+
-    '<b>Possible</b> = a "?" companion, never the basis of a plan. '+
-    '<b>Parked</b> = aspirational / cruise-only longshots. '+
+    '<b>Waiting</b> = gated on a family roster or another person. '+
+    '<b>Possible</b> = a “?” companion, never the basis of a plan. '+
+    '<b>Parked</b> = aspirational / someday / cruise-only. '+
     'Scores ride on each card as context — they never sort or filter.';
   const sc=document.getElementById('aiScope');if(sc&&DATA.length)sc.textContent=aiScopeText();
 }
@@ -556,7 +521,7 @@ function render(){
 /* ===== load ===== */
 function loadCSV(text){
   const rows=parseCSV(text);
-  DATA=rows.map(expand).filter(d=>d.hasDesire);
+  DATA=rows.map(expand);
   if(DATA.length){
     document.getElementById('dropZone').classList.add('loaded');
     document.getElementById('dropTitle').textContent=DATA.length+' destinations loaded';
@@ -613,7 +578,7 @@ function showTooltip(e,d){
   ];
   rows.forEach(([k,v])=>{
     const row=document.createElement('div');row.className='tt-row';
-    row.innerHTML='<span class="tt-key">'+esc(k)+'</span><span class="tt-val">'+esc(v)+'</span>';
+    row.innerHTML='<span class="tt-key">'+k+'</span><span class="tt-val">'+v+'</span>';
     body.appendChild(row);
   });
   tt.style.display='block';
@@ -639,39 +604,31 @@ let aiAbortController=null;
 
 const PIPELINE_PROMPT=`You are a personal travel planning analyst. I give you my travel pipeline: every destination split into companion-instances, each already placed in a funnel stage. Your job is to tell me WHAT TO DO, IN WHAT ORDER, AND WHY — not to summarize the board back to me (I can see it).
 
-WHAT AN "INSTANCE" IS — READ THIS FIRST, IT IS THE MOST MISUNDERSTOOD PART:
-Each destination is split into one line per COMPANION OPTION. Multiple instances of the same destination are ALTERNATIVE WAYS TO TAKE ONE TRIP — they are NOT multiple separate trips, and NOT duplicates to prune. They are a CHOICE of who to go with, not a quantity of trips.
-- Worked example: "GranCanaria — Bekah", "GranCanaria — solo", and "GranCanaria — Laura" all in READY = ONE trip I could take with any one of those three people. This is correct and expected. Do NOT tell me to "drop the extra instances," "consolidate," or warn about "too many active plans" or "cadence creep" — no such problem exists. The right move is to help me PICK the best companion, or just note the destination once with its best option.
-- A destination's freq (e.g. 2xYr) is a property of the DESTINATION, not of each instance. Three Ready instances of a 2xYr destination is NOT three trips against a two-trip limit — it's one trip, three possible companions, on a twice-a-year cadence. Never count instances against a freq budget.
-- Only treat two instances as genuinely separate trips if they have DIFFERENT dates (e.g. a booked instance in August AND a separate targeted instance in January is two trips; two undated Ready instances are one trip with two companion options).
-
 THE STAGES (already assigned — do not re-stage):
 - BOOKED: date confirmed. Nothing to do but pre-trip logistics. Mostly ignore these except to note scheduling collisions.
 - TARGETED: committed, date + companion named, not yet booked. Action: firm up the booking when its window opens. Flag any whose date is approaching.
-- READY: viable, unscheduled, I am the sole decision-maker — the opportunity is mine to take. THIS IS THE HEART OF THE ANALYSIS. These are gated only on me picking a date AND (where there are several companion options) picking who to go with. Tell me which destinations to act on, in what order, and the best companion for each.
-- WAITING-OTHER: a destination held up by something other than my pure desire — a family roster, a named person, a cost/logistics dependency, or (occasionally) my own indecision. Each line is pre-labeled BLOCKER=external or BLOCKER=self, and possibly HAS-READY-ALTERNATIVE — trust those labels rather than re-deriving them. See HOW TO REASON for what to do with each.
+- READY: viable, unscheduled, I am the sole decision-maker — the opportunity is mine to take. THIS IS THE HEART OF THE ANALYSIS. These are gated only on me picking a date. Tell me which to act on and in what order.
+- WAITING-OTHER: gated on someone else (a family roster, or a named person). Action: nudge that person, or nothing until they move. Distinguish genuinely-blocked from ones where an unblocked alternative companion-instance exists elsewhere on the board.
 - POSSIBLE: a tentative ("?") companion — never the basis of a firm plan. Note only if one is worth firming up the companion for.
-- PARKED: aspirational or cruise-only longshots. Largely ignore.
+- PARKED: aspirational / someday / cruise-only longshots. Largely ignore.
 
-DATA ON EACH INSTANCE: destination, companion, that companion's score, my desire ("me"), schedule date if any, cluster, freq (recurring cadence), and flags (fund-Bekah = Bekah joins if I pay, so it's gated on me not blocked; daytrip = calendar pick only; cruise-only). WAITING-OTHER lines also carry a system-computed BLOCKER=external / BLOCKER=self label and sometimes HAS-READY-ALTERNATIVE — these are authoritative; trust them over your own reading of the row. The "note:" field, when present, is context about the DESTINATION — it applies to the whole destination, not specifically to the companion on that line.
+DATA ON EACH INSTANCE: destination, companion, that companion's score, my desire ("me"), schedule date if any, cluster, freq (recurring cadence), and flags (fund-Bekah = Bekah joins if I pay, so it's gated on me not blocked; daytrip = calendar pick only; cruise-only).
 
 HOW TO REASON:
-- Lead with READY. Which DESTINATIONS are highest-leverage to act on now? Order them, and for each name the best companion among its instances. Weigh my desire, companion alignment, recurring cadence (a 1xYr/2xYr with no date is overdue a decision), and low friction (European/home-base trips, daytrips). fund-Bekah and other "gated on me" items belong here — they're pure decisions.
-- For WAITING-OTHER: each line is pre-labeled by the system — TRUST these labels, do not re-derive them from the other fields. "BLOCKER=external" means real coordination with others (a roster, a named companion, or a logistics/cost dependency) is genuinely required — nudge them or wait. "BLOCKER=self" means nothing and no one external is in the way; the stall is purely my own decision, so surface it as a decision I should just make — especially at high desire. "HAS-READY-ALTERNATIVE" means the same destination also sits in READY with a different companion, so it isn't really blocked at all — I can just take the trip with the other companion. Put each destination in exactly one bucket (self vs external) per its label. Daytrips here need only a calendar pick.
+- Lead with READY. Which instances are highest-leverage to act on now? Order them. Weigh my desire, companion alignment, recurring cadence (a 1xYr/2xYr with no date is overdue a decision), and low friction (European/home-base trips, daytrips). fund-Bekah and other "gated on me" items belong here — they're pure decisions.
+- For WAITING-OTHER: call out which are truly blocked vs. which have a Ready alternative instance (same destination, different companion) — those aren't really blocked, I just need to treat them as the other companion's trip. Daytrips here need only a calendar pick.
 - For TARGETED: flag anything with an approaching date, and any dense booking windows (several trips same month) that need sequencing.
 - Note the SHAPE of the funnel if it's telling (e.g. a large Ready pile = lots of decisions parked on me; a Waiting column that's all family rosters = coordination is the real bottleneck).
 
 GUARDRAILS:
-- Multiple companion instances of one destination are NOT a problem to flag, NOT duplicates, NOT cadence creep. Never recommend dropping or consolidating them. (Restated because it is the most common mistake.)
 - target vs booked is hard: a TARGETED trip is "firm up," never "book it now" or "confirm." Only BOOKED is confirmed.
 - A far-future date (e.g. 2031) is a deliberate committed plan — never call it unrealistic.
 - A tentative ("?") companion is a maybe — never build a firm recommendation on one.
-- A "note:" on a line describes the destination, not the companion on that line — do not infer that a note about funding or scheduling applies to whichever person happens to be named on that instance.
 - If a destination's date or stage reflects a deliberate Notes choice, respect it; don't flag it as an error.
 - Don't psychologize or give life-coaching. Structural, scheduling, companion-fit reasoning only.
 - Where Bekah or a friend out-scores the named companion but a companion is already named in a booked/target date, keep the named one — note the higher scorer only as an alternative.
 
-OUTPUT: Open with a 3-5 line TL;DR of the most action-forcing things (each a decision/tension/consequence, not a restatement). Then a section ordering the READY column by DESTINATION (what to do, in what order, why, and the best companion for each). Then a short WAITING section (self-blocked vs. genuinely externally-blocked, and any false blocks with a Ready alternative). Then a short TARGETED/scheduling section. Direct, punchy, bullets not walls. End with ONE concrete next step.`;
+OUTPUT: Open with a 3-5 line TL;DR of the most action-forcing things (each a decision/tension/consequence, not a restatement). Then a section ordering the READY column (what to do, in what order, why). Then a short WAITING section (real blocks vs. false blocks). Then a short TARGETED/scheduling section. Direct, punchy, bullets not walls. End with ONE concrete next step.`;
 
 function serializePipeline(){
   // build the same filtered+sorted instance lists the board shows, grouped by stage, as text
@@ -688,7 +645,6 @@ function serializePipeline(){
     if(!list.length){out+='(none)\n';return;}
     list.forEach(x=>{
       const d=x.d,i=x.inst;
-      const notesRedundant=/^(bekah-will-go-if-i-fund|daytrip)$/i.test(d.notes||'');
       let line='- '+d.place+' — '+(i.companion||'?')+(i.score?(' ('+i.companion.toLowerCase()+':'+i.score+')'):'')+' · me '+d.mine;
       if(i.sched)line+=' · '+i.sched;
       if(d.freq)line+=' · '+d.freq;
@@ -697,14 +653,7 @@ function serializePipeline(){
       if(d.fund_bekah&&i.companion==='Bekah')line+=' · fund-Bekah (gated on me, not blocked)';
       if(d.daytrip)line+=' · daytrip';
       if(i.tentative)line+=' · TENTATIVE';
-      // Precomputed blocker classification — the analyst should TRUST these, not re-derive them.
-      if(s==='WAITING-OTHER'){
-        if(d.blocker==='external-coordination')line+=' · BLOCKER=external ('+d.blockerDetail.replace(/^external — /,'')+')';
-        else if(d.blocker==='self')line+=' · BLOCKER=self (no one else involved — your decision)';
-        else if(i.companion==='Family')line+=' · BLOCKER=external (family roster)';
-        if(d.hasReadyAlt)line+=' · HAS-READY-ALTERNATIVE (an unblocked way to take this trip exists)';
-      }
-      if(d.notes&&!notesRedundant)line+=' · note: '+d.notes;
+      if(d.notes)line+=' · note: '+d.notes;
       out+=line+'\n';
     });
   });
@@ -712,27 +661,9 @@ function serializePipeline(){
   return out;
 }
 
-function aiHeaderLine(host,model,ctxVal,tempVal){
-  return '[pipeline · '+host+' · '+model+' · ctx '+(ctxVal>0?ctxVal:'default')+' · temp '+tempVal+' · '+aiScopeText()+']\n\n';
-}
-
 function aiScopeText(){
   let inst=0;DATA.forEach(d=>d.instances.forEach(i=>{if(passes(d,i))inst++;}));
   return DATA.length+' destinations · '+inst+' instances shown (current filter)';
-}
-
-function onHostSelectChange(){
-  const sel=document.getElementById('aiHostSelect');
-  const input=document.getElementById('aiHost');
-  if(sel.value==='custom'){
-    input.style.display='inline-block';
-    input.value='';
-    input.focus();
-  }else{
-    input.style.display='none';
-    input.value=sel.value;
-    fetchModels();
-  }
 }
 
 async function fetchModels(){
@@ -760,17 +691,6 @@ async function copyPipeline(){
 }
 
 function stopAnalysis(){if(aiAbortController)aiAbortController.abort();}
-async function copyOutput(){
-  const text=document.getElementById('aiOutput').textContent||'';
-  if(!text.trim()){alert('No output to copy yet — run an analysis first.');return;}
-  try{
-    await navigator.clipboard.writeText(text);
-    const st=document.getElementById('aiStatus');st.style.display='block';
-    const prev=st.textContent;
-    st.textContent='copied output ('+text.length.toLocaleString()+' chars) to clipboard';
-    setTimeout(()=>{if(st.textContent.startsWith('copied output'))st.textContent=prev;},3000);
-  }catch(e){alert('Clipboard copy failed: '+e.message);}
-}
 function clearAnalysis(){
   const out=document.getElementById('aiOutput'),st=document.getElementById('aiStatus');
   out.textContent='';out.style.display='none';st.textContent='';st.style.display='none';
@@ -784,8 +704,7 @@ async function runPipeline(){
   const ctxVal=parseInt(document.getElementById('aiCtx').value);
   const tempVal=parseFloat(document.getElementById('aiTemp').value);
   const out=document.getElementById('aiOutput'),status=document.getElementById('aiStatus'),stopBtn=document.getElementById('aiStopBtn');
-  const header=aiHeaderLine(host,model,ctxVal,tempVal);
-  out.style.display='block';out.textContent=header;status.style.display='block';
+  out.style.display='block';out.textContent='';status.style.display='block';
   status.textContent='connecting to '+host+' · '+aiScopeText();
   document.getElementById('aiBtn').disabled=true;stopBtn.style.display='inline-block';
   aiAbortController=new AbortController();
@@ -881,8 +800,7 @@ function findInstancesInText(body){
 
 function buildSummary(){
   const wrap=document.getElementById('aiSummary');
-  let text=document.getElementById('aiOutput').textContent||'';
-  text=text.replace(/^\[pipeline · [^\]]*\]\n\n/,'');
+  const text=document.getElementById('aiOutput').textContent||'';
   if(!text.trim()||!DATA.length){wrap.style.display='none';return;}
   const secs=parseSections(text);
   let html='<div class="filter-label" style="margin-bottom:10px;">summary — destinations mentioned per section (hover a pill for details)</div>';
@@ -894,12 +812,12 @@ function buildSummary(){
     any=true;
     const col=SUMMARY_COLORS[idx%SUMMARY_COLORS.length];
     html+='<div style="background:var(--bg2);border:0.5px solid var(--border);border-left:3px solid '+col+';border-radius:var(--radius);padding:12px 14px;">';
-    html+='<div style="font-weight:600;font-size:13px;margin-bottom:2px;color:'+col+';">'+esc(s.title)+'</div>';
+    html+='<div style="font-weight:600;font-size:13px;margin-bottom:2px;color:'+col+';">'+s.title+'</div>';
     html+='<div style="font-size:11px;color:var(--text3);margin-bottom:10px;">'+inst.length+' mentioned</div>';
     html+='<div style="display:flex;flex-wrap:wrap;gap:6px;">';
     inst.forEach(it=>{
       const label=it.place+(it.comp?' · '+it.comp:'')+(it.score?' '+it.score:'');
-      html+='<span class="sumpill" data-di="'+it.di+'" style="font-size:12px;padding:3px 9px;border:0.5px solid var(--border2);border-radius:12px;background:var(--bg);color:var(--text);cursor:default;white-space:nowrap;">'+esc(label)+'</span>';
+      html+='<span class="sumpill" data-di="'+it.di+'" style="font-size:12px;padding:3px 9px;border:0.5px solid var(--border2);border-radius:12px;background:var(--bg);color:var(--text);cursor:default;white-space:nowrap;">'+label+'</span>';
     });
     html+='</div></div>';
   });

@@ -1,7 +1,5 @@
 <!DOCTYPE html>
-<!-- Updated 2026-06-25: Data model migration. CSV header matcher fixed (l rank/b rank/status -> l desire/b desire/intent). STATUS_COLORS/STATUS_ALL and filter buttons updated to the 5-value Intent taxonomy (decided/blocked/open/opportunistic/aspirational). AI_SYSTEM_PROMPT, AI_BRIEF_PROMPT, AI_ITINERARY_PROMPT, buildQuickUserMsg, and filteredToCSV() rewritten for the new taxonomy, the broadened "blocked" definition, the My Desire companion-scoping rule, friend bare-name inheritance, and desire/Intent divergence treated as signal rather than contradiction. AI itinerary now excludes already-booked trips; top-20/3x3 pre-filter booked rows from the CSV payload; run-metadata header + copy-output button added; ollama host is now a typeable input with a datalist of local hosts.
-     Code review fixes (same date): single resize listener instead of one per CSV load; quadrant cards now theme-adaptive (dark mode); status bubble warns on unknown Intent values instead of silently dropping; 0/- desire rows kept (only blank dropped); quadrant gained a Laura/Bekah scorer toggle; removed dead setGStatus; HTML-escaped CSV-derived strings in table and tooltip; minor style normalizations.
-     Classification-in-code refactor (same date): processRow now computes deterministic labels (isDated/isBooked, decided-but-undated, daysToNext/timeCritical, blocker=external|self, divergence, fundBekah); filteredToCSV emits these as a "Computed" column. AI_SYSTEM_PROMPT, AI_BRIEF_PROMPT, AI_ITINERARY_PROMPT and buildQuickUserMsg now instruct the model to TRUST the Computed labels instead of re-deriving date/blocker/divergence classifications from raw columns — removes the brittleness of asking small local models to do date math and self/external inference, and the labels recompute structurally as data changes. -->
+<!-- Updated 2026-06-25: Data model migration. CSV header matcher fixed (l rank/b rank/status -> l desire/b desire/intent). STATUS_COLORS/STATUS_ALL and filter buttons updated to the 5-value Intent taxonomy (decided/blocked/open/opportunistic/aspirational). AI_SYSTEM_PROMPT, AI_BRIEF_PROMPT, AI_ITINERARY_PROMPT, buildQuickUserMsg, and filteredToCSV() rewritten for the new taxonomy, the broadened "blocked" definition, the My Desire companion-scoping rule, friend bare-name inheritance, and desire/Intent divergence treated as signal rather than contradiction. -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -249,18 +247,11 @@ tr:hover td{background:var(--bg2);}
       <div class="panel-title">quadrant view</div>
       <div class="panel-controls">
         <div class="filter-group">
-          <div class="filter-label">scorer</div>
-          <div class="filter-btns">
-            <button class="tog active" id="qScoreLaura" onclick="setQScorer('laura')">Laura</button>
-            <button class="tog" id="qScoreBek" onclick="setQScorer('bek')">Bekah</button>
-          </div>
-        </div>
-        <div class="filter-group">
           <div class="filter-label">your desire threshold: <span id="qYouVal" style="font-weight:500;color:var(--text)">8</span></div>
           <input type="range" min="1" max="10" value="8" step="1" id="qYouSlider" oninput="setQThresh('you',this.value)">
         </div>
         <div class="filter-group">
-          <div class="filter-label"><span id="qScorerLabel">laura</span>'s desire threshold: <span id="qLauraVal" style="font-weight:500;color:var(--text)">8</span></div>
+          <div class="filter-label">laura's desire threshold: <span id="qLauraVal" style="font-weight:500;color:var(--text)">8</span></div>
           <input type="range" min="1" max="10" value="8" step="1" id="qLauraSlider" oninput="setQThresh('laura',this.value)">
         </div>
       </div>
@@ -298,12 +289,11 @@ tr:hover td{background:var(--bg2);}
       <div class="panel-controls" style="flex-wrap:wrap;gap:10px;align-items:flex-end;">
         <div class="filter-group">
           <div class="filter-label">ollama host</div>
-          <select id="aiHostSelect" onchange="onHostSelectChange()" style="font-size:12px;padding:4px 8px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);">
-            <option value="http://imagebeast:11434">imagebeast (5090) — local</option>
+          <input id="aiHost" list="aiHostList" value="http://chatworkhorse:11434" onchange="fetchModels()" onkeydown="if(event.key==='Enter'){event.preventDefault();fetchModels();}" style="font-size:12px;padding:4px 8px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);min-width:220px;">
+          <datalist id="aiHostList">
             <option value="http://chatworkhorse:11434">chatworkhorse (3060) — local</option>
-            <option value="custom">custom URL…</option>
-          </select>
-          <input id="aiHost" value="http://imagebeast:11434" onchange="fetchModels()" onkeydown="if(event.key==='Enter'){event.preventDefault();fetchModels();}" style="display:none;font-size:12px;padding:4px 8px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);min-width:220px;margin-left:6px;" placeholder="http://host:11434">
+            <option value="http://imagebeast:11434">imagebeast (5090) — local</option>
+          </datalist>
         </div>
         <div class="filter-group">
           <div class="filter-label">model</div>
@@ -374,11 +364,10 @@ let c1Dots=[];
 let c2DesireMin=7, c2Comps=new Set(['solo','friend','family','bekah','laura']), c2JitterX=0, c2JitterY=20;
 let c2Dots=[];
 let gComp='all', gVisit='all', gDesireMin=1, gStatus='all';
-let qYou=8, qLaura=8, qScorer='laura';
+let qYou=8, qLaura=8;
 let sortCol='desire', sortDir=-1;
 
 // ── CSV ───────────────────────────────────────────────────────────────
-function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function splitLine(line){
   const v=[];let c='',q=false;
   for(let ch of line){if(ch==='"'){q=!q;}else if(ch===','&&!q){v.push(c.trim());c='';}else c+=ch;}
@@ -414,9 +403,7 @@ function parseCSV(text){
 function processRow(r){
   const lrank=r.l_rank!==''&&!isNaN(r.l_rank)&&parseFloat(r.l_rank)>0?parseFloat(r.l_rank):null;
   const brank=r.b_rank!==''&&!isNaN(r.b_rank)&&parseFloat(r.b_rank)>0?parseFloat(r.b_rank):null;
-  const desireRaw=(r.desire||'').trim();
-  const hasDesire=desireRaw!=='';
-  const desire=desireRaw==='-'?0:(parseFloat(desireRaw)||0);
+  const desire=parseFloat(r.desire)||0;
   const visits=parseInt(r.visits)||0;
   const lval=lrank!=null;
   const lauraScore=lrank;
@@ -435,37 +422,7 @@ function processRow(r){
   let dominant='solo';
   if(lval)dominant='laura';else if(bval)dominant='bekah';
   else if(family)dominant='family';else if(friend)dominant='friend';
-
-  // ── Precomputed classifications (computed deterministically so the AI trusts
-  //    labels instead of re-deriving them from raw columns — the brittle part). ──
-  const status=(r.status||'').trim().toLowerCase();
-  const target=(r.target||'').trim();
-  const booked=(r.booked||'').trim();
-  const notes=(r.notes||'').trim();
-  // Strip a leading "MM/DD/YYYY" out of a date cell for parsing.
-  const parseDateCell=v=>{const m=/(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(v||'');return m?new Date(+m[3],+m[1]-1,+m[2]):null;};
-  const isDated=target!==''||booked!=='';
-  const isBooked=booked!=='';
-  // decided-but-undated = genuinely needs a booking decision
-  const decidedUndated=(status==='decided')&&!isDated;
-  // date proximity: days until the nearest of target/booked, if any
-  const today=new Date();today.setHours(0,0,0,0);
-  const dates=[parseDateCell(target),parseDateCell(booked)].filter(Boolean);
-  let daysToNext=null;
-  if(dates.length){const soonest=dates.map(d=>Math.round((d-today)/86400000)).filter(n=>n>=0).sort((a,b)=>a-b);if(soonest.length)daysToNext=soonest[0];}
-  const timeCritical=daysToNext!=null&&daysToNext<=45;
-  // self vs external block (only meaningful when Intent=blocked): is there anyone to coordinate with?
-  const fundBekah=/bekah-will-go-if-i-fund/i.test(notes);
-  const hasCoordCompanion=family||friend||lval||bval;
-  let blocker='';
-  if(status==='blocked')blocker=hasCoordCompanion?'external':'self';
-  // desire/intent divergence (signal, not error)
-  let divergence='';
-  if(desire>=8&&status==='aspirational')divergence='high-desire-aspirational';
-  else if(desire<=5&&status==='decided')divergence='low-desire-decided';
-
-  return{name:r.place.trim(),lrank,brank,desire,hasDesire,visits,solo,friend,family,bekah:bval,laura:lval,lauraScore,bekScore,versatility,compList,dominant,status,notes,cluster:(r.cluster||'').trim(),freq:(r.freq||'').trim(),target,booked,friendRaw,familyRaw,
-    isDated,isBooked,decidedUndated,daysToNext,timeCritical,blocker,divergence,fundBekah};
+  return{name:r.place.trim(),lrank,brank,desire,visits,solo,friend,family,bekah:bval,laura:lval,lauraScore,bekScore,versatility,compList,dominant,status:(r.status||'').trim().toLowerCase(),notes:(r.notes||'').trim(),cluster:(r.cluster||'').trim(),freq:(r.freq||'').trim(),target:(r.target||'').trim(),booked:(r.booked||'').trim(),friendRaw,familyRaw};
 }
 
 // ── HELPERS ───────────────────────────────────────────────────────────
@@ -520,7 +477,7 @@ function showTooltip(e,items,header){
      ...(d.notes?[['notes',d.notes]]:[])
     ].forEach(([k,v])=>{
       const row=document.createElement('div');row.className='tt-row';
-      row.innerHTML=`<span class="tt-key">${esc(k)}</span><span class="tt-val">${esc(v)}</span>`;
+      row.innerHTML=`<span class="tt-key">${k}</span><span class="tt-val">${v}</span>`;
       body.appendChild(row);
     });
   });
@@ -706,7 +663,7 @@ function drawChart2(){
       if(ck==='friend'&&!d.friend)return;
       if(ck==='family'&&!d.family)return;
       if(ck==='bekah'&&!d.bekah)return;
-      if(ck==='laura'&&!d.laura)return;
+      if(ck==='laura'&&d.laura===false)return;
       const key=ck+'|'+d.desire;
       if(!groups[key])groups[key]={items:[],ck,desire:d.desire};
       groups[key].items.push(d);
@@ -764,7 +721,7 @@ function applyGlobal(){
     if(gComp==='friend'&&!d.friend)return false;
     if(gComp==='family'&&!d.family)return false;
     if(gComp==='bekah'&&!d.bekah)return false;
-    if(gComp==='laura'&&!d.laura)return false;
+    if(gComp==='laura'&&d.laura===false)return false;
     if(gStatus!=='all'&&d.status!==gStatus)return false;
     return true;
   });
@@ -783,19 +740,17 @@ function updateStats(){
 
 function renderQuadrant(){
   const qg=document.getElementById('quadGrid');qg.innerHTML='';
-  const sName=qScorer==='bek'?'bekah':'laura';
-  const scoreOf=d=>qScorer==='bek'?d.bekScore:d.lauraScore;
   const defs=[
-    {label:`both want it`,sub:`you ≥${qYou} · ${sName} ≥${qLaura}`,border:'#1D9E75',test:d=>d.desire>=qYou&&scoreOf(d)!=null&&scoreOf(d)>=qLaura},
-    {label:`${sName} more than you`,sub:`you <${qYou} · ${sName} ≥${qLaura}`,border:'#378ADD',test:d=>d.desire<qYou&&scoreOf(d)!=null&&scoreOf(d)>=qLaura},
-    {label:'you want it, she scored lower',sub:`you ≥${qYou} · ${sName} scored <${qLaura}`,border:'#E24B4A',test:d=>d.desire>=qYou&&scoreOf(d)!=null&&scoreOf(d)<qLaura},
-    {label:"you want it, she hasn't scored",sub:`you ≥${qYou} · no ${sName} score`,border:'#8E44AD',test:d=>d.desire>=qYou&&scoreOf(d)==null},
-    {label:'neither priority',sub:`you <${qYou} · ${sName} <${qLaura} or unscored`,border:'#BA7517',test:d=>d.desire<qYou&&(scoreOf(d)==null||scoreOf(d)<qLaura)},
+    {label:'both want it',sub:`you ≥${qYou} · laura ≥${qLaura}`,bg:'#EAF3DE',border:'#1D9E75',test:d=>d.desire>=qYou&&d.lauraScore!=null&&d.lauraScore>=qLaura},
+    {label:'laura more than you',sub:`you <${qYou} · laura ≥${qLaura}`,bg:'#E6F1FB',border:'#378ADD',test:d=>d.desire<qYou&&d.lauraScore!=null&&d.lauraScore>=qLaura},
+    {label:'you want it, she scored lower',sub:`you ≥${qYou} · laura scored <${qLaura}`,bg:'#FCEBEB',border:'#E24B4A',test:d=>d.desire>=qYou&&d.lauraScore!=null&&d.lauraScore<qLaura},
+    {label:"you want it, she hasn't scored",sub:`you ≥${qYou} · no laura score`,bg:'#F5EEF8',border:'#8E44AD',test:d=>d.desire>=qYou&&d.lauraScore==null},
+    {label:'neither priority',sub:`you <${qYou} · laura <${qLaura} or unscored`,bg:'#FAEEDA',border:'#BA7517',test:d=>d.desire<qYou&&(d.lauraScore==null||d.lauraScore<qLaura)},
   ];
   defs.forEach(q=>{
     const members=gFiltered.filter(q.test);
     const card=document.createElement('div');card.className='quad-card';
-    card.style.cssText=`background:${q.border}1A;border:1px solid ${q.border}44;border-radius:var(--radius-lg);padding:12px;`;
+    card.style.cssText=`background:${q.bg};border:1px solid ${q.border}44;border-radius:var(--radius-lg);padding:12px;`;
     const title=document.createElement('div');title.className='quad-title';title.style.color=q.border;title.textContent=q.label+' ('+members.length+')';
     const sub=document.createElement('div');sub.className='quad-sub';sub.style.color=q.border;sub.textContent=q.sub;
     const chips=document.createElement('div');chips.className='quad-chips';
@@ -829,21 +784,21 @@ function renderTable(){
   const tbody=document.getElementById('tableBody');tbody.innerHTML='';
   sorted.forEach(d=>{
     const tr=document.createElement('tr');
-    const pips=d.compList.map(c=>{const k=c.toLowerCase();const col=COMP_COLORS[k]||COMP_COLORS.solo;return`<span class="pip" style="background:${col}55;border:1px solid ${col}" title="${esc(c)}"></span>`;}).join('');
+    const pips=d.compList.map(c=>{const k=c.toLowerCase();const col=COMP_COLORS[k]||COMP_COLORS.solo;return`<span class="pip" style="background:${col}55;border:1px solid ${col}" title="${c}"></span>`;}).join('');
     tr.innerHTML=`
-      <td style="font-weight:500">${esc(d.name)}</td>
+      <td style="font-weight:500">${d.name}</td>
       <td><div class="bar-wrap"><div class="bar" style="width:${d.desire*16}px;background:var(--green)"></div><span style="font-size:12px">${d.desire}</span></div></td>
       <td>${d.lauraScore!=null?`<div class="bar-wrap"><div class="bar" style="width:${d.lauraScore*16}px;background:var(--purple)"></div><span style="font-size:12px">${d.lauraScore}</span></div>`:`<span style="color:var(--text3)">—</span>`}</td>
       <td>${d.bekScore!=null?`<div class="bar-wrap"><div class="bar" style="width:${d.bekScore*16}px;background:var(--pink)"></div><span style="font-size:12px">${d.bekScore}</span></div>`:`<span style="color:var(--text3)">—</span>`}</td>
       <td><span style="color:${VISIT_COLORS[Math.min(d.visits,5)]};font-weight:500">${d.visits}</span> <span style="color:var(--text3);font-size:11px">${VISIT_LABELS[Math.min(d.visits,5)]}</span></td>
       <td style="color:var(--text2);font-size:12px">${d.versatility}/5</td>
-      <td>${d.status?`<span style="font-size:11px;padding:2px 7px;border-radius:10px;background:${STATUS_COLORS[d.status]||'#888'}22;color:${STATUS_COLORS[d.status]||'#888'};border:1px solid ${STATUS_COLORS[d.status]||'#888'}66">${esc(d.status)}</span>`:'<span style="color:var(--text3)">—</span>'}</td>
-      <td style="font-size:11px;color:var(--text3)">${esc(d.cluster)||'—'}</td>
-      <td style="font-size:11px;color:var(--text3)">${esc(d.freq)||'—'}</td>
-      <td style="font-size:11px;color:var(--text2)">${esc(d.target)||'—'}</td>
-      <td style="font-size:11px;color:var(--text2)">${esc(d.booked)||'—'}</td>
-      <td>${pips}<span style="font-size:11px;color:var(--text3);margin-left:3px">${esc(d.compList.join(', '))}</span></td>
-      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:var(--text3)" title="${esc(d.notes)}">${esc(d.notes)||'—'}</td>`;
+      <td>${d.status?`<span style="font-size:11px;padding:2px 7px;border-radius:10px;background:${STATUS_COLORS[d.status]||'#888'}22;color:${STATUS_COLORS[d.status]||'#888'};border:1px solid ${STATUS_COLORS[d.status]||'#888'}66">${d.status}</span>`:'<span style="color:var(--text3)">—</span>'}</td>
+      <td style="font-size:11px;color:var(--text3)">${d.cluster||'—'}</td>
+      <td style="font-size:11px;color:var(--text3)">${d.freq||'—'}</td>
+      <td style="font-size:11px;color:var(--text2)">${d.target||'—'}</td>
+      <td style="font-size:11px;color:var(--text2)">${d.booked||'—'}</td>
+      <td>${pips}<span style="font-size:11px;color:var(--text3);margin-left:3px">${d.compList.join(', ')}</span></td>
+      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:var(--text3)" title="${d.notes.replace(/"/g,'&quot;')}">${d.notes||'—'}</td>`;
     tbody.appendChild(tr);
   });
   document.querySelectorAll('th[id^="th-"]').forEach(th=>{
@@ -881,6 +836,10 @@ function toggleC2Comp(ck){
   btn.classList.toggle('active',c2Comps.has(ck));
   btn.textContent=(c2Comps.has(ck)?'✓ ':'')+COMP_NAMES[ck];
   drawChart2();
+}
+function setGStatus(v){
+  gStatus=v;
+  applyGlobal();renderQuadrant();renderTable();
 }
 let sbFilter='all';
 let sbScorer='laura';
@@ -1037,12 +996,7 @@ function drawStatusBubble(){
   // group data by status
   const groups={};
   STATUS_ALL.forEach(s=>groups[s]=[]);
-  const unknownStatus=[];
-  allData.forEach(d=>{
-    if(groups[d.status])groups[d.status].push(d);
-    else unknownStatus.push(d.name+' ("'+d.status+'")');
-  });
-  if(unknownStatus.length)console.warn('Status bubble: '+unknownStatus.length+' destination(s) have an Intent value not in STATUS_ALL and are not shown: '+unknownStatus.join(', '));
+  allData.forEach(d=>{if(groups[d.status])groups[d.status].push(d);});
 
   sbDots=[];
 
@@ -1174,13 +1128,6 @@ function setQThresh(who,v){
   else{qLaura=parseInt(v);document.getElementById('qLauraVal').textContent=v;}
   renderQuadrant();
 }
-function setQScorer(v){
-  qScorer=v;
-  document.getElementById('qScoreLaura').classList.toggle('active',v==='laura');
-  document.getElementById('qScoreBek').classList.toggle('active',v==='bek');
-  document.getElementById('qScorerLabel').textContent=v==='bek'?'bekah':'laura';
-  renderQuadrant();
-}
 function sortBy(col){if(sortCol===col)sortDir*=-1;else{sortCol=col;sortDir=-1;}renderTable();}
 function resetAll(){
   c1YouMin=7;c1LauraMin=2;c1ShowUnscored=false;
@@ -1204,8 +1151,7 @@ function resetAll(){
   document.getElementById('gDesireSlider').value=1;document.getElementById('gDesireVal').textContent=1;
   document.getElementById('qYouSlider').value=8;document.getElementById('qYouVal').textContent=8;
   document.getElementById('qLauraSlider').value=8;document.getElementById('qLauraVal').textContent=8;
-  setQScorer('laura');
-  setGComp('all');setGVisit('all');
+  setGComp('all');setGVisit('all');setGStatus('all');
   setC1Comp('laura');
   drawChart1();drawChart2();
 }
@@ -1226,7 +1172,6 @@ freq = recurring cadence, e.g. 2xYr (twice a year), 1xYr (annual), 0.5xYr (every
 target = intended timeframe, format MM/DD/YYYY, optionally "MM/DD/YYYY w Person" naming the planned companion. Not a confirmed booking.
 booked = confirmed and scheduled, format MM/DD/YYYY, optionally "MM/DD/YYYY w Person" naming the confirmed companion.
 Notes = freeform context only (e.g. "Same as Cruise:Brazil", "fetish event"). The structured tags that used to live here are now their own columns.
-Computed = system-computed labels you should TRUST rather than re-derive from the raw columns. Possible labels: BOOKED-DATE (already booked), TARGET-DATE (has a target, not booked), decided-but-undated(needs-booking), TIME-CRITICAL(Nd) (nearest date is N days away, ≤45), blocker=external (a blocked destination with people/roster to coordinate with), blocker=self(your-decision) (a blocked destination with no one else involved — the stall is yours), divergence=high-desire-aspirational or divergence=low-desire-decided, fund-Bekah(gated-on-you). These are authoritative — if the Computed column says blocker=self, do not argue it's external from the other columns, and vice versa. The raw columns are still there for context, but the Computed labels settle the classifications.
 
 COMPANION COLUMNS — solo, friend, family (Laura and Bekah are NOT companion columns; see below):
 - These mark COMPATIBILITY, not combined attendance. A row viable both solo and with Laura means the trip works as a solo trip OR a Laura trip — not that Laura joins a solo trip.
@@ -1253,9 +1198,9 @@ CLUSTERS: any non-blank Cluster code is ALREADY one bound itinerary. Never sugge
 DAYTRIPS: a destination noted as a daytrip needs no overnight logistics. If it's blocked, the dependency is almost always just social scheduling, not a real blocker. Don't treat daytrips like multi-day trips.
 
 DATA CONSISTENCY — flag these:
-- A destination labeled decided-but-undated(needs-booking) in the Computed column may need a booking decision. Trust that label — it already accounts for both the target and booked columns, so do NOT independently decide a destination "lacks a date." If a row is NOT labeled decided-but-undated, it is already dated or not decided; never tell it to add a date. freq is not a date and does not count.
+- decided but no booked AND no target date → may need a booking. Before flagging this, you MUST check BOTH the target column AND the booked column for that exact row. If either column holds any value (a date, or "MM/DD/YYYY w Person"), the destination is already dated — do NOT flag it and do NOT tell me to add a date. freq alone does NOT count as a date, but a real value in target or booked does. Never assert a destination "lacks a date" without having confirmed both columns are empty.
 - Two rows that are the same trip (Notes say "Same as X") → treat as one.
-- A destination labeled TIME-CRITICAL(Nd) has a date within the next 45 days → surface it; the number is the days remaining.
+- A target/booked date within the next 45 days → time-critical, surface it.
 
 DESIRE/INTENT DIVERGENCE — surface, don't correct:
 - My Desire >= 8 but Intent is aspirational → this is NOT a contradiction or an error. Call it out as a genuinely interesting pattern: a high-desire destination with no mechanism in motion. Ask what's actually stopping it from moving — sometimes the honest answer is nothing has been tried yet.
@@ -1280,29 +1225,21 @@ FORMAT:
 - Challenge me where the data warrants it. Show scores when they support your reasoning.
 - End with STRATEGIC ACTION ITEMS, numbered, priority order, one sentence each.
 
-SECTION GUIDANCE (instructions for you — do NOT print this guidance text in your output; only print the short header lines listed under SECTIONS below, then your analysis):
-- "Gated-on-you" funding decisions: a destination labeled fund-Bekah(gated-on-you) is its OWN category — Bekah joins if I pay. It is NOT blocked, NOT self-blocked, and NOT a divergence. Never file these under Section 2, 4, or 6. Their home is Section 3 (Quick Wins), as pure decisions I control. Do not invent a "functional divergence" or "functional self-block" for them — that is exactly the re-derivation the Computed labels exist to prevent.
-- Section 2 (What's blocked): the Computed column classifies each blocked destination as blocker=external or blocker=self — trust those labels. For external ones, name WHO/WHAT the coordination is with from Notes and companion data. For self ones, surface them as decisions sitting on me. Don't re-litigate the call. fund-Bekah trips do NOT belong here.
-- Section 3 (Quick wins): include any fund-Bekah(gated-on-you) trips here as a named group — they're high-leverage because the decision is entirely yours.
-- Section 4 (Self vs external): split blocked destinations by their blocker= label; don't re-derive. Self-blocked high-desire ones are decisions, surface distinctly. If none are blocker=self, say so in one sentence and STOP — do not then argue that some other trip "functions as" self-blocked. A fund-Bekah trip is never self-blocked.
-- Section 5 (Open vs opportunistic): both passive, but the trigger differs — "open" = I'd say yes to a concrete proposal; "opportunistic" = I'd chase it if circumstances lined up. For open, note who's likely to propose based on companion engagement; for opportunistic, note what circumstance is needed. Don't conflate them.
-- Section 6 (Divergence): cover exactly the rows flagged divergence=... in the Computed column — don't miss any, don't invent unflagged ones. These are signals, not errors; never suggest changing a value to "fix" one. If none are flagged, say so in one sentence and STOP — do not then describe a fund-Bekah or any other trip as a "functional divergence." A funding gate is not a divergence.
-
-SECTIONS — print each header EXACTLY as written below (just the short line), then your bullets beneath it. Do not print any of the guidance above.
+SECTIONS:
 ---
 TL;DR
 ---
 SECTION 1: WHAT IS ACTUALLY HAPPENING
 ---
-SECTION 2: WHAT'S BLOCKED, AND WHAT'S ACTUALLY HOLDING IT BACK
+SECTION 2: WHAT'S BLOCKED, AND WHAT'S ACTUALLY HOLDING IT BACK — "blocked" covers people, timing, money, logistics, AND my own indecision. Don't default to assuming a person is the blocker. For each blocked destination, name the real blocker type using the Notes and companion data — and separately call out any that look self-blocked (nothing external in the data explains the stall) versus genuinely externally-blocked.
 ---
 SECTION 3: QUICK WINS
 ---
-SECTION 4: SELF-BLOCKED VS EXTERNALLY-BLOCKED
+SECTION 4: SELF-BLOCKED VS EXTERNALLY-BLOCKED — of everything marked blocked, which ones are actually waiting on you (no real external dependency visible in the data) versus waiting on someone or something else? Self-blocked, high-desire destinations are worth surfacing distinctly — they're decisions, not negotiations.
 ---
-SECTION 5: OPEN VS OPPORTUNISTIC — WHAT TO WATCH FOR
+SECTION 5: OPEN VS OPPORTUNISTIC — WHAT TO WATCH FOR — these are both passive (I'm not actively pursuing either), but the trigger differs: "open" means I'd say yes to a concrete proposal if one came; "opportunistic" means no one's offering, but I'd chase it if circumstances lined up. For "open" destinations, note who's most likely to actually propose them based on existing companion engagement elsewhere. For "opportunistic" ones, note what circumstance would need to occur — don't conflate the two or treat them as the same kind of "wait and see."
 ---
-SECTION 6: DESIRE/INTENT DIVERGENCE
+SECTION 6: DESIRE/INTENT DIVERGENCE — NOT a list of contradictions or data errors. Surface destinations where My Desire and Intent pull in different directions (high desire + aspirational; low desire + decided; etc.) as a genuinely interesting pattern, and reason about what it might mean. Never suggest "fixing" a divergence by changing a value. No motivation/finance editorializing — stick to what the structural facts suggest, not why I might feel that way.
 ---
 SECTION 7: OVERALL PATTERNS
 ---
@@ -1320,28 +1257,15 @@ function aiHeaderLine(mode,host,model,ctxVal,tempVal,scopeCount){
   return '['+mode+' · '+host+' · '+model+' · ctx '+(ctxVal>0?ctxVal:'default')+' · temp '+tempVal+' · '+scopeCount+' destinations]\n\n';
 }
 
-function computedFlags(d){
-  const f=[];
-  if(d.isBooked)f.push('BOOKED-DATE');
-  else if(d.isDated)f.push('TARGET-DATE');
-  if(d.decidedUndated)f.push('decided-but-undated(needs-booking)');
-  if(d.timeCritical)f.push('TIME-CRITICAL('+d.daysToNext+'d)');
-  if(d.blocker==='external')f.push('blocker=external');
-  if(d.blocker==='self')f.push('blocker=self(your-decision)');
-  if(d.divergence)f.push('divergence='+d.divergence);
-  if(d.fundBekah)f.push('fund-Bekah(gated-on-you)');
-  return f.join('; ');
-}
 function filteredToCSV(excludeBooked){
-  const headers=['Place','My Desire','L Desire','B Desire','num visits','solo','friend','family','Cluster','Intent','freq','target','booked','Notes','Computed'];
+  const headers=['Place','My Desire','L Desire','B Desire','num visits','solo','friend','family','Cluster','Intent','freq','target','booked','Notes'];
   const src=excludeBooked?gFiltered.filter(d=>!d.booked):gFiltered;
   const rows=src.map(d=>[
     d.name,d.desire,
     d.lrank!=null?d.lrank:'',d.brank!=null?d.brank:'',
     d.visits,
     d.solo?'x':'',d.friendRaw||'',d.familyRaw||'',
-    d.cluster,d.status,d.freq,d.target,d.booked,d.notes,
-    computedFlags(d)
+    d.cluster,d.status,d.freq,d.target,d.booked,d.notes
   ].map(v=>String(v).includes(',')?`"${v}"`:v).join(','));
   return[headers.join(','),...rows].join('\n');
 }
@@ -1351,20 +1275,6 @@ function updateAiScope(){
   if(!el)return;
   if(!allData.length){el.textContent='— load csv first —';return;}
   el.textContent=gFiltered.length+' destinations (current filter)';
-}
-
-function onHostSelectChange(){
-  const sel=document.getElementById('aiHostSelect');
-  const input=document.getElementById('aiHost');
-  if(sel.value==='custom'){
-    input.style.display='inline-block';
-    input.value='';
-    input.focus();
-  }else{
-    input.style.display='none';
-    input.value=sel.value;
-    fetchModels();
-  }
 }
 
 async function fetchModels(){
@@ -1385,7 +1295,7 @@ async function fetchModels(){
 }
 
 function buildQuickUserMsg(csv,today){
-  return 'Today is '+today+'.\n\nHere is my travel data:\n\n'+csv+'\n\nThe Computed column carries authoritative system-computed labels — TRUST them, do not re-derive from the raw columns. Already-booked destinations have been removed from this data entirely, so everything here still needs a decision. Key labels: decided-but-undated(needs-booking) = needs a booking decision; TARGET-DATE = has a target, action is "firm up" never "book/confirm/secure"; TIME-CRITICAL(Nd) = N days to its date; blocker=external vs blocker=self = how a blocked destination is held up (trust this, do not reclassify); divergence=... = a desire/intent gap worth noting; fund-Bekah(gated-on-you) = your funding decision, not a block.\n\nReturn ONLY a numbered list of strategic action items in priority order. Rules: (1) Each item distinct — no repeating the same instruction with different names. (2) Only genuine high-value actions that require a real decision or resolve a data gap. (3) No items that all say the same thing in different words. (4) If fewer than 10 genuine distinct actions exist, stop — do not pad. (5) One sentence each explaining why. (6) For a TARGET-DATE row the action is "firm up"/"set the booking," never "book it now," "confirm," or "secure." (7) Never promote a destination to "decided" without a concrete external trigger — "opportunistic" stays put. Use the blocker= label as-is; never call a blocker=external destination self-blocked just because it is also viable solo. A fund-Bekah(gated-on-you) trip is its own thing — a decision you control, NOT a block and NOT self-blocked; treat it as an actionable decision, not something stalled. No sections, no headers, no preamble. Just the numbered list.';
+  return 'Today is '+today+'.\n\nHere is my travel data:\n\n'+csv+'\n\nBEFORE YOU WRITE ANYTHING — for every destination you are about to mention, do this lookup first: find that exact row, read its booked column, read its target column. If booked has ANY value, that destination is fully confirmed — do not put it on this list at all, do not say "firm up," do not invent or guess a date for it. Only destinations whose booked column is empty are eligible. Example of the failure mode to avoid: a row with booked="07/07/2026 w Laura" and target="" must NEVER be described as needing a target firmed up — it is already booked, full stop.\n\nReturn ONLY a numbered list of strategic action items in priority order. Rules: (1) Each item must be distinct — do not repeat the same instruction with different destination names. (2) Only include genuine high-value actions that require a real decision or resolve a data gap. (3) Do not generate items that all say the same thing in different words. (4) If fewer than 10 genuine distinct actions exist, stop — do not pad. (5) One sentence each explaining why. (6) For any destination with a target but no booked value: the action is to "firm up" or "set the booking," never "book it now," "confirm the booking," or "secure it." (7) Never suggest moving a destination to "decided" or otherwise promoting its Intent unless the data shows a concrete external trigger — "opportunistic" stays put without one. A "blocked" destination is self-blocked ONLY if there is genuinely no external dependency anywhere in its Notes or companion data — solo viability alone does NOT make a blocked destination self-blocked; a destination can be viable solo and still be genuinely blocked by something else (scheduling, money, logistics) at the same time. No sections, no headers, no preamble. Just the numbered list.';
 }
 async function copyPrompt(mode){
   if(!gFiltered.length){alert('No data loaded or filtered.');return;}
@@ -1497,7 +1407,7 @@ const AI_BRIEF_PROMPT=`You are a personal travel planning analyst. I am going to
 TL;DR (max 5 bullets — most urgent things right now)
 
 WHAT'S BLOCKED, AND WHAT'S ACTUALLY HOLDING IT BACK
-Use the Computed blocker= label to split blocked destinations into external vs self (don't re-derive it). For external ones, name who/what the coordination is with from the companion data and Notes; group where the same blocker hits several destinations. For self ones (blocker=self), surface them as decisions sitting on me.
+For each blocked destination, name the real reason — a specific person, timing, money, logistics, or your own indecision — don't default to assuming a person. Group by reason where it's genuinely the same blocker across multiple destinations; otherwise one line per destination.
 
 STRATEGIC ACTION ITEMS
 Apply all the same rules as the full analysis. Each item distinct. Stop when genuine actions run out.
@@ -1528,8 +1438,6 @@ INTENT TAXONOMY — five distinct states, do not conflate or migrate without an 
 decided: mind made up, no real chance of backing out, regardless of whether dates exist yet. blocked: something other than pure desire is stopping it — a person, timing, money, logistics, OR my own indecision; broad on purpose, don't assume it's always a person. open: a concrete proposal would get a yes, but I'm not actively seeking it. opportunistic: no clean proposal exists, but I'd chase it if circumstances lined up — the difference from "open" is the trigger type (clean offer vs. circumstance), not activity level. aspirational: desire without mechanism, not blocked by anything specific, just not in motion.
 Intent and My Desire are independent axes — a row where they diverge is a signal worth surfacing, never an error to flag or fix.
 
-COMPUTED COLUMN — the CSV's last column carries authoritative system-computed labels: BOOKED-DATE, TARGET-DATE, decided-but-undated(needs-booking), TIME-CRITICAL(Nd), blocker=external / blocker=self, divergence=..., fund-Bekah(gated-on-you). TRUST these over your own reading of the raw columns. In particular: exclude every BOOKED-DATE destination from the list; treat blocker=self as a pure decision (rank it like a firm-up candidate); never call a blocker=external destination self-blocked.
-
 COMPUTE THESE YOURSELF FROM THE CSV (the PDF dashboard used to provide them):
 - My Desire is specifically scoped to "if Bekah and/or Laura came" — that's exactly why it's valid to compare directly against L Desire/B Desire below. It does NOT reflect how I'd feel about a friend-only or solo version of the trip; don't apply these alignment groups to friend or solo instances, since My Desire wasn't scoped to those scenarios.
 - Assign each destination to an alignment group by comparing My Desire against L Desire and B Desire: (a) both want it — My Desire >= 8 AND L Desire >= 8; (b) Laura more than me — L Desire > My Desire and L Desire >= 8; (c) I want it, she scored lower — My Desire >= 8 AND L Desire present but < 8; (d) I want it, she hasn't scored — My Desire >= 8 AND L Desire blank; (e) neither priority — everything else. Use these groupings to pick the RIGHT companion per trip and to justify ranking.
@@ -1538,8 +1446,8 @@ COMPUTE THESE YOURSELF FROM THE CSV (the PDF dashboard used to provide them):
 - Cross-check internally: if a row's columns look internally inconsistent (e.g. a companion named in target/booked who has no corresponding score or compatibility), flag it.
 
 RANKING LOGIC (priority order):
-- decided with a target date (firm-up candidates) — these need the LEAST additional decision-making, so they lead. (Look for TARGET-DATE + decided.)
-- blocker=self destinations at high My Desire (8+) with strong companion alignment — especially fund-Bekah(gated-on-you) ones (gated only on my decision). Trust the blocker=self label; do not re-derive it.
+- decided with a target date (firm-up candidates) — these need the LEAST additional decision-making, so they lead.
+- Self-blocked destinations at high My Desire (8+) with strong companion alignment — i.e. marked "blocked" but nothing in the data points to an external dependency — especially Bekah-will-go-if-I-fund ones (gated only on my decision).
 - Strong-alignment undated trips lower down.
 - Pick the companion that maximizes mutual alignment. Where Bekah out-scores Laura, recommend Bekah; where a friend is the top fit, name them; where only solo is clean, say solo. EXCEPTION: if a target already names a companion ("w Person"), that companion is a committed choice — do NOT override it on score alone. If someone else scores higher, note them as an alternative ("Bekah scores higher if plans change"), but keep the named companion as the recommendation.
 
@@ -1784,7 +1692,7 @@ ${csv}`;
 
 function loadCSV(text){
   const rows=parseCSV(text);
-  allData=rows.map(processRow).filter(d=>d.hasDesire);
+  allData=rows.map(processRow).filter(d=>d.desire>0);
   if(allData.length){
     document.getElementById('dropZone').classList.add('loaded');
     document.getElementById('dropTitle').textContent=allData.length+' destinations loaded';
@@ -1794,14 +1702,8 @@ function loadCSV(text){
     drawChart1();drawChart2();
     setupC1Events();setupC2Events();
     applyGlobal();renderQuadrant();renderTable();drawStatusBubble();setupSbEvents();updateAiScope();
-    wireResizeOnce();
+    window.addEventListener('resize',()=>{drawChart1();drawChart2();drawStatusBubble();});
   }
-}
-let resizeWired=false;
-function wireResizeOnce(){
-  if(resizeWired)return;
-  resizeWired=true;
-  window.addEventListener('resize',()=>{if(allData.length){drawChart1();drawChart2();drawStatusBubble();}});
 }
 fetchModels();
 const dz=document.getElementById('dropZone'),fi=document.getElementById('fileInput');
