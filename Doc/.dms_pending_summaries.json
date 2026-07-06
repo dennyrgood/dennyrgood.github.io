@@ -1,95 +1,57 @@
 {
-  "timestamp": "2026-03-05T16:58:10.861388",
+  "timestamp": "2026-07-06T20:29:53.355318",
   "summaries": [
     {
       "file": {
-        "path": "./TravelBeast_Setup.docx",
-        "hash": "sha256:a8dfc80aade6696bdcff0b911dc099b2ea2faefe00d495c08ae8baeab975ee2c",
-        "size": 10538,
-        "readable_version": "./md_outputs/TravelBeast_Setup.md"
+        "path": "./Drive_Swap_Procedure.docx",
+        "hash": "sha256:5e92a7223830d1fc42e945ba07a0e1a179e10ff6c1a50ea1d71210e9e5985e6c",
+        "size": 11103,
+        "readable_version": "./md_outputs/Drive_Swap_Procedure.md"
       },
-      "summary": "This document outlines steps for setting up Jump Desktop on Windows 11 Home for continuous remote access by configuring power settings and disabling sleep/hibernation.",
+      "summary": "This document outlines a step-by-step procedure for swapping storage drives between an Acer Aspire TC-885 and a Lenovo Legion 5 while preserving data using Macrium Reflect cloning software.",
       "category": "Guides",
       "is_new_category": false,
-      "title": "TravelBeast_Setup",
-      "timestamp": "2026-03-05T16:57:52.526751"
+      "title": "Drive_Swap_Procedure",
+      "timestamp": "2026-07-06T20:29:39.804561"
     },
     {
       "file": {
-        "path": "./B450 Steel Legend.pdf",
-        "hash": "sha256:d0f2e5410c033af237064de64fd14ec28468ec2a55b054f9d82186970f07757b",
-        "size": 6578311,
-        "readable_version": "./md_outputs/B450 Steel Legend.md"
+        "path": "./WorkBench_VirtualBox_Ubuntu_v1.docx",
+        "hash": "sha256:e14b2c6e80246d2fb39f9d0b1e47df79656b78785a2bdb14e1e402aab2cf9dea",
+        "size": 17221,
+        "readable_version": "./md_outputs/WorkBench_VirtualBox_Ubuntu_v1.md"
       },
-      "summary": "This document contains legal disclaimers and copyright information for the B450 Steel Legend motherboard by ASRock, published in November 2020.",
+      "summary": "This document outlines the setup of an Ubuntu 24.04 LTS virtual machine in VirtualBox on Windows for Linux experimentation with quick reference details.",
       "category": "Guides",
       "is_new_category": false,
-      "title": "B450 Steel Legend",
-      "timestamp": "2026-03-05T16:57:55.637435"
+      "title": "WorkBench_VirtualBox_Ubuntu_v1",
+      "timestamp": "2026-07-06T20:29:44.415768"
     },
     {
       "file": {
-        "path": "./GL.iNet GL-SFT1200 - Private Wifi.docx",
-        "hash": "sha256:7a5cf9ccc72e08a60ef90e94d752b3fb1fb36afd568404e28205f765fe282a2b",
-        "size": 21477,
-        "readable_version": "./md_outputs/GL.iNet GL-SFT1200 - Private Wifi.md"
+        "path": "./Ubuntu Install Old Laptop TLDR.docx",
+        "hash": "sha256:94043d44ba545d26e40ae0fbac9cc84041dc4c5d25cbc1df7f6f868b0973a0de",
+        "size": 29009,
+        "readable_version": "./md_outputs/Ubuntu Install Old Laptop TLDR.md"
       },
-      "summary": "The document describes how to use the GL.iNet GL-SFT1200 device in standalone mode to create a private WiFi network for local device communication without an internet connection.",
+      "summary": "This document provides step-by-step instructions for installing Ubuntu 24.04 LTS on an old laptop using a USB drive created with Rufus.",
       "category": "Guides",
       "is_new_category": false,
-      "title": "GL.iNet GL-SFT1200 - Private Wifi",
-      "timestamp": "2026-03-05T16:57:58.729709"
+      "title": "Ubuntu Install Old Laptop TLDR",
+      "timestamp": "2026-07-06T20:29:49.191009"
     },
     {
       "file": {
-        "path": "./CLOUDFLARE.txt",
-        "hash": "sha256:99e0f1a52805ec0296859a11b9406869ed64b983cbda78b96aa4e78de1fe8024",
-        "size": 1264
+        "path": "./FleetOps_Documentation.docx",
+        "hash": "sha256:35ea900bc281a9f751142d73cc5b5c99e0a54514e2b7c574f69ba7b84331acca",
+        "size": 14156,
+        "readable_version": "./md_outputs/FleetOps_Documentation.md"
       },
-      "summary": "This document lists DNS records managed by Cloudflare for the domain ldmathes.cc, including A, CNAME, MX, and TXT records as well as tunnels.",
-      "category": "QuickRefs",
-      "is_new_category": false,
-      "title": "CLOUDFLARE",
-      "timestamp": "2026-03-05T16:58:01.725495"
-    },
-    {
-      "file": {
-        "path": "./Tailscale with Surfshark.docx",
-        "hash": "sha256:0e4db084d1e204e917edea525f6e9831e4b964fc33274b89d048d92f0526bc13",
-        "size": 16121,
-        "readable_version": "./md_outputs/Tailscale with Surfshark.md"
-      },
-      "summary": "Describes steps to activate Surfshark TransparentProxy on macOS by manipulating startup security settings and troubleshooting tips for integrating Tailscale with Surfshark.",
+      "summary": "This document provides technical documentation for Fleet Ops, a browser-based dashboard that displays real-time network status via D3.js.",
       "category": "Guides",
       "is_new_category": false,
-      "title": "Tailscale with Surfshark",
-      "timestamp": "2026-03-05T16:58:04.583305"
-    },
-    {
-      "file": {
-        "path": "./StatusHub.docx",
-        "hash": "sha256:581ea2627015ea2aa1bfdf985858fe17f1a967d129fbdcebd1c2a27b1b4a4870",
-        "size": 51103,
-        "readable_version": "./md_outputs/StatusHub.md"
-      },
-      "summary": "This document outlines the planning phase for a web-based fleet status dashboard using Python checkers and Flask APIs, with no coding begun yet.",
-      "category": "Workflows",
-      "is_new_category": false,
-      "title": "StatusHub",
-      "timestamp": "2026-03-05T16:58:07.607919"
-    },
-    {
-      "file": {
-        "path": "./GLiNet_Opal_Surfshark_Guide.docx",
-        "hash": "sha256:97a046a8d39ff8dbb94289ad22112ac65d4de634a9f6481648450d216dc474ed",
-        "size": 10955,
-        "readable_version": "./md_outputs/GLiNet_Opal_Surfshark_Guide.md"
-      },
-      "summary": "This document provides step-by-step instructions for setting up the GL.iNet Opal router with Surfshark VPN on cruise ships, ensuring secure and private internet access.",
-      "category": "Guides",
-      "is_new_category": false,
-      "title": "GLiNet_Opal_Surfshark_Guide",
-      "timestamp": "2026-03-05T16:58:10.861352"
+      "title": "FleetOps_Documentation",
+      "timestamp": "2026-07-06T20:29:53.355233"
     }
   ]
 }
