@@ -226,7 +226,7 @@
                 // WEATHER DASHBOARD
                 {
                     icon: "🌤️",
-                    title: "Weather Dashboard ❄️",
+                    title: "Weather Dashboard",
                     description: "Real-time weather information and forecasts. View default location or customize with URL parameters for your preferred city.",
                     buttons: [
                         {
@@ -300,7 +300,7 @@
                 // Movies & Shows (FORMERLY CARD 2)
                 {
                     icon: "🎬",
-                    title: "Movies & Shows ❄️",
+                    title: "Movies & Shows",
                     description: "Full CRUD editor for your movies and shows collection. Add new entries, edit existing ones, or delete as needed.",
                     buttons: [
                         {
@@ -335,6 +335,40 @@
                         }
                     ]
                 },
+
+                // Custom Searches (Tailscale-only)
+                {
+                    icon: "🔎",
+                    title: "Custom Searches",
+                    description: "Two local search tools, reachable only over Tailscale: a general-purpose AI search (DuckDuckGo + local LLM), and a fast direct-API lookup for TV/movie casts, actors, and show info.",
+                    buttons: [
+                        {
+                            text: "General Search",
+                            url: "http://mb.ldmathes.cc:5025",
+                            style: "primary"
+                        },
+                        {
+                            text: "Cast / Actor / Show Search",
+                            url: "http://mb.ldmathes.cc:5020",
+                            style: "secondary"
+                        }
+                    ]
+                },
+
+                // Travel (Tailscale-only)
+                {
+                    icon: "✈️",
+                    title: "Travel",
+                    description: "Travel planning site, reachable only over Tailscale.",
+                    buttons: [
+                        {
+                            text: "Open Travel Site",
+                            url: "http://mb.ldmathes.cc:5030",
+                            style: "primary"
+                        }
+                    ]
+                },
+
                 // Documentation
                 {
                     icon: "📚",
