@@ -345,7 +345,7 @@
                 {
                     icon: "🔎",
                     title: "Custom Searches",
-                    description: "Two local search tools, reachable only over Tailscale: a general-purpose AI search (DuckDuckGo + local LLM), and a fast direct-API lookup for TV/movie casts, actors, and show info.",
+                    description: "Local search tools, reachable only over Tailscale: a general-purpose AI search (DuckDuckGo + local LLM), a fast direct-API lookup for TV/movie casts, actors, and show info, and a TMDB explorer.",
                     buttons: [
                         {
                             text: "General Search",
@@ -356,6 +356,16 @@
                             text: "Cast / Actor / Show Search",
                             url: "http://mb.ldmathes.cc:5020",
                             style: "secondary"
+                        },
+                        {
+                            text: "TMDB Explorer",
+                            url: "http://mb.ldmathes.cc:5035",
+                            style: "secondary"
+                        },
+                        {
+                            text: "TMDB Explorer (local)",
+                            url: "http://192.168.178.236:5035",
+                            style: "tertiary"
                         }
                     ]
                 },
