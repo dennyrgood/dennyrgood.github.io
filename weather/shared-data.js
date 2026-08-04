@@ -55,8 +55,8 @@ var SharedData = (function() {
         var apiUrl = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon + 
                      '&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m' +
                      '&daily=sunrise,sunset,temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code' +
-                     '&temperature_unit=celsius&wind_speed_unit=mph&timezone=auto&forecast_days=4';
-        
+                     '&temperature_unit=celsius&wind_speed_unit=mph&timezone=auto&forecast_days=4&models=ecmwf_ifs025';
+
         var url = CONFIG.USE_PROXY ? CONFIG.PROXY_URL + '?url=' + encodeURIComponent(apiUrl) : apiUrl;
         
         var xhr = new XMLHttpRequest();
