@@ -297,6 +297,35 @@
                 },               
         
                 
+                // ComfyUI Fleet Reports (Tailscale-only)
+                {
+                    icon: "🧵",
+                    title: "ComfyUI Fleet Reports",
+                    description: "Model/workflow readiness across the ComfyUI fleet (ImageBeast, ChatWorkhorse, TravelBeast). Reachable only over Tailscale. Auto-scanned daily; report always reflects the latest run.",
+                    buttons: [
+                        {
+                            text: "Fleet Report",
+                            url: "http://mb.ldmathes.cc:5050/fleet_report_latest.html",
+                            style: "primary"
+                        },
+                        {
+                            text: "Fleet Explorer",
+                            url: "http://mb.ldmathes.cc:5050/fleet_explorer_latest.html",
+                            style: "primary"
+                        },
+                        {
+                            text: "Browse All Files",
+                            url: "http://mb.ldmathes.cc:5050/",
+                            style: "secondary"
+                        },
+                        {
+                            text: "Fleet Report (direct IP)",
+                            url: "http://100.72.187.19:5050/fleet_report_latest.html",
+                            style: "tertiary"
+                        }
+                    ]
+                },
+
                 // Movies & Shows (FORMERLY CARD 2)
                 {
                     icon: "🎬",
