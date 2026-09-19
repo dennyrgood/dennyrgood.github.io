@@ -382,25 +382,36 @@
                     description: "Self-hosted search tools, reachable only over Tailscale. A general-purpose AI search (DuckDuckGo + local LLM), plus direct-API tools for browsing TMDB and looking up TV/movie casts, actors, and shows.",
                     buttons: [
                         {
-                            text: "General Search",
+                            text: "General Search (TS/md)",
                             url: "http://mb.ldmathes.cc:5025",
                             style: "primary"
                         },
                         {
-                            text: "Cast / Actor / Show Search",
+                            text: "Cast / Actor / Show Search (TS/md)",
                             url: "http://mb.ldmathes.cc:5020",
                             style: "secondary"
                         },
                         {
-                            text: "TMDB Explorer",
+                            text: "TMDB Explorer (TS/md)",
                             url: "http://mb.ldmathes.cc:5035",
                             style: "secondary"
                         },
                         {
-                            text: "TMDB Explorer (direct IP)",
+                            text: "TMDB Explorer (direct Local LAN IP/mb)",
+                            url: "http://192.168.178.27:5035",
+                            style: "tertiary"
+                        },
+                                               {
+                            text: "TMDB Explorer (TS/fd)",
+                            url: "http://fd.ldmathes.cc:5035",
+                            style: "secondary"
+                        },
+                        {
+                            text: "TMDB Explorer (direct Local LAN IP/fd)",
                             url: "http://192.168.178.27:5035",
                             style: "tertiary"
                         }
+
                     ]
                 },
 
