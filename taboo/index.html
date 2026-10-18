@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Taboo">
+<meta name="theme-color" content="#f6f4ef">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>Taboo Cards</title>
+<style>
+  :root { --bg:#f6f4ef; --card:#fff; --ink:#1d1d1f; --muted:#6b6b6b; --accent:#a8321e; --line:#e6dfd3; }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; display:flex; flex-direction:column; align-items:center;
+         justify-content:center; gap:24px;
+         padding:max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+                 max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+         background:var(--bg); color:var(--ink);
+         font-family:system-ui,-apple-system,"Segoe UI",sans-serif; }
+  #timer { font-size:2.5rem; font-variant-numeric:tabular-nums; color:var(--muted); }
+  .card { width:100%; max-width:420px; background:var(--card); border-radius:16px;
+          padding:28px 24px; box-shadow:0 4px 20px rgba(0,0,0,.08); }
+  #word { font-size:2.4rem; font-weight:700; margin:0 0 16px; overflow-wrap:anywhere; }
+  .label { color:var(--accent); font-weight:600; font-size:.9rem; text-transform:uppercase;
+           letter-spacing:.05em; margin-bottom:8px; }
+  #taboo { list-style:none; margin:0; padding:0; }
+  #taboo li { font-size:1.3rem; padding:10px 0; border-bottom:1px solid var(--line); }
+  #next { width:100%; max-width:420px; padding:18px; font-size:1.3rem; font-weight:600; border:0;
+          border-radius:12px; background:var(--ink); color:#fff; cursor:pointer; touch-action:manipulation; }
+  #next:active { transform:scale(.98); }
+</style>
+</head>
+<body>
+  <div id="timer">00:00</div>
+  <div class="card">
+    <h1 id="word"></h1>
+    <div class="label">Don't say</div>
+    <ul id="taboo"></ul>
+  </div>
+  <button id="next">Next</button>
+<script>
+// 2026-10-18 14:40 UTC — created: random Taboo card (shuffle-deck), count-up timer, Next button + Space/Enter
+// 2026-10-18 15:00 UTC — PWA copy (index.html): manifest/icon links, home-screen meta, safe-area padding, service-worker registration
+
+const CSV = `Stapler,Paper,Attach,Metal,Desk,Press
+Printer,Paper,Ink,Jam,Copies,Toner
+Laptop,Computer,Screen,Keyboard,Portable,Charger
+Meeting,Calendar,Room,Agenda,Talk,Schedule
+Email,Inbox,Send,Message,Reply,Address
+Desk,Table,Chair,Work,Drawer,Office
+Boss,Manager,In charge,Leader,Report,Team
+Coffee,Cup,Bean,Morning,Caffeine,Latte
+Lunch break,Eat,Noon,Food,Rest,Sandwich
+Whiteboard,Marker,Erase,Write,Wall,Meeting
+Paycheck,Money,Salary,Friday,Bank,Earn
+Keyboard,Type,Keys,Computer,Letters,Laptop
+Calendar,Date,Month,Schedule,Day,Week
+Elevator,Floor,Up,Down,Button,Lift
+Water cooler,Drink,Chat,Gossip,Office,Fountain
+Password,Login,Secret,Computer,Letters,Account
+Headphones,Music,Ears,Listen,Noise,Wear
+Paper clip,Metal,Bend,Hold,Sheets,Office
+Sticky note,Yellow,Paper,Post,Reminder,Write
+Chair,Sit,Desk,Seat,Legs,Office
+Promotion,Raise,Job,Title,Manager,Higher
+Vacation,Holiday,Trip,Beach,Off,Away
+Deadline,Due,Date,Late,Project,Finish
+Interview,Job,Hire,Questions,Resume,Candidate
+Spreadsheet,Excel,Cells,Rows,Columns,Numbers
+Reply all,Email,Everyone,Send,Mistake,Inbox
+Mute button,Zoom,Sound,Microphone,Quiet,Silence
+Out of office,Vacation,Email,Away,Reply,Automatic
+Overtime,Late,Hours,Extra,Work,Pay
+Brainstorm,Ideas,Think,Meeting,Group,Whiteboard
+Coworker,Colleague,Office,Team,Job,Desk
+Commute,Drive,Train,Traffic,Work,Bus
+Name tag,Badge,Sticker,Hello,Wear,Conference
+Conference room,Meeting,Table,Book,Chairs,Projector
+Fire drill,Alarm,Exit,Practice,Stairs,Evacuate
+Team building,Activity,Bond,Event,Group,Fun
+Small talk,Weather,Chat,Polite,Conversation,Elevator
+Webcam,Camera,Video,Laptop,Face,Zoom
+Cubicle,Desk,Walls,Office,Space,Box
+Intern,Student,Summer,Learn,Job,New
+Microphone,Speak,Voice,Sound,Loud,Podcast
+Synergy,Together,Teamwork,Combined,Buzzword,Greater
+Bandwidth,Time,Capacity,Busy,Internet,Available
+Quarterly report,Three,Months,Numbers,Results,Earnings
+Performance review,Annual,Feedback,Manager,Goals,Rating
+Onboarding,New,Hire,Training,First,Welcome
+Work-life balance,Home,Job,Time,Family,Healthy
+Agenda,List,Meeting,Topics,Plan,Order
+Feedback,Opinion,Comment,Review,Improve,Advice
+Multitasking,Many,Things,Same time,Juggle,Busy
+Casual Friday,Jeans,Dress,Week,Relaxed,Clothes
+Hybrid,Remote,Office,Home,Mix,Both
+Elevator pitch,Short,Sell,Idea,Quick,Thirty seconds
+Office plant,Green,Water,Desk,Leaves,Pot
+Networking,Meet,People,Business,Contacts,Event
+Pizza,Cheese,Slice,Pepperoni,Italian,Crust
+Hamburger,Beef,Bun,Patty,Grill,Fries
+Banana,Yellow,Fruit,Peel,Monkey,Split
+Pancake,Breakfast,Syrup,Flat,Flip,Batter
+Ice cream,Cold,Cone,Scoop,Dessert,Vanilla
+Sandwich,Bread,Lunch,Ham,Deli,Sub
+Popcorn,Movie,Butter,Kernel,Snack,Microwave
+Spaghetti,Pasta,Noodles,Italian,Meatballs,Sauce
+Apple,Red,Fruit,Tree,Pie,Orchard
+Taco,Mexican,Shell,Tuesday,Beef,Salsa
+Cookie,Chocolate chip,Bake,Sweet,Jar,Dough
+Cereal,Breakfast,Milk,Bowl,Spoon,Box
+Carrot,Orange,Vegetable,Rabbit,Snowman,Root
+Egg,Chicken,Yolk,Shell,Breakfast,Scrambled
+Watermelon,Seeds,Summer,Green,Red,Fruit
+Cheese,Mouse,Milk,Yellow,Cheddar,Swiss
+Hot dog,Bun,Sausage,Mustard,Ketchup,Baseball game
+Lemonade,Yellow,Sour,Stand,Summer,Drink
+Chef,Cook,Kitchen,Hat,Restaurant,Knife
+Sushi,Rice,Raw,Fish,Japanese,Roll
+Bagel,Bread,Hole,Cream cheese,Breakfast,Round
+Burrito,Wrap,Mexican,Beans,Tortilla,Rice
+Smoothie,Blend,Fruit,Drink,Straw,Yogurt
+Avocado,Green,Toast,Guacamole,Pit,Fruit
+Pretzel,Twist,Salt,Knot,Soft,Mustard
+Pineapple,Fruit,Tropical,Pizza,Yellow,Spiky
+Chocolate,Sweet,Brown,Candy,Cocoa,Bar
+Waffle,Breakfast,Syrup,Squares,Iron,Belgian
+French fries,Potato,Salty,Ketchup,Crispy,Side
+Peanut butter,Jelly,Sandwich,Spread,Jar,Creamy
+Cupcake,Frosting,Muffin,Birthday,Sprinkles,Bakery
+Soup,Bowl,Spoon,Hot,Chicken noodle,Broth
+Salad,Lettuce,Green,Healthy,Dressing,Bowl
+Barbecue,Grill,Ribs,Smoke,Sauce,Summer
+Marshmallow,Fluffy,White,Campfire,S'mores,Roast
+Toast,Bread,Butter,Brown,Breakfast,Crunchy
+Honey,Bees,Sweet,Golden,Sticky,Jar
+Donut,Hole,Glazed,Sprinkles,Fried,Dozen
+Nachos,Chips,Cheese,Mexican,Salsa,Jalapeño
+Lollipop,Candy,Stick,Sweet,Round,Flavor
+Leftovers,Fridge,Yesterday,Dinner,Reheat,Extra
+Brunch,Breakfast,Lunch,Sunday,Late,Eggs
+Food truck,Street,Vendor,Parked,Lunch,Window
+Potluck,Share,Dish,Bring,Party,Everyone
+Picnic,Basket,Blanket,Park,Outside,Ants
+Spicy,Hot,Pepper,Burn,Chili,Mild
+Buffet,All you can eat,Line,Plate,Restaurant,Serve
+Vegetarian,Meat,Vegan,Plants,Tofu,Beans
+Recipe,Cook,Instructions,Ingredients,Book,Steps
+Dessert,Sweet,After,Dinner,Cake,Sugar
+Microwave,Heat,Kitchen,Popcorn,Beep,Oven
+Lunchbox,School,Pack,Sandwich,Carry,Kids
+Takeout,Order,Delivery,Restaurant,Home,Box
+Grocery store,Shop,Cart,Food,Aisle,Checkout
+Fortune cookie,Chinese,Paper,Message,Restaurant,Future
+Beach,Sand,Ocean,Waves,Sun,Swim
+Airport,Plane,Fly,Gate,Security,Luggage
+Library,Books,Quiet,Read,Borrow,Card
+Zoo,Animals,Cage,Lions,Visit,Keeper
+School,Teacher,Class,Students,Learn,Desk
+Park,Trees,Grass,Bench,Swing,Walk
+Kitchen,Cook,Stove,Fridge,Room,Sink
+Museum,Art,History,Exhibit,Paintings,Statue
+Mall,Shopping,Stores,Food court,Buy,Escalator
+Farm,Cows,Barn,Tractor,Crops,Chickens
+Gym,Exercise,Weights,Workout,Treadmill,Fitness
+Movie theater,Film,Popcorn,Screen,Seats,Tickets
+Bakery,Bread,Cake,Oven,Pastry,Croissant
+Castle,King,Queen,Moat,Tower,Knight
+Campsite,Tent,Fire,Woods,Sleeping bag,Outdoors
+Restaurant,Waiter,Menu,Eat,Table,Order
+Swimming pool,Water,Dive,Lifeguard,Splash,Summer
+Aquarium,Fish,Tanks,Sharks,Water,Visit
+Grand Canyon,Arizona,Deep,Rocks,River,Hike
+Eiffel Tower,Paris,France,Tall,Metal,Landmark
+New York City,Big Apple,Manhattan,Times Square,Statue of Liberty,Subway
+Hawaii,Island,Aloha,Beach,Pacific,Volcano
+Antarctica,Cold,Ice,Penguins,South,Continent
+Hollywood,Movies,Stars,California,Sign,Los Angeles
+Statue of Liberty,Torch,New York,Green,France,Lady
+Great Wall of China,Long,Ancient,Asia,Stones,Beijing
+Moon,Night,Sky,Full,Crater,Astronaut
+Jungle,Trees,Rainforest,Monkeys,Vines,Wild
+Desert,Sand,Hot,Camel,Dry,Cactus
+Volcano,Lava,Erupt,Mountain,Hot,Ash
+Subway,Train,Underground,Station,Tracks,Ride
+Hotel,Room,Stay,Bed,Lobby,Check-in
+Lighthouse,Coast,Ship,Tall,Beam,Sea
+Island,Water,Surrounded,Beach,Ocean,Palm tree
+Waterfall,River,Cliff,Niagara,Mist,Drop
+Post office,Mail,Stamps,Letters,Package,Send
+Bowling alley,Pins,Ball,Strike,Lanes,Shoes
+Stadium,Sports,Game,Seats,Crowd,Arena
+Suburbs,City,Houses,Outside,Neighborhood,Quiet
+Downtown,City,Center,Buildings,Busy,Main street
+Backyard,House,Grass,Garden,Behind,Fence
+Laundromat,Washing,Clothes,Machines,Coins,Dryer
+Escape room,Puzzle,Locked,Clues,Get out,Team
+Basement,Downstairs,Under,House,Dark,Storage
+Greenhouse,Plants,Glass,Grow,Warm,Garden
+Ski resort,Snow,Mountain,Lift,Slopes,Lodge
+Theme park,Rides,Roller coaster,Tickets,Lines,Fun
+Train station,Platform,Tickets,Tracks,Depart,Wait
+Farmers market,Vegetables,Stands,Fresh,Local,Weekend
+Treehouse,Branches,Ladder,Kids,Wooden,Backyard
+Titanic,Ship,Iceberg,Sink,Jack,Rose
+Frozen,Elsa,Anna,Let It Go,Snow,Disney
+The Lion King,Simba,Africa,Disney,Hakuna Matata,Pride Rock
+Star Wars,Jedi,Lightsaber,Force,Darth Vader,Space
+Toy Story,Woody,Buzz,Pixar,Cowboy,Andy
+Harry Potter,Wizard,Hogwarts,Magic,Wand,Scar
+Jaws,Shark,Ocean,Beach,Bite,Boat
+Finding Nemo,Reef,Dory,Clownfish,Ocean,Pixar
+Shrek,Ogre,Green,Donkey,Swamp,Fiona
+Batman,Gotham,Joker,Bruce Wayne,Robin,Cape
+Spider-Man,Web,Peter Parker,Marvel,Hero,Climb
+Home Alone,Kevin,Christmas,Burglars,Traps,Kid
+Jurassic Park,Dinosaurs,T. rex,Island,Theme,Raptor
+Cartoon,Animated,Drawing,Saturday morning,Kids,TV
+Sitcom,Funny,TV,Laugh track,Episodes,Comedy
+Remote control,TV,Channel,Buttons,Couch,Change
+The Wizard of Oz,Dorothy,Yellow brick road,Toto,Kansas,Emerald City
+Ghostbusters,Slime,Proton,Call,Spirits,Marshmallow man
+Back to the Future,DeLorean,Marty,Time travel,Doc,1985
+Mary Poppins,Nanny,Umbrella,Spoonful,Chimney,Flying
+Cooking show,Chef,Kitchen,Recipe,Judges,Competition
+Game show,Contestant,Host,Prize,Win,Buzzer
+Reality TV,Unscripted,Drama,Cameras,Contestants,Survivor
+News anchor,TV,Report,Desk,Headlines,Broadcast
+Commercial,Ad,Break,Sell,TV,Product
+Superhero,Cape,Powers,Save,Villain,Marvel
+Sequel,Second,Part two,Movie,Next,Follow-up
+Binge-watch,Episodes,Netflix,Series,Marathon,All night
+Red carpet,Celebrities,Oscars,Premiere,Walk,Fashion
+Movie trailer,Preview,Coming soon,Clips,Before,Teaser
+Soundtrack,Music,Songs,Movie,Album,Score
+Documentary,Real,Facts,Film,Nature,True story
+Paddington,Bear,Marmalade,London,Peru,Hat
+Cinderella,Glass slipper,Prince,Pumpkin,Midnight,Stepsisters
+Ratatouille,Rat,Chef,Paris,Pixar,Cook
+Plot twist,Surprise,Ending,Story,Unexpected,Turn
+Cliffhanger,Ending,Suspense,Episode,Next,Wait
+Spoiler alert,Ending,Ruin,Tell,Secret,Warning
+Rerun,Again,Old,Episode,Repeat,Watch
+Laugh track,Audience,Sitcom,Recorded,Funny,Fake
+Opening credits,Names,Beginning,Theme song,Actors,Start
+Director,Movie,Film,Action,Cut,Chair
+Stunt double,Actor,Dangerous,Replace,Fall,Action
+Blooper reel,Mistakes,Funny,Outtakes,Laugh,Credits
+Season finale,Last,Episode,End,Series,Cliffhanger
+Streaming,Netflix,Watch,Online,Internet,Subscription
+Oscar,Award,Gold,Statue,Academy,Best actor
+Theme song,Music,Opening,Show,Sing,Intro
+Animation,Cartoon,Drawn,Pixar,Frames,Moving
+Box office,Tickets,Sales,Money,Hit,Weekend
+Umbrella,Rain,Wet,Open,Handle,Weather
+Toothbrush,Teeth,Paste,Bathroom,Dentist,Bristles
+Alarm clock,Wake,Morning,Snooze,Ring,Bed
+Bicycle,Pedal,Wheels,Ride,Helmet,Bike
+Shoes,Feet,Laces,Walk,Sneakers,Pair
+Car,Drive,Wheels,Road,Engine,Vehicle
+Phone,Call,Text,Screen,Apps,Ring
+Dog,Bark,Pet,Puppy,Leash,Bone
+Cat,Meow,Pet,Kitten,Whiskers,Purr
+Rain,Water,Clouds,Wet,Umbrella,Storm
+Sunglasses,Eyes,Shade,Bright,Summer,Wear
+Pillow,Bed,Sleep,Head,Soft,Feathers
+Mirror,Reflection,Glass,Look,Bathroom,See
+Key,Lock,Door,Open,Car,Chain
+Backpack,School,Bag,Carry,Zipper,Straps
+Bed,Sleep,Pillow,Blanket,Night,Mattress
+Shower,Water,Bathroom,Wash,Soap,Morning
+Birthday,Cake,Candles,Party,Gift,Celebrate
+Traffic jam,Cars,Stuck,Road,Rush hour,Slow
+Vacuum,Clean,Floor,Carpet,Dust,Noisy
+Laundry,Clothes,Wash,Dryer,Fold,Basket
+Grocery list,Shopping,Food,Paper,Milk,Write
+Wi-Fi,Internet,Password,Connection,Router,Signal
+Selfie,Photo,Phone,Camera,Picture,Myself
+Sneeze,Nose,Achoo,Cold,Tissue,Allergies
+Yawn,Tired,Mouth,Sleepy,Bored,Open
+Parking ticket,Car,Fine,Meter,Windshield,Pay
+Junk mail,Spam,Ads,Trash,Envelopes,Recycle
+Flat tire,Car,Air,Pump,Spare,Wheel
+Snooze button,Alarm,Morning,More sleep,Five minutes,Press
+Text message,Phone,Send,Type,Emoji,Reply
+Thermostat,Temperature,Heat,Cold,Wall,Degrees
+Recycling,Bin,Plastic,Green,Reuse,Cans
+Doorbell,Ring,Visitor,Button,Front,Ding dong
+Dishwasher,Plates,Clean,Kitchen,Soap,Load
+Procrastinate,Later,Delay,Put off,Lazy,Tomorrow
+Daydream,Imagine,Mind,Wander,Sleep,Fantasy
+Déjà vu,Before,Again,Familiar,French,Feeling
+Comfort zone,Safe,Easy,Familiar,Leave,Cozy
+Nostalgia,Past,Memories,Old times,Remember,Miss
+Weekend,Saturday,Sunday,Off,Relax,Friday night
+Habit,Routine,Every day,Break,Repeat,Always
+Bucket list,Before,Goals,Dreams,Life,Things to do
+Brain freeze,Cold,Ice cream,Head,Pain,Fast
+Power nap,Short,Sleep,Afternoon,Rest,Tired
+Lost and found,Missing,Box,Items,Return,Claim
+Road trip,Car,Drive,Travel,Highway,Snacks
+Jigsaw puzzle,Pieces,Edges,Corner,Picture,Box
+Sunrise,Morning,Dawn,Early,East,Sky
+Rainbow,Colors,Sky,Arc,Pot of gold,Storm
+Halloween,Costume,October,Trick or treat,Candy,Pumpkin
+Thanksgiving,Turkey,November,Pilgrims,Thankful,Feast
+Turkey,Thanksgiving,Bird,Gobble,Stuffing,Roast
+Fireworks,Sky,Boom,July,Sparkle,Night
+Costume,Dress up,Halloween,Mask,Party,Wear
+Parade,Floats,Marching band,Street,Balloons,Crowd
+Graduation,Cap,Gown,Diploma,School,Ceremony
+Mother's Day,Mom,May,Flowers,Card,Brunch
+Father's Day,Dad,June,Tie,Grill,Card
+Jack-o'-lantern,Pumpkin,Carve,Halloween,Candle,Face
+Trick or treat,Candy,Halloween,Costume,Door,Kids
+Haunted house,Ghosts,Scary,Spooky,Halloween,Old
+Candy corn,Halloween,Orange,Yellow,Triangle,Sweet
+Pumpkin pie,Thanksgiving,Dessert,Orange,Whipped cream,Slice
+New Year's Eve,Midnight,Countdown,Ball drop,December,Resolution
+Fourth of July,Independence,America,Fireworks,Flag,Summer
+St. Patrick's Day,Green,Ireland,Shamrock,Leprechaun,March
+April Fools' Day,Prank,Joke,Trick,First,Gotcha
+Resolution,Goal,Promise,January,New Year,Habit
+Groundhog Day,February,Shadow,Spring,Winter,Punxsutawney
+Lunar New Year,Dragon,Red envelope,Lanterns,Zodiac,Celebration
+Earth Day,Planet,April,Green,Recycle,Trees
+Labor Day,September,Monday,Long weekend,Workers,Barbecue
+Leap year,February,29,Extra day,Calendar,Four
+Boss's Day,October,Manager,Thank,Card,Appreciate
+Santa Claus,North Pole,Beard,Presents,Reindeer,Ho ho ho
+Snowman,Frosty,Carrot,Winter,Build,Scarf
+Christmas tree,Pine,Ornaments,Lights,Decorate,Star
+Candy cane,Peppermint,Red,White,Striped,Hook
+Elf,Santa,Helper,Workshop,Pointy,Toys
+Sleigh,Santa,Reindeer,Snow,Ride,Bells
+Wrapping paper,Gift,Presents,Tape,Bow,Roll
+Hot chocolate,Cocoa,Marshmallows,Mug,Warm,Drink
+Stocking,Fireplace,Hang,Sock,Fill,Mantel
+Reindeer,Rudolph,Sleigh,Antlers,Santa,Nose
+Gingerbread house,Cookie,Candy,Build,Icing,Bake
+Ugly sweater,Party,Knit,Tacky,Wear,Contest
+Secret Santa,Gift,Exchange,Anonymous,Office,Draw names
+Grinch,Green,Dr. Seuss,Whoville,Stole,Heart
+Rudolph,Red nose,Lead,Glow,Fog,Reindeer
+Ornament,Tree,Hang,Ball,Glass,Decoration
+North Pole,Santa,Cold,Arctic,Ice,Top
+Chimney,Santa,Fireplace,Smoke,Roof,Brick
+Jingle Bells,Song,Sleigh,Ring,Dashing,Snow
+Christmas lights,Tree,String,Bulbs,House,Twinkle
+Snow angel,Lie down,Arms,Legs,Wings,Ground
+Nutcracker,Ballet,Clara,Soldier,Toy,Sugar Plum
+Tinsel,Shiny,Tree,Silver,Strands,Decoration
+Holiday party,Office,December,Celebrate,Festive,Event
+Gift card,Present,Store,Money,Plastic,Balance
+Fireplace,Chimney,Logs,Warm,Mantel,Hearth
+Snowflake,Ice,Cold,Unique,Winter,Crystal
+Wreath,Door,Circle,Green,Hang,Pine
+Christmas Eve,December,24th,Night,Before,Santa
+Gift exchange,Swap,Presents,Party,White elephant,Trade
+Monkey,animal,tree,zoo,Banana,
+apple,green,red,fruit,round,
+car,drive,wheels,road,garage,
+farmer,farm,grow,job,country,
+cat,milk,meow,kitty,pet,
+airport,travel,plane,fly,passport,
+chicken,animal,kfc,egg,farm,
+ghost,scary,white,haunt,dead,
+dinner,night,eat,lunch,food,
+milk,white,cold,drink,cow,
+fish,water,animal,swim,sea,
+bed,sleep,pillow,blanket,tired,
+hippo,animal,africa,river,fat,
+family,mother,father,brother,sister,
+orange,colour,red,yellow,fruit,
+english,alphabet,abc,language,class,
+birthday,cake,party,age,presents,
+computer,play,game,email,internet,
+tree,green,tall,forest,leaf,
+phone,talk,answer,listen,machine,
+Money,dollar,spend,wallet,bank,
+fan,air,blow,wind,hot,
+window,look,room,square,house,
+frog,green,animal,jump,water,
+book,read,paper,library,school,
+bike,ride,wheels,park,helmet,
+bread,food,sandwich,toast,breakfast,
+hat,clothing,head,sun,beach,
+guitar,music,play,instrument,hands,
+dentist,teeth,doctor,smile,mouth,
+kitchen,room,cook,stove,fridge,
+summer,spring,winter,season,hot,
+japan,sushi,kimono,fuji,sumo,
+england,london,capital,big ben,football,
+rain,wet,water,sky,cloud,
+housework,clean,house,wash,dishes,
+sofa,sit,living room,tv,furniture,
+eye,body,see,glasses,two,
+Moon,sky,night,space,star,
+supermarket,shop,buy,food,groceries,
+pool,swim,blue,house,water,
+socks,clothes,two,feet,shoes,
+run,walk,fast,legs,track,
+water,sea,ocean,river,drink,
+cinema,movie,popcorn,screen,place,
+duck,bird,white,donald,eat,
+ship,sea,float,titanic,sailor,
+black,night,bat,coal,colour,
+candy,sweet,kids,party,food,
+photo,picture,camera,take,selfie,
+potato,vegetable,fries,chips,white,
+beach,swim,sand,sea,umbrella,
+flower,beautiful,plant,rose,bee,
+ice cream,food,cold,summer,kids,
+kangaroo,mouse,big,hop,australia,
+alien,space,ufo,green,strange,
+zoo,animal,cage,place,photos,
+soup,food,spoon,hot,bowl,
+weather,rain,sun,cloud,wind,
+ambulance,car,hospital,doctor,accident,`;
+
+const cards = CSV.trim().split("\n").map(line => {
+  const [word, ...taboo] = line.split(",");
+  return { word, taboo: taboo.filter(t => t.trim() !== "") };   // drops the ESL padding field
+});
+
+// Shuffle-deck: no repeats until all cards have been shown
+let deck = [];
+let current = null;
+function shuffle(a) {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function draw() {
+  if (deck.length === 0) {
+    deck = shuffle(cards.slice());
+    // avoid showing the same card twice across a reshuffle
+    if (current && deck[deck.length - 1] === current) [deck[0], deck[deck.length - 1]] = [deck[deck.length - 1], deck[0]];
+  }
+  return deck.pop();
+}
+
+// Display-only count-up stopwatch
+const timerEl = document.getElementById("timer");
+let start = Date.now();
+function tick() {
+  const s = Math.floor((Date.now() - start) / 1000);
+  timerEl.textContent = String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
+}
+setInterval(tick, 250);
+
+function next() {
+  current = draw();
+  document.getElementById("word").textContent = current.word;
+  const ul = document.getElementById("taboo");
+  ul.replaceChildren(...current.taboo.map(t => {
+    const li = document.createElement("li");
+    li.textContent = t;
+    return li;
+  }));
+  start = Date.now();
+  tick();
+}
+
+const btn = document.getElementById("next");
+btn.addEventListener("click", () => { next(); btn.blur(); });   // blur so Space/Enter can't fire twice
+document.addEventListener("keydown", e => {
+  if (e.code === "Space" || e.key === "Enter") {
+    e.preventDefault();
+    if (!e.repeat) next();
+  }
+});
+
+next();
+
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
+</script>
+</body>
+</html>
