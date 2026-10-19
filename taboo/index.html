@@ -12,7 +12,8 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <title>Taboo Cards</title>
 <style>
-  :root { --bg:#f6f4ef; --card:#fff; --ink:#1d1d1f; --muted:#6b6b6b; --accent:#a8321e; --line:#e6dfd3; }
+  :root { --bg:#f6f4ef; --card:#fff; --ink:#1d1d1f; --muted:#6b6b6b; --accent:#a8321e; --line:#e6dfd3;
+          --special:#fde4ec; }
   * { box-sizing: border-box; }
   body { margin:0; min-height:100vh; display:flex; flex-direction:column; align-items:center;
          justify-content:center; gap:24px;
@@ -31,9 +32,20 @@
   #next { width:100%; max-width:420px; padding:18px; font-size:1.3rem; font-weight:600; border:0;
           border-radius:12px; background:var(--ink); color:#fff; cursor:pointer; touch-action:manipulation; }
   #next:active { transform:scale(.98); }
+  #mode { display:flex; gap:4px; padding:4px; background:var(--line); border-radius:10px; }
+  #mode button { border:0; background:transparent; padding:8px 12px; font-size:.95rem; font-weight:600;
+                 color:var(--muted); border-radius:7px; cursor:pointer; touch-action:manipulation; }
+  #mode button[aria-pressed="true"] { background:var(--card); color:var(--ink); box-shadow:0 1px 3px rgba(0,0,0,.12); }
+  #mode button:disabled { opacity:.4; cursor:default; }
+  .card.special { background:var(--special); }
 </style>
 </head>
 <body>
+  <div id="mode" role="group" aria-label="Card set">
+    <button data-mode="standard">Standard</button>
+    <button data-mode="mixed">+ Special</button>
+    <button data-mode="special">Special only</button>
+  </div>
   <div id="timer">00:00</div>
   <div class="card">
     <h1 id="word"></h1>
@@ -44,6 +56,7 @@
 <script>
 // 2026-10-18 14:40 UTC — created: random Taboo card (shuffle-deck), count-up timer, Next button + Space/Enter
 // 2026-10-18 15:00 UTC — PWA copy (index.html): manifest/icon links, home-screen meta, safe-area padding, service-worker registration
+// 2026-10-19 05:20 UTC — added special card set (pink background) and Standard / + Special / Special only toggle, remembered on device
 
 const CSV = `Stapler,Paper,Attach,Metal,Desk,Press
 Printer,Paper,Ink,Jam,Copies,Toner
@@ -426,6 +439,161 @@ const cards = CSV.trim().split("\n").map(line => {
   return { word, taboo: taboo.filter(t => t.trim() !== "") };   // drops the ESL padding field
 });
 
+// Special cards: one card per line, same format as the CSV — word first, then the forbidden words, comma-separated
+// Don't use commas inside a word, or backticks (`) anywhere
+const SPECIAL_CSV = `
+Swear,Cuss, Damn, Shit, Fuck, Crap
+Swear,Blast, Joke, Blunt, Tool, Jerk
+Damn,Swear, Cuss, Shit, Fuck, Crap
+Damn,Blunt, Blast, Blunder, Tool, Jerk
+Shit,Swear, Cuss, Fuck, Crap, Hell
+Shit,Blunt, Blast, Blunder, Tool, Jerk
+Fuck,Swear, Cuss, Shit, Crap, Hell
+Fuck,Blunt, Blast, Blunder, Tool, Jerk
+Crap,Swear, Cuss, Shit, Fuck, Hell
+Crap,Blunt, Blast, Blunder, Tool, Jerk
+Hell,Swear, Cuss, Shit, Fuck, Crap
+Hell,Blunt, Blast, Blunder, Tool, Jerk
+Insult,Bitch, Cunt, Slut, Whore, Piss
+Insult,Jerk, Tool, Blunder, Lout, Dunce
+Idiot,Dumbass, Moron, Tool, Jerk, Lout
+Idiot,Blunder, Dunce, Tool, Jerk, Bum
+Jerk,Idiot, Dumbass, Moron, Tool, Bum
+Jerk,Blunder, Lout, Dunce, Jerk, Tool
+Moron,Idiot, Dumbass, Tool, Jerk, Bum
+Moron,Lout, Dunce, Blunder, Jerk, Tool
+Dumbass,Idiot, Moron, Tool, Jerk, Bum
+Dumbass,Lout, Dunce, Blunder, Jerk, Tool
+Tool,Idiot, Dumbass, Jerk, Moron, Bum
+Tool,Lout, Dunce, Blunder, Jerk, Tool
+Explicit,Vulgar, Dirty, Filth, Gross, Smut
+Explicit,Foul, Blunt, Blunder, Bum, Lout
+Sex,Porn, Slut, Whore, Fucking, Slang
+Sex,Blunt, Blunder, Bum, Lout, Tool
+Porn,Sex, Slut, Whore, Fucking, Slang
+Porn,Blunt, Blunder, Bum, Lout, Tool
+Slut,Sex, Porn, Whore, Fucking, Slang
+Slut,Blunt, Blunder, Bum, Lout, Tool
+Whore,Sex, Porn, Slut, Fucking, Slang
+Whore,Blunt, Blunder, Bum, Lout, Tool
+Fucking,Sex, Porn, Slut, Whore, Slang
+Fucking,Blunt, Blunder, Bum, Lout, Tool
+Bodily,Fart, Snot, Piss, Bleed, Puke
+Bodily,Spit, Sputter, Sputter, Blunder, Bum
+Piss,Shit, Fart, Snot, Bleed, Puke
+Piss,Spit, Sputter, Sputter, Blunder, Bum
+Fart,Shit, Piss, Snot, Bleed, Puke
+Fart,Spit, Sputter, Sputter, Blunder, Bum
+Snot,Shit, Piss, Fart, Bleed, Puke
+Snot,Spit, Sputter, Sputter, Blunder, Bum
+Bleed,Shit, Piss, Fart, Snot, Puke
+Bleed,Spit, Sputter, Sputter, Blunder, Bum
+Puke,Shit, Piss, Fart, Snot, Bleed
+Puke,Spit, Sputter, Sputter, Blunder, Bum
+Vulgar,Dirty, Gross, Filth, Foul, Smut
+Vulgar,Blunt, Blunder, Bum, Lout, Tool
+Bitch,Cunt, Slut, Twat, Pussy, Whore
+Bitch,Blunt, Blunder, Bum, Lout, Tool
+Cunt,Bitch, Slut, Twat, Pussy, Whore
+Cunt,Blunt, Blunder, Bum, Lout, Tool
+Twat,Bitch, Cunt, Slut, Pussy, Whore
+Twat,Blunt, Blunder, Bum, Lout, Tool
+Pussy,Bitch, Cunt, Slut, Twat, Whore
+Pussy,Blunt, Blunder, Bum, Lout, Tool
+Slang,Fucking, Cuss, Swear, Crap, Damn
+Slang,Blunt, Blunder, Bum, Lout, Tool
+Cuss,Swear, Fucking, Crap, Damn, Shit
+Cuss,Blunt, Blunder, Bum, Lout, Tool
+Rude,Cuss, Swear, Fuck, Crap, Damn
+Rude,Blunt, Blunder, Bum, Lout, Tool
+Lout,Tool, Jerk, Moron, Idiot, Dumbass
+Lout,Blunder, Bum, Lout, Dunce, Jerk
+Blast,Spit, Spat, Blow, Blast, Spat
+Blast,Sputter, Blunder, Bum, Lout, Tool
+Blows,Spit, Spat, Blow, Blast, Spat
+Blows,Sputter, Blunder, Bum, Lout, Tool
+Spat,Spit, Blow, Blast, Blows, Spat
+Spat,Sputter, Blunder, Bum, Lout, Tool
+Blunt,Cuss, Rude, Fuck, Crap, Darn
+Blunt,Blunt, Blunder, Bum, Lout, Tool
+Dirty,Gross, Filth, Foul, Smut, Vulgar
+Dirty,Blunt, Blunder, Bum, Lout, Tool
+Slur,Cuss, Rude, Fuck, Crap, Swear
+Slur,Blunt, Blunder, Bum, Lout, Tool
+Raunch,Gross, Filth, Foul, Smut, Dirty
+Raunch,Blunt, Blunder, Bum, Lout, Tool
+Spite,Cuss, Rude, Fuck, Crap, Swear
+Spite,Blunt, Blunder, Bum, Lout, Tool
+Puke,Shit, Piss, Fart, Snot, Bleed
+Puke,Spit, Sputter, Sputter, Blunder, Bum
+Darn,Swear, Cuss, Damn, Crap, Hell
+Darn,Blunt, Blunder, Bum, Lout, Tool
+Bastard,Cuss, Swear, Damn, Crap, Fuck
+Bastard,Blunt, Blunder, Bum, Lout, Tool
+Gross,Filth, Foul, Dirty, Smut, Vulgar
+Gross,Blunt, Blunder, Bum, Lout, Tool
+Filth,Gross, Foul, Dirty, Smut, Vulgar
+Filth,Blunt, Blunder, Bum, Lout, Tool
+Foul,Gross, Filth, Dirty, Smut, Vulgar
+Foul,Blunt, Blunder, Bum, Lout, Tool
+Piddle,Piss, Shit, Fart, Snot, Bleed
+Piddle,Spit, Sputter, Sputter, Blunder, Bum
+Blow,Spit, Spat, Blast, Blows, Spat
+Blow,Sputter, Blunder, Bum, Lout, Tool
+Spit,Blow, Spat, Blast, Blows, Spat
+Spit,Sputter, Blunder, Bum, Lout, Tool
+Smut,Filth, Gross, Foul, Dirty, Vulgar
+Smut,Blunt, Blunder, Bum, Lout, Tool
+Rude,Cuss, Swear, Fuck, Crap, Damn
+Rude,Blunt, Blunder, Bum, Lout, Tool
+Cock,Dick, Prick, Balls, Nads, Wank
+Cock,Blunt, Blunder, Bum, Lout, Tool
+Dick,Cock, Prick, Balls, Nads, Wank
+Dick,Blunt, Blunder, Bum, Lout, Tool
+Prick,Cock, Dick, Balls, Nads, Wank
+Prick,Blunt, Blunder, Bum, Lout, Tool
+Arse,Fanny, Balls, Cunt, Twat, Pussy
+Arse,Slut, Blunt, Blunder, Bum, Lout
+Tits,Pussy, Balls, Cunt, Twat, Slut
+Tits,Blunt, Blunder, Bum, Lout, Tool
+Balls,Cock, Dick, Prick, Nads, Wank
+Balls,Blunt, Blunder, Bum, Lout, Tool
+Cunt,Bitch, Slut, Twat, Pussy, Whore
+Cunt,Slut, Blunt, Blunder, Bum, Lout
+Twat,Bitch, Cunt, Slut, Pussy, Whore
+Twat,Slut, Blunt, Blunder, Bum, Lout
+Slut,Bitch, Cunt, Twat, Pussy, Whore
+Slut,Slut, Blunt, Blunder, Bum, Lout
+Fanny,Arse, Balls, Cunt, Pussy, Tits
+Fanny,Slut, Blunt, Blunder, Bum, Lout
+Wank,Cock, Dick, Prick, Nads, Balls
+Wank,Blunt, Blunder, Bum, Lout, Tool
+Nads,Cock, Dick, Prick, Wank, Balls
+Nads,Blunt, Blunder, Bum, Lout, Tool
+Wet Dream,Piss, Fart, Snot, Bleed, Puke
+Wet Dream,Spit, Sputter, Sputter, Blunder, Bum
+Wet Dream,Piss, Fart, Snot, Bleed, Puke
+Wet Dream,Spit, Sputter, Sputter, Blunder, Bum
+`;
+const specialCards = SPECIAL_CSV.split("\n")
+  .map(l => l.trim())
+  .filter(l => l !== "" && l !== "PUT WORDS HERE")
+  .map(line => {
+    const [word, ...taboo] = line.split(",");
+    return { word: word.trim(), taboo: taboo.map(t => t.trim()).filter(t => t !== ""), special: true };
+  });
+
+// Which set to deal from; remembered on this device, falls back to Standard
+let mode = "standard";
+try { mode = localStorage.getItem("taboo-mode") || "standard"; } catch (e) {}
+if (specialCards.length === 0 || !["standard", "mixed", "special"].includes(mode)) mode = "standard";
+
+function pool() {
+  if (mode === "special") return specialCards;
+  if (mode === "mixed") return cards.concat(specialCards);
+  return cards;
+}
+
 // Shuffle-deck: no repeats until all cards have been shown
 let deck = [];
 let current = null;
@@ -438,7 +606,7 @@ function shuffle(a) {
 }
 function draw() {
   if (deck.length === 0) {
-    deck = shuffle(cards.slice());
+    deck = shuffle(pool().slice());
     // avoid showing the same card twice across a reshuffle
     if (current && deck[deck.length - 1] === current) [deck[0], deck[deck.length - 1]] = [deck[deck.length - 1], deck[0]];
   }
@@ -457,6 +625,7 @@ setInterval(tick, 250);
 function next() {
   current = draw();
   document.getElementById("word").textContent = current.word;
+  document.querySelector(".card").classList.toggle("special", !!current.special);
   const ul = document.getElementById("taboo");
   ul.replaceChildren(...current.taboo.map(t => {
     const li = document.createElement("li");
@@ -476,7 +645,20 @@ document.addEventListener("keydown", e => {
   }
 });
 
-next();
+const modeBtns = document.querySelectorAll("#mode button");
+function setMode(m) {
+  mode = m;
+  try { localStorage.setItem("taboo-mode", m); } catch (e) {}
+  modeBtns.forEach(b => b.setAttribute("aria-pressed", String(b.dataset.mode === m)));
+  deck = [];          // rebuild from the new set
+  next();             // deal a card and reset the timer
+}
+modeBtns.forEach(b => {
+  if (b.dataset.mode !== "standard" && specialCards.length === 0) b.disabled = true;
+  b.addEventListener("click", () => { setMode(b.dataset.mode); b.blur(); });
+});
+
+setMode(mode);
 
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
 </script>
